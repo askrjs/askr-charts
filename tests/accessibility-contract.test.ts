@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
+import { renderToStringSync } from "@askrjs/askr/ssr";
 
 import {
   BarChart,
   DonutChart,
+  FlameGraph,
   Heatmap,
   ProgressMeter,
   Sparkline,
@@ -10,135 +12,121 @@ import {
   Timeline,
 } from "../src/components";
 
-type ElementNode = {
-  type: unknown;
-  props: Record<string, unknown>;
-  key?: string | number | null;
-};
-
-function isElementNode(value: unknown): value is ElementNode {
-  return Boolean(
-    value &&
-    typeof value === "object" &&
-    "props" in (value as Record<string, unknown>) &&
-    "type" in (value as Record<string, unknown>),
-  );
+function renderChart(render: () => unknown): string {
+  return renderToStringSync(() => render());
 }
 
-function toChildrenArray(children: unknown): unknown[] {
-  if (children == null) return [];
-  return Array.isArray(children) ? children : [children];
-}
-
-function findFirst(node: unknown, predicate: (node: ElementNode) => boolean): ElementNode | null {
-  if (!isElementNode(node)) return null;
-  if (predicate(node)) return node;
-
-  for (const child of toChildrenArray(node.props.children)) {
-    const match = findFirst(child, predicate);
-    if (match) return match;
-  }
-
-  return null;
-}
-
-function findAll(node: unknown, predicate: (node: ElementNode) => boolean): ElementNode[] {
-  if (!isElementNode(node)) return [];
-
-  const matches = predicate(node) ? [node] : [];
-  for (const child of toChildrenArray(node.props.children)) {
-    matches.push(...findAll(child, predicate));
-  }
-
-  return matches;
+function countOccurrences(value: string, needle: string): number {
+  return value.split(needle).length - 1;
 }
 
 describe("accessibility contract", () => {
   it("should expose role img and fallback table content for visual charts", () => {
     const charts = [
-      BarChart({
-        label: "Monthly revenue",
-        data: [{ label: "Jan", value: 42, description: "Opening month" }],
-      }),
-      DonutChart({
-        label: "Traffic split",
-        data: [{ label: "Direct", value: 64, description: "Homepage traffic" }],
-      }),
-      Heatmap({
-        label: "Weekly activity",
-        data: [{ x: "Mon", y: "Week 1", value: 8, description: "Support load" }],
-      }),
-      Sparkline({
-        label: "Response trend",
-        data: [{ label: "Mon", value: 12, description: "Average response" }],
-      }),
-      StackedBarChart({
-        label: "Pipeline mix",
-        data: [
-          {
-            label: "Q1",
-            segments: [{ label: "Open", value: 12, description: "Carryover" }],
-          },
-        ],
-      }),
-      Timeline({
-        label: "Release timeline",
-        data: [{ label: "Alpha", value: "Jan", description: "Internal preview" }],
-      }),
+      renderChart(() =>
+        BarChart({
+          label: "Monthly revenue",
+          data: [{ label: "Jan", value: 42, description: "Opening month" }],
+        }),
+      ),
+      renderChart(() =>
+        DonutChart({
+          label: "Traffic split",
+          data: [{ label: "Direct", value: 64, description: "Homepage traffic" }],
+        }),
+      ),
+      renderChart(() =>
+        FlameGraph({
+          label: "Call stack",
+          data: [
+            {
+              label: "renderApp",
+              value: 90,
+              description: "Top-level frame",
+              children: [{ label: "loadRoute", value: 40, description: "Data boot" }],
+            },
+          ],
+        }),
+      ),
+      renderChart(() =>
+        Heatmap({
+          label: "Weekly activity",
+          data: [{ x: "Mon", y: "Week 1", value: 8, description: "Support load" }],
+        }),
+      ),
+      renderChart(() =>
+        Sparkline({
+          label: "Response trend",
+          data: [{ label: "Mon", value: 12, description: "Average response" }],
+        }),
+      ),
+      renderChart(() =>
+        StackedBarChart({
+          label: "Pipeline mix",
+          data: [
+            {
+              label: "Q1",
+              segments: [{ label: "Open", value: 12, description: "Carryover" }],
+            },
+          ],
+        }),
+      ),
+      renderChart(() =>
+        Timeline({
+          label: "Release timeline",
+          data: [{ label: "Alpha", value: "Jan", description: "Internal preview" }],
+        }),
+      ),
     ];
 
     for (const chart of charts) {
-      const graphic = findFirst(chart, (node) => node.props["role"] === "img");
-      const summary = findFirst(chart, (node) => node.props["data-slot"] === "chart-summary");
-      const table = findFirst(chart, (node) => node.props["data-slot"] === "chart-table");
-
-      expect(graphic).toBeTruthy();
-      expect(typeof graphic?.props["aria-label"]).toBe("string");
-      expect(summary).toBeTruthy();
-      expect(table?.type).toBe("table");
-      expect(String(table?.props.className)).toContain("ak-chart-sr-only");
+      expect(chart).toContain('role="img"');
+      expect(chart).toContain("aria-label=");
+      expect(chart).toContain('data-slot="chart-summary"');
+      expect(chart).toContain('data-slot="chart-table"');
+      expect(chart).toContain("ak-chart-sr-only");
     }
   });
 
   it("should expose semantic meter attributes for progress meters", () => {
-    const chart = ProgressMeter({
-      label: "Quota progress",
-      value: 48,
-      max: 80,
-      description: "Current quarter attainment",
-    });
+    const chart = renderChart(() =>
+      ProgressMeter({
+        label: "Quota progress",
+        value: 48,
+        max: 80,
+        description: "Current quarter attainment",
+      }),
+    );
 
-    const meter = findFirst(chart, (node) => node.props["role"] === "meter");
-    const summary = findFirst(chart, (node) => node.props["data-slot"] === "chart-summary");
-
-    expect(meter).toBeTruthy();
-    expect(meter?.props["aria-valuemin"]).toBe(0);
-    expect(meter?.props["aria-valuemax"]).toBe(80);
-    expect(meter?.props["aria-valuenow"]).toBe(48);
-    expect(String(meter?.props["aria-valuetext"]).includes("%")).toBe(true);
-    expect(summary).toBeTruthy();
+    expect(chart).toContain('role="meter"');
+    expect(chart).toContain('aria-valuemin="0"');
+    expect(chart).toContain('aria-valuemax="80"');
+    expect(chart).toContain('aria-valuenow="48"');
+    expect(chart).toContain('aria-valuetext="60%"');
+    expect(chart).toContain('data-slot="chart-summary"');
   });
 
   it("should include labelled data items for list-driven chart structures", () => {
-    const barChart = BarChart({
-      label: "Revenue",
-      data: [
-        { label: "Jan", value: 10 },
-        { label: "Feb", value: 12 },
-      ],
-    });
-    const timeline = Timeline({
-      label: "Release timeline",
-      data: [
-        { label: "Alpha", value: "Jan" },
-        { label: "GA", value: "Mar" },
-      ],
-    });
+    const barChart = renderChart(() =>
+      BarChart({
+        label: "Revenue",
+        data: [
+          { label: "Jan", value: 10 },
+          { label: "Feb", value: 12 },
+        ],
+      }),
+    );
+    const timeline = renderChart(() =>
+      Timeline({
+        label: "Release timeline",
+        data: [
+          { label: "Alpha", value: "Jan" },
+          { label: "GA", value: "Mar" },
+        ],
+      }),
+    );
 
-    const barItems = findAll(barChart, (node) => node.props["data-slot"] === "bar-chart-item");
-    const timelineItems = findAll(timeline, (node) => node.props["data-slot"] === "timeline-item");
-
-    expect(barItems).toHaveLength(2);
-    expect(timelineItems).toHaveLength(2);
+    expect(countOccurrences(barChart, 'data-slot="bar-chart-item"')).toBe(2);
+    expect(countOccurrences(timeline, 'data-slot="timeline-item"')).toBe(2);
   });
 });

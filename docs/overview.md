@@ -11,3 +11,10 @@ Current package layers:
 
 The package is intentionally presentation-first. Runtime chart adapters can layer on
 top of these primitives without coupling the package to one chart engine.
+
+Current visual chart set includes bar charts, donut charts, flame graphs,
+heatmaps, progress meters, sparklines, stacked bar charts, and timelines.
+
+Animations stay CSS-first and decorative. Chart components emit animation data
+attributes and CSS variables during SSR so charts remain correct without
+hydration, and `prefers-reduced-motion: reduce` disables motion by default.

@@ -1,7 +1,13 @@
 import {
   buildHeatmapSummary,
+  getAnimationDataAttrs,
+  getAnimationStyle,
+  normalizeAnimation,
   buildValueChartSummary,
+  type ChartAnimation,
+  type ChartAnimationDefaults,
   type ChartValueFormatter,
+  type NormalizedChartAnimation,
   type NormalizedHeatmapDatum,
   type NormalizedValueChartDatum,
 } from "../../core";
@@ -75,4 +81,22 @@ export function resolveValueFormatter(
   formatter?: ChartValueFormatter,
 ): ChartValueFormatter | undefined {
   return formatter;
+}
+
+export function resolveChartAnimation(
+  animate: boolean | undefined,
+  animation: ChartAnimation | undefined,
+  defaults: Partial<ChartAnimationDefaults>,
+): {
+  animation: NormalizedChartAnimation;
+  animationAttrs: Record<string, string>;
+  animationStyle: ChartStyle;
+} {
+  const resolvedAnimation = normalizeAnimation(animation ?? animate, defaults);
+
+  return {
+    animation: resolvedAnimation,
+    animationAttrs: getAnimationDataAttrs(resolvedAnimation),
+    animationStyle: getAnimationStyle(resolvedAnimation),
+  };
 }

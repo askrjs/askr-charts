@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "../../css/animations.css";
 @import "./styles/base/typography.css";
 @import "./styles/base/utilities.css";
 @import "./styles/layout/layout.css";
@@ -6,6 +7,7 @@
 @import "./styles/display/chart.css";
 @import "./styles/display/bar-chart.css";
 @import "./styles/display/donut-chart.css";
+@import "./styles/display/flame-graph.css";
 @import "./styles/display/heatmap.css";
 @import "./styles/display/progress-meter.css";
 @import "./styles/display/sparkline.css";

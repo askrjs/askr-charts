@@ -1,3 +1,4 @@
+import { For } from "@askrjs/askr";
 import { cx } from "../_internal/classnames";
 import type { ChartLegendProps } from "./chart-legend.types";
 
@@ -16,24 +17,26 @@ export function ChartLegend({ className, items, style, title, ...rest }: ChartLe
       ) : null}
 
       <ul data-slot="chart-legend-list" className="chart-legend-list">
-        {items.map((item) => (
-          <li key={item.label} data-slot="chart-legend-item" className="chart-legend-item">
-            <span
-              aria-hidden="true"
-              data-slot="chart-legend-swatch"
-              className="chart-legend-swatch"
-              style={item.color ? { "--ak-chart-item-color": item.color } : undefined}
-            />
-            <span data-slot="chart-legend-label" className="chart-legend-label">
-              {item.label}
-            </span>
-            {item.value ? (
-              <span data-slot="chart-legend-value" className="chart-legend-value">
-                {item.value}
+        <For each={items} by={(item) => item.label}>
+          {(item) => (
+            <li data-slot="chart-legend-item" className="chart-legend-item">
+              <span
+                aria-hidden="true"
+                data-slot="chart-legend-swatch"
+                className="chart-legend-swatch"
+                style={item.color ? { "--ak-chart-item-color": item.color } : undefined}
+              />
+              <span data-slot="chart-legend-label" className="chart-legend-label">
+                {item.label}
               </span>
-            ) : null}
-          </li>
-        ))}
+              {item.value ? (
+                <span data-slot="chart-legend-value" className="chart-legend-value">
+                  {item.value}
+                </span>
+              ) : null}
+            </li>
+          )}
+        </For>
       </ul>
     </aside>
   );

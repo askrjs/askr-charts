@@ -12,6 +12,8 @@ export { ChartShell } from "./chart-shell";
 export type { ChartShellProps } from "./chart-shell";
 export { DonutChart } from "./donut-chart";
 export type { DonutChartProps } from "./donut-chart";
+export { FlameGraph } from "./flame-graph";
+export type { FlameGraphDatum, FlameGraphProps } from "./flame-graph";
 export { Heatmap } from "./heatmap";
 export type { HeatmapProps } from "./heatmap";
 export { ProgressMeter } from "./progress-meter";

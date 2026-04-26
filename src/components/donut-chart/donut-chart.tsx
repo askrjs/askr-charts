@@ -1,14 +1,18 @@
+import { For } from "@askrjs/askr";
 import { buildDonutStops, getValueChartTotal, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
+  resolveChartAnimation,
   resolveValueFormatter,
 } from "../_internal/chart-helpers";
 import type { DonutChartProps } from "./donut-chart.types";
 
 export function DonutChart({
+  animate,
+  animation,
   className,
   data,
   id,
@@ -19,6 +23,9 @@ export function DonutChart({
   valueFormatter,
   ...rest
 }: DonutChartProps) {
+  const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
+    type: "sweep",
+  });
   const normalized = normalizeValueChartData(data, {
     max: getValueChartTotal(data) || 1,
     valueFormatter: resolveValueFormatter(valueFormatter),
@@ -32,9 +39,13 @@ export function DonutChart({
     <section
       {...rest}
       id={id}
+      {...animationAttrs}
       data-slot="donut-chart"
       className={cx("ak-chart", "ak-donut-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-donut-stops": donutStops }, style)}
+      style={mergeChartStyles(
+        { "--ak-chart-donut-stops": donutStops, ...animationStyle },
+        style,
+      )}
     >
       <div
         data-slot="chart-graphic"
@@ -43,7 +54,13 @@ export function DonutChart({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
-        <div data-slot="donut-chart-ring" className="ak-donut-chart-ring" aria-hidden="true" />
+        <div
+          data-ak-chart-item="true"
+          data-slot="donut-chart-ring"
+          className="ak-donut-chart-ring"
+          style={mergeChartStyles({ "--ak-chart-item-index": 0 })}
+          aria-hidden="true"
+        />
         <div data-slot="donut-chart-center" className="ak-donut-chart-center">
           <span data-slot="donut-chart-total-label" className="ak-donut-chart-total-label">
             {totalLabel}
@@ -60,28 +77,31 @@ export function DonutChart({
       </div>
 
       <ol data-slot="donut-chart-list" className="ak-donut-chart-list">
-        {normalized.data.map((datum, index) => (
-          <li
-            key={`${datum.label}-${index}`}
-            data-slot="donut-chart-item"
-            className="ak-donut-chart-item"
-            style={mergeChartStyles({
-              "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`,
-            })}
-          >
-            <span
-              data-slot="donut-chart-swatch"
-              className="ak-donut-chart-swatch"
-              aria-hidden="true"
-            />
-            <span data-slot="donut-chart-label" className="ak-donut-chart-label">
-              {datum.label}
-            </span>
-            <span data-slot="donut-chart-value" className="ak-donut-chart-value">
-              {datum.formattedValue}
-            </span>
-          </li>
-        ))}
+        <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+          {(datum, index) => (
+            <li
+              data-ak-chart-item="true"
+              data-slot="donut-chart-item"
+              className="ak-donut-chart-item"
+              style={mergeChartStyles({
+                "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                "--ak-chart-item-index": index(),
+              })}
+            >
+              <span
+                data-slot="donut-chart-swatch"
+                className="ak-donut-chart-swatch"
+                aria-hidden="true"
+              />
+              <span data-slot="donut-chart-label" className="ak-donut-chart-label">
+                {datum.label}
+              </span>
+              <span data-slot="donut-chart-value" className="ak-donut-chart-value">
+                {datum.formattedValue}
+              </span>
+            </li>
+          )}
+        </For>
       </ol>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
@@ -98,13 +118,15 @@ export function DonutChart({
           </tr>
         </thead>
         <tbody>
-          {normalized.data.map((datum, index) => (
-            <tr key={`${datum.label}-${index}`}>
-              <th scope="row">{datum.label}</th>
-              <td>{datum.formattedValue}</td>
-              <td>{datum.description ?? ""}</td>
-            </tr>
-          ))}
+          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+            {(datum) => (
+              <tr>
+                <th scope="row">{datum.label}</th>
+                <td>{datum.formattedValue}</td>
+                <td>{datum.description ?? ""}</td>
+              </tr>
+            )}
+          </For>
         </tbody>
       </table>
     </section>

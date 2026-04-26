@@ -47,6 +47,7 @@
     },
     "./default/bar-chart.css": "./src/charts/default/styles/display/bar-chart.css",
     "./default/donut-chart.css": "./src/charts/default/styles/display/donut-chart.css",
+    "./default/flame-graph.css": "./src/charts/default/styles/display/flame-graph.css",
     "./default/heatmap.css": "./src/charts/default/styles/display/heatmap.css",
     "./default/progress-meter.css": "./src/charts/default/styles/display/progress-meter.css",
     "./default/sparkline.css": "./src/charts/default/styles/display/sparkline.css",
