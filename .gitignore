@@ -61,6 +61,7 @@ Thumbs.db
 playwright-report/
 test-results/
 .vitest-attachments/
+tests/__screenshots__/
 
 # Vite logs
 vite.config.js.timestamp-*
