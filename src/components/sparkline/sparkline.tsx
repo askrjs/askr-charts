@@ -17,6 +17,7 @@ export function Sparkline({
   data,
   id,
   label,
+  min,
   max,
   style,
   summary,
@@ -27,6 +28,7 @@ export function Sparkline({
     type: "fade",
   });
   const normalized = normalizeValueChartData(data, {
+    min,
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
@@ -54,12 +56,16 @@ export function Sparkline({
             {(datum, index) => (
               <li
                 data-ak-chart-item="true"
+                data-ak-chart-tooltip-trigger="true"
                 data-slot="sparkline-item"
                 className="ak-sparkline-item"
+                tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-color":
+                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
                   "--ak-chart-item-index": index(),
-                  "--ak-chart-item-value": `${Math.max(8, datum.fraction * 100)}%`,
+                  "--ak-chart-item-min-block-size": datum.value > 0 ? "0.5rem" : 0,
+                  "--ak-chart-item-value": `${datum.fraction * 100}%`,
                 })}
                 aria-label={`${datum.label}: ${datum.formattedValue}`}
               >
@@ -67,6 +73,15 @@ export function Sparkline({
                 <span data-slot="sparkline-dot" className="ak-sparkline-dot" />
                 <span className="ak-chart-sr-only">
                   {datum.label}: {datum.formattedValue}
+                </span>
+                <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                  <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                    {datum.label}
+                  </span>
+                  <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                    {datum.formattedValue}
+                  </span>
+                  {datum.description ? <span>{datum.description}</span> : null}
                 </span>
               </li>
             )}

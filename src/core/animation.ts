@@ -93,9 +93,7 @@ export function getAnimationStyle(animation: NormalizedChartAnimation): Record<s
   };
 }
 
-export function getAnimationDataAttrs(
-  animation: NormalizedChartAnimation,
-): Record<string, string> {
+export function getAnimationDataAttrs(animation: NormalizedChartAnimation): Record<string, string> {
   return {
     "data-ak-animate": String(animation.enabled),
     "data-ak-animation": animation.enabled ? animation.type : "none",

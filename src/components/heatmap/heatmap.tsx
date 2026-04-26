@@ -17,6 +17,7 @@ export function Heatmap({
   data,
   id,
   label,
+  min,
   max,
   style,
   summary,
@@ -27,6 +28,7 @@ export function Heatmap({
     type: "fade",
   });
   const normalized = normalizeHeatmapData(data, {
+    min,
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
@@ -69,21 +71,37 @@ export function Heatmap({
                 </span>
                 <For each={normalized.columns} by={(column) => `${row}-${column}`}>
                   {(column, columnIndex) => {
-                    const cell = normalized.cells.find((entry) => entry.x === column && entry.y === row);
+                    const cell = normalized.cells.find(
+                      (entry) => entry.x === column && entry.y === row,
+                    );
                     const cellLabel = `${row}, ${column}`;
                     return (
                       <span
                         data-ak-chart-item="true"
+                        data-ak-chart-tooltip-trigger="true"
                         data-slot="heatmap-cell"
                         className="ak-heatmap-cell"
-                        aria-label={cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
+                        aria-label={
+                          cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`
+                        }
+                        tabIndex={0}
                         style={mergeChartStyles({
                           "--ak-chart-cell-bg": cell?.background ?? "var(--ak-chart-color-muted)",
-                          "--ak-chart-item-index": rowIndex() * normalized.columns.length + columnIndex(),
+                          "--ak-chart-item-index":
+                            rowIndex() * normalized.columns.length + columnIndex(),
                         })}
                       >
                         <span className="ak-chart-sr-only">
                           {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
+                        </span>
+                        <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                          <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                            {cellLabel}
+                          </span>
+                          <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                            {cell ? cell.formattedValue : "0"}
+                          </span>
+                          {cell?.description ? <span>{cell.description}</span> : null}
                         </span>
                       </span>
                     );

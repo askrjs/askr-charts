@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { cleanupApp, createIsland } from "@askrjs/askr";
 
-import { BarChart, FlameGraph, Heatmap, ProgressMeter } from "../src/components";
+import { BarChart, DonutChart, FlameGraph, Heatmap, ProgressMeter, Timeline } from "../src/components";
 
 function mount(element: JSX.Element): HTMLElement {
   const container = document.createElement("div");
@@ -56,9 +56,9 @@ describe("browser chart rendering", () => {
 
     expect(graphic?.getAttribute("aria-label")).toBe("Monthly revenue");
     expect(items).toHaveLength(2);
-    expect(container.querySelector('[data-slot="bar-chart"]')?.getAttribute("data-ak-animation")).toBe(
-      "grow",
-    );
+    expect(
+      container.querySelector('[data-slot="bar-chart"]')?.getAttribute("data-ak-animation"),
+    ).toBe("grow");
     expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-value:100%");
     expect(items[1]?.getAttribute("style")).toContain("--ak-chart-item-value:62.5%");
     expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-index:0");
@@ -152,5 +152,125 @@ describe("browser chart rendering", () => {
     expect(meter?.getAttribute("aria-valuetext")).toBe("60%");
     expect(fill?.getAttribute("style")).toContain("--ak-chart-item-index:0");
     expect(description?.textContent).toBe("Current quarter attainment");
+  });
+
+  it("should keep zero values at zero width in live rendering", async () => {
+    container = mount(<BarChart label="Zero revenue" data={[{ label: "Jan", value: 0 }]} />);
+    await flushUpdates();
+
+    const item = container.querySelector('[data-slot="bar-chart-item"]');
+
+    expect(item?.getAttribute("style")).toContain("--ak-chart-item-value:0%");
+    expect(item?.getAttribute("style")).toContain("--ak-chart-item-min-size:0");
+  });
+
+  it("should normalize tuple data and explicit minimums in live bar rendering", async () => {
+    container = mount(
+      <BarChart
+        label="Monthly revenue"
+        labelDensity="minimal"
+        min={20}
+        max={40}
+        data={[
+          ["Jan", 20],
+          ["Feb", 40],
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const root = container.querySelector('[data-slot="bar-chart"]');
+    const items = [...container.querySelectorAll('[data-slot="bar-chart-item"]')];
+
+    expect(root?.getAttribute("data-ak-label-density")).toBe("minimal");
+    expect(items).toHaveLength(2);
+    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-value:0%");
+    expect(items[1]?.getAttribute("style")).toContain("--ak-chart-item-value:100%");
+  });
+
+  it("should render CSS-only tooltip content on chart items", async () => {
+    container = mount(
+      <BarChart
+        label="Monthly revenue"
+        data={[{ label: "Jan", value: 40, description: "First month" }]}
+      />,
+    );
+    await flushUpdates();
+
+    const item = container.querySelector('[data-slot="bar-chart-item"]');
+    const tooltip = container.querySelector('[data-slot="chart-tooltip"]');
+    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
+    const tooltipValue = container.querySelector('[data-slot="chart-tooltip-value"]');
+
+    expect(item?.getAttribute("tabindex")).toBe("0");
+    expect(tooltip).toBeTruthy();
+    expect(tooltipTitle?.textContent).toBe("Jan");
+    expect(tooltipValue?.textContent).toBe("40");
+  });
+
+  it("should render donut charts with live totals and tooltip-ready segments", async () => {
+    container = mount(
+      <DonutChart
+        label="Traffic split"
+        labelDensity="compact"
+        animate
+        data={[
+          ["Direct", 44, "tomato", "Owned traffic"],
+          ["Referral", 21],
+          ["Social", 35],
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const root = container.querySelector('[data-slot="donut-chart"]');
+    const ring = container.querySelector('[data-slot="donut-chart-ring"]');
+    const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
+    const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
+    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
+
+    expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
+    expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
+    expect(root?.getAttribute("style")).toContain("--ak-chart-donut-stops:");
+    expect(ring?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(items).toHaveLength(3);
+    expect(items[0]?.getAttribute("tabindex")).toBe("0");
+    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-color:tomato");
+    expect(totalValue?.textContent).toBe("100");
+    expect(tooltipTitle?.textContent).toBe("Direct");
+  });
+
+  it("should render timelines with slide animation and tooltip-ready milestones", async () => {
+    container = mount(
+      <Timeline
+        label="Release timeline"
+        labelDensity="compact"
+        animate
+        data={[
+          { label: "Alpha", value: "Jan", description: "Internal preview", accentColor: "gold" },
+          { label: "Beta", value: "Feb", description: "Team rollout" },
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const root = container.querySelector('[data-slot="timeline"]');
+    const items = [...container.querySelectorAll('[data-slot="timeline-item"]')];
+    const firstMarker = container.querySelector('[data-slot="timeline-marker"]');
+    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
+    const tooltipValue = container.querySelector('[data-slot="chart-tooltip-value"]');
+
+    expect(root?.getAttribute("data-ak-animation")).toBe("slide");
+    expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
+    expect(items).toHaveLength(2);
+    expect(items[0]?.getAttribute("tabindex")).toBe("0");
+    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-color:gold");
+    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(firstMarker).toBeTruthy();
+    expect(tooltipTitle?.textContent).toBe("Alpha");
+    expect(tooltipValue?.textContent).toBe("Jan");
+    expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
+      "Release timeline",
+    );
   });
 });

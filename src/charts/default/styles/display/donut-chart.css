@@ -63,3 +63,15 @@
   font-family: var(--ak-chart-font-family-mono);
   color: var(--ak-chart-color-text-muted);
 }
+
+:where(.ak-donut-chart, [data-slot="donut-chart"])[data-ak-label-density="compact"]
+  :where(.ak-donut-chart-value, [data-slot="donut-chart-value"]),
+:where(.ak-donut-chart, [data-slot="donut-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-donut-chart-value, [data-slot="donut-chart-value"]) {
+  display: none;
+}
+
+:where(.ak-donut-chart, [data-slot="donut-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-donut-chart-total-label, [data-slot="donut-chart-total-label"]) {
+  display: none;
+}

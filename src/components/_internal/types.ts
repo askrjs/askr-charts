@@ -13,5 +13,6 @@ export interface ChartVisualBaseProps {
   style?: string | Record<string, string | number | undefined>;
   animate?: boolean;
   animation?: ChartAnimation;
+  labelDensity?: "full" | "compact" | "minimal";
   [key: string]: unknown;
 }

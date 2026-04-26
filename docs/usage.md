@@ -11,6 +11,7 @@ import {
   StackedBarChart,
   Timeline,
 } from "@askrjs/askr-charts/components";
+import { createHeatmapLegendItems, createValueChartLegendItems } from "@askrjs/askr-charts/core";
 import "@askrjs/askr-charts/default";
 
 export function AnalyticsPreview() {
@@ -107,6 +108,65 @@ export function AnalyticsPreview() {
     </div>
   );
 }
+```
+
+## Data Shapes And Scale Controls
+
+`BarChart`, `DonutChart`, `Sparkline`, and `Heatmap` accept either object data or tuple data.
+
+```tsx
+<BarChart
+  label="Monthly revenue"
+  data={[
+    ["Jan", 20],
+    ["Feb", 40],
+  ]}
+  min={20}
+  max={40}
+  labelDensity="compact"
+/>
+
+<Heatmap
+  label="Weekly activity"
+  data={[
+    ["Mon", "Week 1", 2],
+    ["Tue", "Week 1", 8],
+  ]}
+  min={2}
+  max={8}
+/>
+```
+
+Values that are `null`, `undefined`, negative, or non-finite normalize to `0`.
+
+`labelDensity` is available on visual charts and currently supports:
+
+- `full`
+- `compact`
+- `minimal`
+
+Charts keep their accessible summary and fallback table regardless of the visible label density.
+
+## Legends And Tooltips
+
+Chart items now emit CSS-only hover and focus tooltips through the shared `chart-tooltip` slots.
+No client-side measurement or mount-time JavaScript is required.
+
+Legend items can be generated directly from normalized chart data:
+
+```tsx
+const revenueLegend = createValueChartLegendItems([
+  ["Direct", 30],
+  ["Referral", 70, "tomato"],
+]);
+
+const activityLegend = createHeatmapLegendItems(
+  [
+    ["Mon", "Week 1", 2],
+    ["Tue", "Week 1", 8],
+  ],
+  { min: 2, max: 8, steps: 3 },
+);
 ```
 
 ## Animation API

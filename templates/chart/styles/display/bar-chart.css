@@ -38,3 +38,15 @@
   font-family: var(--ak-chart-font-family-mono);
   color: var(--ak-chart-color-text-muted);
 }
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="compact"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]),
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  display: none;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
+  display: none;
+}

@@ -1,9 +1,10 @@
-import type { ChartValueFormatter, HeatmapDatum } from "../../core";
+import type { ChartValueFormatter, HeatmapDatumInput } from "../../core";
 import type { ChartVisualBaseProps } from "../_internal/types";
 
 export interface HeatmapProps extends ChartVisualBaseProps {
-  data: readonly HeatmapDatum[];
+  data: readonly HeatmapDatumInput[];
   label: string;
+  min?: number;
   summary?: string;
   max?: number;
   valueFormatter?: ChartValueFormatter;

@@ -42,7 +42,8 @@ export function ProgressMeter({
       className={cx("ak-chart", "ak-progress-meter", className)}
       style={mergeChartStyles(
         {
-          "--ak-chart-item-value": `${Math.max(2, percentage)}%`,
+          "--ak-chart-item-min-size": normalizedValue > 0 ? "0.5rem" : 0,
+          "--ak-chart-item-value": `${percentage}%`,
           ...animationStyle,
         },
         style,

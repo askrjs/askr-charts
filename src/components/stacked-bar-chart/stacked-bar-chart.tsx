@@ -71,10 +71,7 @@ export function StackedBarChart({
             {(datum, rowIndex) => {
               const total = totals[rowIndex()] ?? 0;
               return (
-                <li
-                  data-slot="stacked-bar-chart-item"
-                  className="ak-stacked-bar-chart-item"
-                >
+                <li data-slot="stacked-bar-chart-item" className="ak-stacked-bar-chart-item">
                   <span data-slot="stacked-bar-chart-label" className="ak-stacked-bar-chart-label">
                     {datum.label}
                   </span>
@@ -86,16 +83,31 @@ export function StackedBarChart({
                       {(segment, segmentIndex) => (
                         <span
                           data-ak-chart-item="true"
+                          data-ak-chart-tooltip-trigger="true"
                           data-slot="stacked-bar-chart-segment"
                           className="ak-stacked-bar-chart-segment"
                           aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
+                          tabIndex={0}
                           style={mergeChartStyles({
                             "--ak-chart-item-color":
                               segment.color ?? `var(--ak-chart-series-${(segmentIndex() % 6) + 1})`,
                             "--ak-chart-item-index": segmentIndex(),
-                            "--ak-chart-item-value": `${total > 0 ? Math.max(2, (clampChartValue(segment.value) / total) * 100) : 0}%`,
+                            "--ak-chart-item-min-size": segment.value > 0 ? "0.25rem" : 0,
+                            "--ak-chart-item-value": `${total > 0 ? (clampChartValue(segment.value) / total) * 100 : 0}%`,
                           })}
-                        />
+                        >
+                          <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                            <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                              {datum.label}: {segment.label}
+                            </span>
+                            <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                              {formatChartValue(segment.value, formatter)}
+                            </span>
+                            {(segment.description ?? datum.description) ? (
+                              <span>{segment.description ?? datum.description}</span>
+                            ) : null}
+                          </span>
+                        </span>
                       )}
                     </For>
                   </span>

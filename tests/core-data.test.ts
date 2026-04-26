@@ -5,6 +5,9 @@ import {
   buildHeatmapSummary,
   buildValueChartSummary,
   clampChartValue,
+  createHeatmapLegendItems,
+  createValueChartLegendItems,
+  getValueChartMin,
   getValueChartMax,
   normalizeHeatmapData,
   normalizeValueChartData,
@@ -25,9 +28,24 @@ describe("core data contract", () => {
     ]);
 
     expect(normalized.max).toBe(50);
+    expect(normalized.min).toBe(0);
     expect(normalized.data[0]?.fraction).toBe(1);
     expect(normalized.data[1]?.value).toBe(0);
     expect(normalized.data[1]?.fraction).toBe(0);
+  });
+
+  it("should accept tuple inputs and explicit minimums for value charts", () => {
+    const normalized = normalizeValueChartData(
+      [
+        ["Jan", 20],
+        ["Feb", 40],
+      ],
+      { min: 20, max: 40 },
+    );
+
+    expect(normalized.min).toBe(20);
+    expect(normalized.data[0]?.fraction).toBe(0);
+    expect(normalized.data[1]?.fraction).toBe(1);
   });
 
   it("should build donut stops from normalized segments", () => {
@@ -50,7 +68,22 @@ describe("core data contract", () => {
 
     expect(normalized.columns).toEqual(["Mon", "Tue"]);
     expect(normalized.rows).toEqual(["Week 1", "Week 2"]);
+    expect(normalized.min).toBe(0);
     expect(normalized.cells[0]?.background).toContain("color-mix");
+  });
+
+  it("should accept tuple inputs and explicit minimums for heatmaps", () => {
+    const normalized = normalizeHeatmapData(
+      [
+        ["Mon", "Week 1", 2],
+        ["Tue", "Week 1", 8],
+      ],
+      { min: 2, max: 8 },
+    );
+
+    expect(normalized.min).toBe(2);
+    expect(normalized.cells[0]?.fraction).toBe(0);
+    expect(normalized.cells[1]?.fraction).toBe(1);
   });
 
   it("should build summaries that stay readable in plain text", () => {
@@ -72,8 +105,36 @@ describe("core data contract", () => {
   });
 
   it("should keep scale helpers predictable", () => {
+    expect(getValueChartMin([{ label: "A", value: 5 }], 2)).toBe(2);
     expect(getValueChartMax([{ label: "A", value: 5 }], 12)).toBe(12);
     expect(toChartFraction(25, 100)).toBe(0.25);
+    expect(toChartFraction(25, 100, 20)).toBe(0.0625);
     expect(toChartFraction(25, 0)).toBe(0);
+  });
+
+  it("should derive chart legend items from value chart data", () => {
+    const items = createValueChartLegendItems([
+      { label: "Direct", value: 30 },
+      { label: "Referral", value: 70, color: "tomato" },
+    ]);
+
+    expect(items).toEqual([
+      { label: "Direct", value: "30", color: "var(--ak-chart-series-1)" },
+      { label: "Referral", value: "70", color: "tomato" },
+    ]);
+  });
+
+  it("should derive heatmap legend ranges from heatmap data", () => {
+    const items = createHeatmapLegendItems(
+      [
+        { x: "Mon", y: "Week 1", value: 2 },
+        { x: "Tue", y: "Week 1", value: 8 },
+      ],
+      { steps: 3 },
+    );
+
+    expect(items).toHaveLength(3);
+    expect(items[0]?.label).toBe("0-2.667");
+    expect(items[2]?.color).toContain("color-mix");
   });
 });

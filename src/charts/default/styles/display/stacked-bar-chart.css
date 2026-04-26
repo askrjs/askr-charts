@@ -32,7 +32,7 @@
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]) {
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
-  min-inline-size: 0.25rem;
+  min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: 0.875rem;
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
 }

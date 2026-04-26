@@ -33,10 +33,18 @@
   overflow: hidden;
   border-radius: 0.75rem;
   border: 1px solid
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 40%, var(--ak-chart-color-border));
+    color-mix(
+      in srgb,
+      var(--ak-chart-item-color, var(--ak-chart-color-primary)) 40%,
+      var(--ak-chart-color-border)
+    );
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%, var(--ak-chart-color-surface));
+    color-mix(
+      in srgb,
+      var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%,
+      var(--ak-chart-color-surface)
+    );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
@@ -54,4 +62,11 @@
   color: var(--ak-chart-color-text-muted);
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+:where(.ak-flame-graph, [data-slot="flame-graph"])[data-ak-label-density="compact"]
+  :where(.ak-flame-graph-value, [data-slot="flame-graph-value"]),
+:where(.ak-flame-graph, [data-slot="flame-graph"])[data-ak-label-density="minimal"]
+  :where(.ak-flame-graph-value, [data-slot="flame-graph-value"]) {
+  display: none;
 }
