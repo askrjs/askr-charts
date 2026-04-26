@@ -1,0 +1,41 @@
+:where(.ak-progress-meter, [data-slot="progress-meter"]) {
+  gap: 0.5rem;
+}
+
+:where(.ak-progress-meter-header, [data-slot="progress-meter-header"]) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+:where(.ak-progress-meter-label, [data-slot="progress-meter-label"]) {
+  font-weight: 600;
+}
+
+:where(.ak-progress-meter-value, [data-slot="progress-meter-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}
+
+:where(.ak-progress-meter-track, [data-slot="progress-meter-track"]) {
+  position: relative;
+  min-height: 0.875rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ak-chart-color-muted);
+}
+
+:where(.ak-progress-meter-fill, [data-slot="progress-meter-fill"]) {
+  display: block;
+  inline-size: var(--ak-chart-item-value, 0%);
+  min-inline-size: 0.5rem;
+  min-block-size: 0.875rem;
+  border-radius: inherit;
+  background: var(--ak-chart-color-primary);
+}
+
+:where(.ak-progress-meter-description, [data-slot="progress-meter-description"]) {
+  margin: 0;
+  color: var(--ak-chart-color-text-muted);
+}

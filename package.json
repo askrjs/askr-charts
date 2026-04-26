@@ -1,0 +1,99 @@
+{
+  "name": "@askrjs/askr-charts",
+  "version": "0.0.1",
+  "description": "Chart tokens, styles, and layout shells for Askr apps.",
+  "keywords": [
+    "askr",
+    "charts",
+    "css",
+    "design-tokens",
+    "vite-plus"
+  ],
+  "homepage": "https://github.com/askrjs/askr-charts#readme",
+  "bugs": {
+    "url": "https://github.com/askrjs/askr-charts/issues"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "askrjs",
+    "url": "https://github.com/askrjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/askrjs/askr-charts.git"
+  },
+  "files": [
+    "dist",
+    "src",
+    "templates",
+    "scripts/new-chart.js",
+    "CHARTING.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./src/index.css",
+    "./default": "./src/charts/default/index.css",
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./default/bar-chart.css": "./src/charts/default/styles/display/bar-chart.css",
+    "./default/donut-chart.css": "./src/charts/default/styles/display/donut-chart.css",
+    "./default/heatmap.css": "./src/charts/default/styles/display/heatmap.css",
+    "./default/progress-meter.css": "./src/charts/default/styles/display/progress-meter.css",
+    "./default/sparkline.css": "./src/charts/default/styles/display/sparkline.css",
+    "./default/stacked-bar-chart.css": "./src/charts/default/styles/display/stacked-bar-chart.css",
+    "./default/timeline.css": "./src/charts/default/styles/display/timeline.css",
+    "./default/tokens.css": "./src/charts/default/tokens.css",
+    "./default/typography.css": "./src/charts/default/styles/base/typography.css",
+    "./default/utilities.css": "./src/charts/default/styles/base/utilities.css",
+    "./default/layout.css": "./src/charts/default/styles/layout/layout.css",
+    "./default/responsive-layout.css": "./src/charts/default/styles/layout/responsive-layout.css",
+    "./default/chart.css": "./src/charts/default/styles/display/chart.css",
+    "./default/legend.css": "./src/charts/default/styles/display/legend.css",
+    "./default/series.css": "./src/charts/default/styles/data/series.css",
+    "./default/tooltip.css": "./src/charts/default/styles/overlays/tooltip.css",
+    "./templates/*": "./templates/*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "new:chart": "node ./scripts/new-chart.js",
+    "verify:token-contract": "node ./scripts/verify-token-contract.js",
+    "verify:responsive": "node ./scripts/verify-responsive-chart.js",
+    "verify:slots": "node ./scripts/verify-slot-coverage.js",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "vp test run -c vitest.config.ts",
+    "test:browser": "vp test run -c vitest.browser.config.ts",
+    "fmt": "vp fmt .",
+    "lint": "vp fmt --check .",
+    "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
+    "build": "vp build && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots"
+  },
+  "devDependencies": {
+    "@askrjs/askr": "file:../askr",
+    "@askrjs/askr-ui": "file:../askr-ui",
+    "@askrjs/askr-vite": "file:../askr-vite",
+    "@types/node": "^25.6.0",
+    "jsdom": "^29.0.2",
+    "playwright": "^1.59.1",
+    "typescript": "^6.0.3",
+    "vite-plus": "^0.1.19"
+  },
+  "peerDependencies": {
+    "@askrjs/askr": "0.0.1",
+    "@askrjs/askr-ui": "0.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

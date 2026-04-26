@@ -1,0 +1,36 @@
+:where(.chart-shell, [data-slot="chart-shell"]),
+:where(.chart-panel, [data-slot="chart-panel"]),
+:where(.chart-legend, [data-slot="chart-legend"]),
+:where(.chart-empty-state, [data-slot="chart-empty-state"]),
+:where(.ak-chart, [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="heatmap"]) {
+  font-family: var(--ak-chart-font-family);
+  color: var(--ak-chart-color-text);
+  font-size: var(--ak-chart-font-size);
+}
+
+:where(.chart-shell-title, [data-slot="chart-shell-title"]),
+:where(.chart-panel-title, [data-slot="chart-panel-title"]),
+:where(.chart-legend-title, [data-slot="chart-legend-title"]),
+:where(.chart-empty-state-title, [data-slot="chart-empty-state-title"]) {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+:where(.chart-shell-description, [data-slot="chart-shell-description"]),
+:where(.chart-panel-description, [data-slot="chart-panel-description"]),
+:where(.chart-empty-state-description, [data-slot="chart-empty-state-description"]) {
+  margin: 0;
+  color: var(--ak-chart-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+:where(.ak-chart-summary, [data-slot="chart-summary"]) {
+  margin: 0;
+  color: var(--ak-chart-color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}

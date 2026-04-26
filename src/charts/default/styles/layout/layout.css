@@ -1,0 +1,36 @@
+:where(.chart-shell, [data-slot="chart-shell"]) {
+  display: grid;
+  gap: var(--ak-chart-gap);
+  padding: var(--ak-chart-padding);
+  background: var(--ak-chart-color-surface);
+  border: 1px solid var(--ak-chart-color-border);
+  border-radius: var(--ak-chart-radius);
+  box-shadow: var(--ak-chart-shadow);
+}
+
+:where(.chart-shell-header, [data-slot="chart-shell-header"]),
+:where(.chart-panel-header, [data-slot="chart-panel-header"]),
+:where(.chart-empty-state-content, [data-slot="chart-empty-state-content"]) {
+  display: grid;
+  gap: 0.35rem;
+}
+
+:where(.chart-shell-content, [data-slot="chart-shell-content"]),
+:where(.chart-panel-body, [data-slot="chart-panel-body"]) {
+  display: grid;
+  gap: var(--ak-chart-gap);
+}
+
+:where(.chart-panel, [data-slot="chart-panel"]) {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  background: var(--ak-chart-surface-elevated);
+  border: 1px solid var(--ak-chart-color-border);
+  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+}
+
+:where(.ak-chart, [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="heatmap"]) {
+  display: grid;
+  gap: 0.875rem;
+}

@@ -1,0 +1,21 @@
+:where(.chart-tooltip, [data-slot="chart-tooltip"]) {
+  position: absolute;
+  inset: auto auto 0 0;
+  pointer-events: none;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  background: var(--ak-chart-tooltip-bg);
+  color: var(--ak-chart-tooltip-fg);
+  box-shadow: var(--ak-chart-shadow);
+}
+
+:where(.chart-tooltip-title, [data-slot="chart-tooltip-title"]) {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+:where(.chart-tooltip-value, [data-slot="chart-tooltip-value"]) {
+  font-size: 0.9375rem;
+}

@@ -1,0 +1,42 @@
+:where(.chart-legend, [data-slot="chart-legend"]) {
+  display: grid;
+  gap: 0.75rem;
+}
+
+:where(.chart-legend-list, [data-slot="chart-legend-list"]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+:where(.chart-legend-item, [data-slot="chart-legend-item"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--ak-chart-color-border);
+  border-radius: 999px;
+  background: var(--ak-chart-color-surface);
+}
+
+:where(.chart-legend-swatch, [data-slot="chart-legend-swatch"]) {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  flex: none;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+:where(.chart-legend-label, [data-slot="chart-legend-label"]) {
+  font-size: 0.875rem;
+}
+
+:where(.chart-legend-value, [data-slot="chart-legend-value"]) {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: var(--ak-chart-color-text-muted);
+}
