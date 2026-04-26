@@ -17,6 +17,8 @@ export function BarChart({
   data,
   id,
   label,
+  labelDensity = "full",
+  min,
   max,
   style,
   summary,
@@ -27,6 +29,7 @@ export function BarChart({
     type: "grow",
   });
   const normalized = normalizeValueChartData(data, {
+    min,
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
@@ -38,6 +41,7 @@ export function BarChart({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="bar-chart"
       className={cx("ak-chart", "ak-bar-chart", className)}
       style={mergeChartStyles(
@@ -59,12 +63,16 @@ export function BarChart({
           <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
               <li
+                data-ak-chart-tooltip-trigger="true"
                 data-slot="bar-chart-item"
                 className="ak-bar-chart-item"
+                tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-color":
+                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
                   "--ak-chart-item-index": index(),
-                  "--ak-chart-item-value": `${Math.max(4, datum.fraction * 100)}%`,
+                  "--ak-chart-item-min-size": datum.value > 0 ? "0.5rem" : 0,
+                  "--ak-chart-item-value": `${datum.fraction * 100}%`,
                 })}
               >
                 <span data-slot="bar-chart-label" className="ak-bar-chart-label">
@@ -79,6 +87,15 @@ export function BarChart({
                 </span>
                 <span data-slot="bar-chart-value" className="ak-bar-chart-value">
                   {datum.formattedValue}
+                </span>
+                <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                  <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                    {datum.label}
+                  </span>
+                  <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                    {datum.formattedValue}
+                  </span>
+                  {datum.description ? <span>{datum.description}</span> : null}
                 </span>
               </li>
             )}

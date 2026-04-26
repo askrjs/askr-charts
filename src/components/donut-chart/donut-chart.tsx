@@ -17,6 +17,7 @@ export function DonutChart({
   data,
   id,
   label,
+  labelDensity = "full",
   style,
   summary,
   totalLabel = "Total",
@@ -40,12 +41,10 @@ export function DonutChart({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="donut-chart"
       className={cx("ak-chart", "ak-donut-chart", className)}
-      style={mergeChartStyles(
-        { "--ak-chart-donut-stops": donutStops, ...animationStyle },
-        style,
-      )}
+      style={mergeChartStyles({ "--ak-chart-donut-stops": donutStops, ...animationStyle }, style)}
     >
       <div
         data-slot="chart-graphic"
@@ -81,10 +80,13 @@ export function DonutChart({
           {(datum, index) => (
             <li
               data-ak-chart-item="true"
+              data-ak-chart-tooltip-trigger="true"
               data-slot="donut-chart-item"
               className="ak-donut-chart-item"
+              tabIndex={0}
               style={mergeChartStyles({
-                "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                "--ak-chart-item-color":
+                  datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
                 "--ak-chart-item-index": index(),
               })}
             >
@@ -98,6 +100,15 @@ export function DonutChart({
               </span>
               <span data-slot="donut-chart-value" className="ak-donut-chart-value">
                 {datum.formattedValue}
+              </span>
+              <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                  {datum.label}
+                </span>
+                <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                  {datum.formattedValue}
+                </span>
+                {datum.description ? <span>{datum.description}</span> : null}
               </span>
             </li>
           )}

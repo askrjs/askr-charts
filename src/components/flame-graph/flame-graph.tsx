@@ -120,6 +120,7 @@ export function FlameGraph({
   data,
   id,
   label,
+  labelDensity = "full",
   max,
   style,
   summary,
@@ -140,7 +141,10 @@ export function FlameGraph({
   const dominantFrame =
     flattened.length === 0
       ? undefined
-      : flattened.reduce((best, datum) => (datum.spanValue > best.spanValue ? datum : best), flattened[0]!);
+      : flattened.reduce(
+          (best, datum) => (datum.spanValue > best.spanValue ? datum : best),
+          flattened[0]!,
+        );
   const defaultSummary =
     flattened.length === 0
       ? `${label}. No flame graph frames available.`
@@ -151,6 +155,7 @@ export function FlameGraph({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="flame-graph"
       className={cx("ak-chart", "ak-flame-graph", className)}
       style={mergeChartStyles(
@@ -176,9 +181,11 @@ export function FlameGraph({
                   {(frame) => (
                     <li
                       data-ak-chart-item="true"
+                      data-ak-chart-tooltip-trigger="true"
                       data-slot="flame-graph-cell"
                       className="ak-flame-graph-cell"
                       aria-label={`${frame.path}: ${frame.formattedValue}`}
+                      tabIndex={0}
                       style={mergeChartStyles({
                         "--ak-chart-item-color":
                           frame.color ?? `var(--ak-chart-series-${(frame.depth % 6) + 1})`,
@@ -192,6 +199,15 @@ export function FlameGraph({
                       </span>
                       <span data-slot="flame-graph-value" className="ak-flame-graph-value">
                         {frame.formattedValue}
+                      </span>
+                      <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                        <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                          {frame.path}
+                        </span>
+                        <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                          {frame.formattedValue}
+                        </span>
+                        {frame.description ? <span>{frame.description}</span> : null}
                       </span>
                     </li>
                   )}

@@ -29,7 +29,7 @@
 :where(.ak-progress-meter-fill, [data-slot="progress-meter-fill"]) {
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
-  min-inline-size: 0.5rem;
+  min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: 0.875rem;
   border-radius: inherit;
   background: var(--ak-chart-color-primary);

@@ -75,17 +75,28 @@
   initial-value: 0deg;
 }
 
-@supports ((mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg)) or (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))) {
+@supports (
+  (mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg)) or
+    (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))
+) {
   :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
     :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
     --ak-chart-reveal-angle: 0deg;
     mask:
       radial-gradient(circle, transparent 0 56%, #000 57% 100%),
-      conic-gradient(from -90deg, #000 0deg var(--ak-chart-reveal-angle), transparent var(--ak-chart-reveal-angle) 360deg);
+      conic-gradient(
+        from -90deg,
+        #000 0deg var(--ak-chart-reveal-angle),
+        transparent var(--ak-chart-reveal-angle) 360deg
+      );
     mask-composite: intersect;
     -webkit-mask:
       radial-gradient(circle, transparent 0 56%, #000 57% 100%),
-      conic-gradient(from -90deg, #000 0deg var(--ak-chart-reveal-angle), transparent var(--ak-chart-reveal-angle) 360deg);
+      conic-gradient(
+        from -90deg,
+        #000 0deg var(--ak-chart-reveal-angle),
+        transparent var(--ak-chart-reveal-angle) 360deg
+      );
     -webkit-mask-composite: source-in;
     animation-name: ak-chart-donut-sweep;
   }

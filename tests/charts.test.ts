@@ -37,6 +37,36 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-item-index:0");
   });
 
+  it("accepts tuple chart data and explicit minimum scales", () => {
+    const bar = renderChart(() =>
+      BarChart({
+        label: "Monthly revenue",
+        data: [
+          ["Jan", 20],
+          ["Feb", 40],
+        ],
+        min: 20,
+        max: 40,
+      }),
+    );
+    const heatmap = renderChart(() =>
+      Heatmap({
+        label: "Activity heatmap",
+        data: [
+          ["Mon", "Week 1", 2],
+          ["Tue", "Week 1", 8],
+        ],
+        min: 2,
+        max: 8,
+      }),
+    );
+
+    expect(bar).toContain("--ak-chart-item-value:0%");
+    expect(bar).toContain("--ak-chart-item-value:100%");
+    expect(heatmap).toContain("Mon");
+    expect(heatmap).toContain("Tue");
+  });
+
   it("uses chart-specific default animation types when animate is enabled", () => {
     const donut = renderChart(() =>
       DonutChart({ label: "Traffic split", data: [{ label: "Direct", value: 50 }], animate: true }),
@@ -69,7 +99,7 @@ describe("chart components", () => {
     );
 
     expect(donut).toContain('data-ak-animation="sweep"');
-  expect(flameGraph).toContain('data-ak-animation="grow"');
+    expect(flameGraph).toContain('data-ak-animation="grow"');
     expect(heatmap).toContain('data-ak-animation="fade"');
     expect(progress).toContain('data-ak-animation="grow"');
     expect(sparkline).toContain('data-ak-animation="fade"');
@@ -144,7 +174,7 @@ describe("chart components", () => {
     expect(html).toContain('data-ak-animation="grow"');
     expect(html).toContain("--ak-chart-item-offset:0%");
     expect(html).toContain("--ak-chart-item-value:100%");
-    expect(html).toContain("data-slot=\"flame-graph-cell\"");
+    expect(html).toContain('data-slot="flame-graph-cell"');
   });
 
   it("renders a heatmap with CSS variable grid sizing", () => {
@@ -171,6 +201,41 @@ describe("chart components", () => {
 
     expect(chart.props["data-slot"]).toBe("progress-meter");
     expect(String(chart.props.style)).toContain("--ak-chart-item-value:60%");
+  });
+
+  it("renders zero values truthfully without forcing non-zero sizes", () => {
+    const bar = renderChart(() =>
+      BarChart({
+        label: "Zero revenue",
+        data: [{ label: "Jan", value: 0 }],
+      }),
+    );
+    const sparkline = renderChart(() =>
+      Sparkline({
+        label: "Zero trend",
+        data: [{ label: "Mon", value: 0 }],
+      }),
+    );
+    const stacked = renderChart(() =>
+      StackedBarChart({
+        label: "Zero pipeline",
+        data: [{ label: "Q1", segments: [{ label: "Open", value: 0 }] }],
+      }),
+    );
+    const progress = ProgressMeter({
+      label: "Zero quota",
+      value: 0,
+      max: 80,
+    }) as { props: Record<string, unknown> };
+
+    expect(bar).toContain("--ak-chart-item-value:0%");
+    expect(bar).toContain("--ak-chart-item-min-size:0");
+    expect(sparkline).toContain("--ak-chart-item-value:0%");
+    expect(sparkline).toContain("--ak-chart-item-min-block-size:0");
+    expect(stacked).toContain("--ak-chart-item-value:0%");
+    expect(stacked).toContain("--ak-chart-item-min-size:0");
+    expect(String(progress.props.style)).toContain("--ak-chart-item-value:0%");
+    expect(String(progress.props.style)).toContain("--ak-chart-item-min-size:0");
   });
 
   it("renders a sparkline with column layout points", () => {
@@ -218,5 +283,25 @@ describe("chart components", () => {
     );
 
     expect(html).toContain('data-slot="timeline"');
+  });
+
+  it("emits label density controls on visible-label charts", () => {
+    const bar = renderChart(() =>
+      BarChart({
+        label: "Monthly revenue",
+        data: [{ label: "Jan", value: 42 }],
+        labelDensity: "minimal",
+      }),
+    );
+    const timeline = renderChart(() =>
+      Timeline({
+        label: "Release timeline",
+        data: [{ label: "Alpha", value: "Jan", description: "Initial release" }],
+        labelDensity: "compact",
+      }),
+    );
+
+    expect(bar).toContain('data-ak-label-density="minimal"');
+    expect(timeline).toContain('data-ak-label-density="compact"');
   });
 });

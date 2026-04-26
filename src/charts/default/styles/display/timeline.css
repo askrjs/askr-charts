@@ -68,3 +68,15 @@
   margin: 0;
   color: var(--ak-chart-color-text-muted);
 }
+
+:where(.ak-timeline, [data-slot="timeline"])[data-ak-label-density="compact"]
+  :where(.ak-timeline-description, [data-slot="timeline-description"]),
+:where(.ak-timeline, [data-slot="timeline"])[data-ak-label-density="minimal"]
+  :where(.ak-timeline-description, [data-slot="timeline-description"]) {
+  display: none;
+}
+
+:where(.ak-timeline, [data-slot="timeline"])[data-ak-label-density="minimal"]
+  :where(.ak-timeline-value, [data-slot="timeline-value"]) {
+  display: none;
+}

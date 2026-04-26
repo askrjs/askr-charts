@@ -28,7 +28,7 @@
 :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
-  min-inline-size: 0.5rem;
+  min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: 0.875rem;
   border-radius: inherit;
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
@@ -37,4 +37,16 @@
 :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
   font-family: var(--ak-chart-font-family-mono);
   color: var(--ak-chart-color-text-muted);
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="compact"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]),
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  display: none;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
+  display: none;
 }

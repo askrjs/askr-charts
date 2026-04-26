@@ -33,7 +33,7 @@
   display: block;
   inline-size: 100%;
   block-size: var(--ak-chart-item-value, 0%);
-  min-block-size: 0.5rem;
+  min-block-size: var(--ak-chart-item-min-block-size, 0);
   border-radius: 999px 999px 0 0;
   background: color-mix(
     in srgb,

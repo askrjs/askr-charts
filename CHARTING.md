@@ -45,6 +45,14 @@ Included v1 components:
 Each chart renders semantic HTML, assigns dynamic values through CSS custom
 properties, and includes a text summary plus a screen-reader table fallback.
 
+Current data and labeling contract:
+
+- Value charts accept object or tuple inputs where applicable.
+- `BarChart`, `Sparkline`, and `Heatmap` accept explicit `min` and `max` scale bounds.
+- Visible-label charts accept `labelDensity="full" | "compact" | "minimal"`.
+- Data items may expose CSS-only tooltips through `data-slot="chart-tooltip"`.
+- `createValueChartLegendItems()` and `createHeatmapLegendItems()` generate legend data from source chart data.
+
 Animation contract:
 
 - Animation remains decorative and must not be required for chart correctness.

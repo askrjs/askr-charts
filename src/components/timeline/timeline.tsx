@@ -10,6 +10,7 @@ export function Timeline({
   data,
   id,
   label,
+  labelDensity = "full",
   style,
   summary,
   ...rest
@@ -30,6 +31,7 @@ export function Timeline({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="timeline"
       className={cx("ak-chart", "ak-timeline", className)}
       style={mergeChartStyles(animationStyle, style)}
@@ -46,14 +48,20 @@ export function Timeline({
             {(datum, index) => (
               <li
                 data-ak-chart-item="true"
+                data-ak-chart-tooltip-trigger="true"
                 data-slot="timeline-item"
                 className="ak-timeline-item"
+                tabIndex={0}
                 style={mergeChartStyles({
                   "--ak-chart-item-color": datum.accentColor,
                   "--ak-chart-item-index": index(),
                 })}
               >
-                <span data-slot="timeline-marker" className="ak-timeline-marker" aria-hidden="true" />
+                <span
+                  data-slot="timeline-marker"
+                  className="ak-timeline-marker"
+                  aria-hidden="true"
+                />
                 <div data-slot="timeline-content" className="ak-timeline-content">
                   <div data-slot="timeline-header" className="ak-timeline-header">
                     <span data-slot="timeline-label" className="ak-timeline-label">
@@ -71,6 +79,17 @@ export function Timeline({
                     </p>
                   ) : null}
                 </div>
+                <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
+                  <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                    {datum.label}
+                  </span>
+                  {datum.value ? (
+                    <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                      {datum.value}
+                    </span>
+                  ) : null}
+                  {datum.description ? <span>{datum.description}</span> : null}
+                </span>
               </li>
             )}
           </For>

@@ -30,12 +30,16 @@ describe("components entrypoint", () => {
     expect(ChartShell({ title: "Traffic", children: "canvas" })).toBeTruthy();
     expect(ChartPanel({ title: "Revenue", children: "chart" })).toBeTruthy();
     expect(ChartEmptyState({ title: "No data", description: "Add a dataset" })).toBeTruthy();
-    expect(renderToStringSync(() => BarChart({ label: "Monthly revenue", data: [{ label: "Jan", value: 42 }] }))).toContain(
-      'data-slot="bar-chart"',
-    );
-    expect(renderToStringSync(() => DonutChart({ label: "Traffic split", data: [{ label: "Direct", value: 64 }] }))).toContain(
-      'data-slot="donut-chart"',
-    );
+    expect(
+      renderToStringSync(() =>
+        BarChart({ label: "Monthly revenue", data: [{ label: "Jan", value: 42 }] }),
+      ),
+    ).toContain('data-slot="bar-chart"');
+    expect(
+      renderToStringSync(() =>
+        DonutChart({ label: "Traffic split", data: [{ label: "Direct", value: 64 }] }),
+      ),
+    ).toContain('data-slot="donut-chart"');
     expect(
       renderToStringSync(() =>
         FlameGraph({
@@ -44,13 +48,15 @@ describe("components entrypoint", () => {
         }),
       ),
     ).toContain('data-slot="flame-graph"');
-    expect(renderToStringSync(() => Heatmap({ label: "Weekly activity", data: [{ x: "Mon", y: "Week 1", value: 8 }] }))).toContain(
-      'data-slot="heatmap"',
-    );
+    expect(
+      renderToStringSync(() =>
+        Heatmap({ label: "Weekly activity", data: [{ x: "Mon", y: "Week 1", value: 8 }] }),
+      ),
+    ).toContain('data-slot="heatmap"');
     expect(ProgressMeter({ label: "Adoption", value: 72, max: 100 })).toBeTruthy();
-    expect(renderToStringSync(() => Sparkline({ label: "Trend", data: [{ label: "Mon", value: 8 }] }))).toContain(
-      'data-slot="sparkline"',
-    );
+    expect(
+      renderToStringSync(() => Sparkline({ label: "Trend", data: [{ label: "Mon", value: 8 }] })),
+    ).toContain('data-slot="sparkline"');
     expect(
       renderToStringSync(() =>
         StackedBarChart({
@@ -59,9 +65,11 @@ describe("components entrypoint", () => {
         }),
       ),
     ).toContain('data-slot="stacked-bar-chart"');
-    expect(renderToStringSync(() => Timeline({ label: "Release timeline", data: [{ label: "Alpha", value: "Jan" }] }))).toContain(
-      'data-slot="timeline"',
-    );
+    expect(
+      renderToStringSync(() =>
+        Timeline({ label: "Release timeline", data: [{ label: "Alpha", value: "Jan" }] }),
+      ),
+    ).toContain('data-slot="timeline"');
     expect(
       renderToStringSync(() =>
         ChartLegend({

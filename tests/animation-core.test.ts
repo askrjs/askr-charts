@@ -3,11 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
 
-import {
-  getAnimationDataAttrs,
-  getAnimationStyle,
-  normalizeAnimation,
-} from "../src/core";
+import { getAnimationDataAttrs, getAnimationStyle, normalizeAnimation } from "../src/core";
 
 describe("chart animation core", () => {
   it("normalizes boolean animation values against defaults", () => {
