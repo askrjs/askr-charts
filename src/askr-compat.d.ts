@@ -31,6 +31,11 @@ declare module "@askrjs/askr/foundations" {
 declare module "@askrjs/askr" {
   import type { JSXElement } from "@askrjs/askr/foundations";
 
+  export interface CreateIslandOptions {
+    root: Element | DocumentFragment;
+    component: () => JSXElement;
+  }
+
   export interface State<T> {
     (): T;
     set(value: T): void;
@@ -69,6 +74,8 @@ declare module "@askrjs/askr" {
   export function state<T>(initialValue: T): State<T>;
   export function defineContext<T>(defaultValue: T): Context<T>;
   export function readContext<T>(context: Context<T>): T;
+  export function createIsland(options: CreateIslandOptions): void;
+  export function cleanupApp(root: Element | DocumentFragment): void;
   export const For: <T, K extends string | number = string | number>(
     props: ForProps<T, K>,
   ) => JSXElement;
