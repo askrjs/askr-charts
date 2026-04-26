@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { cleanupApp, createIsland } from "@askrjs/askr";
 
-import { BarChart, DonutChart, FlameGraph, Heatmap, ProgressMeter, Timeline } from "../src/components";
+import {
+  BarChart,
+  DonutChart,
+  FlameGraph,
+  Heatmap,
+  ProgressMeter,
+  Timeline,
+} from "../src/components";
 
 function mount(element: JSX.Element): HTMLElement {
   const container = document.createElement("div");
