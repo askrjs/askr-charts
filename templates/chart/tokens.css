@@ -1,9 +1,5 @@
 /* __CHART_NAME__ chart tokens */
-:root,
-[data-theme="light"] {
-  color-scheme: light;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
   --ak-chart-font-size: 0.875rem;
   --ak-chart-font-family:
     "Aptos", "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", Inter, ui-sans-serif, system-ui,
@@ -11,6 +7,22 @@
   --ak-chart-font-family-mono:
     "IBM Plex Mono", "SFMono-Regular", "Menlo", "Consolas", ui-monospace, monospace,
     "Apple Color Emoji", "Segoe UI Emoji";
+  --ak-chart-radius: 1rem;
+  --ak-chart-gap: 1rem;
+  --ak-chart-padding: 1.25rem;
+  --ak-chart-series-1: #2563eb;
+  --ak-chart-series-2: #7c3aed;
+  --ak-chart-series-3: #10b981;
+  --ak-chart-series-4: #f59e0b;
+  --ak-chart-series-5: #f43f5e;
+  --ak-chart-series-6: #06b6d4;
+}
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   --ak-chart-color-primary: #2563eb;
   --ak-chart-color-muted: #cbd5e1;
   --ak-chart-color-surface: #ffffff;
@@ -29,16 +41,7 @@
   --ak-chart-axis: rgba(100, 116, 139, 0.48);
   --ak-chart-tooltip-bg: rgba(15, 23, 42, 0.96);
   --ak-chart-tooltip-fg: #f8fafc;
-  --ak-chart-radius: 1rem;
-  --ak-chart-gap: 1rem;
-  --ak-chart-padding: 1.25rem;
   --ak-chart-shadow: 0 22px 48px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
-  --ak-chart-series-1: #2563eb;
-  --ak-chart-series-2: #7c3aed;
-  --ak-chart-series-3: #10b981;
-  --ak-chart-series-4: #f59e0b;
-  --ak-chart-series-5: #f43f5e;
-  --ak-chart-series-6: #06b6d4;
 }
 
 [data-theme="dark"] {
