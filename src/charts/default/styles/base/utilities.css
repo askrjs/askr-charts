@@ -1,0 +1,32 @@
+:where(.chart-muted, [data-slot="chart-muted"]) {
+  color: var(--ak-chart-color-text-muted);
+}
+
+:where(.chart-surface, [data-slot="chart-surface"]) {
+  background: var(--ak-chart-color-surface);
+  border: 1px solid var(--ak-chart-color-border);
+  border-radius: var(--ak-chart-radius);
+  box-shadow: var(--ak-chart-shadow);
+}
+
+:where(.chart-divider, [data-slot="chart-divider"]) {
+  border: 0;
+  border-top: 1px solid var(--ak-chart-color-border);
+  margin: 0;
+}
+
+:where(.ak-chart-sr-only) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:where(.ak-chart-table, [data-slot="chart-table"]) {
+  inline-size: 100%;
+}

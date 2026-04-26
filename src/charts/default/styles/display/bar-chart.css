@@ -1,0 +1,40 @@
+:where(.ak-bar-chart-list, [data-slot="bar-chart-list"]) {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]) {
+  display: grid;
+  grid-template-columns: minmax(0, 6rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+:where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
+  font-weight: 600;
+}
+
+:where(.ak-bar-chart-track, [data-slot="bar-chart-track"]) {
+  position: relative;
+  min-height: 0.875rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ak-chart-color-muted);
+}
+
+:where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
+  display: block;
+  inline-size: var(--ak-chart-item-value, 0%);
+  min-inline-size: 0.5rem;
+  min-block-size: 0.875rem;
+  border-radius: inherit;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+}
+
+:where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}

@@ -1,0 +1,61 @@
+:where(.ak-donut-chart, [data-slot="donut-chart"]) {
+  align-items: start;
+}
+
+:where(.ak-donut-chart-graphic) {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+:where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
+  inline-size: min(18rem, 100%);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: conic-gradient(var(--ak-chart-donut-stops));
+  mask: radial-gradient(circle, transparent 0 56%, black 57% 100%);
+}
+
+:where(.ak-donut-chart-center, [data-slot="donut-chart-center"]) {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+}
+
+:where(.ak-donut-chart-total-label, [data-slot="donut-chart-total-label"]) {
+  color: var(--ak-chart-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+:where(.ak-donut-chart-total-value, [data-slot="donut-chart-total-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  font-size: 1.125rem;
+}
+
+:where(.ak-donut-chart-list, [data-slot="donut-chart-list"]) {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.ak-donut-chart-item, [data-slot="donut-chart-item"]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+:where(.ak-donut-chart-swatch, [data-slot="donut-chart-swatch"]) {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border-radius: 999px;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+}
+
+:where(.ak-donut-chart-value, [data-slot="donut-chart-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}

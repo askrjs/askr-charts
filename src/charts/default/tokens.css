@@ -1,0 +1,64 @@
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --ak-chart-font-size: 0.875rem;
+  --ak-chart-font-family:
+    "Aptos", "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", Inter, ui-sans-serif, system-ui,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --ak-chart-font-family-mono:
+    "IBM Plex Mono", "SFMono-Regular", "Menlo", "Consolas", ui-monospace, monospace,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  --ak-chart-color-primary: #2563eb;
+  --ak-chart-color-muted: #cbd5e1;
+  --ak-chart-color-surface: #ffffff;
+  --ak-chart-color-border: rgba(15, 23, 42, 0.1);
+  --ak-chart-color-text: #0f172a;
+  --ak-chart-color-text-muted: #475569;
+  --ak-chart-color-tooltip-bg: rgba(15, 23, 42, 0.96);
+  --ak-chart-color-tooltip-fg: #f8fafc;
+  --ak-chart-bg: #f8fafc;
+  --ak-chart-surface: #ffffff;
+  --ak-chart-surface-elevated: #f1f5f9;
+  --ak-chart-border: rgba(15, 23, 42, 0.1);
+  --ak-chart-text: #0f172a;
+  --ak-chart-text-muted: #475569;
+  --ak-chart-grid: rgba(100, 116, 139, 0.14);
+  --ak-chart-axis: rgba(100, 116, 139, 0.48);
+  --ak-chart-tooltip-bg: rgba(15, 23, 42, 0.96);
+  --ak-chart-tooltip-fg: #f8fafc;
+  --ak-chart-radius: 1rem;
+  --ak-chart-gap: 1rem;
+  --ak-chart-padding: 1.25rem;
+  --ak-chart-shadow: 0 22px 48px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --ak-chart-series-1: #2563eb;
+  --ak-chart-series-2: #7c3aed;
+  --ak-chart-series-3: #10b981;
+  --ak-chart-series-4: #f59e0b;
+  --ak-chart-series-5: #f43f5e;
+  --ak-chart-series-6: #06b6d4;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ak-chart-color-primary: #60a5fa;
+  --ak-chart-color-muted: #334155;
+  --ak-chart-color-surface: #0f172a;
+  --ak-chart-color-border: rgba(148, 163, 184, 0.18);
+  --ak-chart-color-text: #e2e8f0;
+  --ak-chart-color-text-muted: #94a3b8;
+  --ak-chart-color-tooltip-bg: rgba(15, 23, 42, 0.98);
+  --ak-chart-color-tooltip-fg: #f8fafc;
+  --ak-chart-bg: #020617;
+  --ak-chart-surface: #0f172a;
+  --ak-chart-surface-elevated: #111827;
+  --ak-chart-border: rgba(148, 163, 184, 0.18);
+  --ak-chart-text: #e2e8f0;
+  --ak-chart-text-muted: #94a3b8;
+  --ak-chart-grid: rgba(148, 163, 184, 0.18);
+  --ak-chart-axis: rgba(148, 163, 184, 0.42);
+  --ak-chart-tooltip-bg: rgba(15, 23, 42, 0.98);
+  --ak-chart-tooltip-fg: #f8fafc;
+  --ak-chart-shadow: 0 22px 48px rgba(2, 6, 23, 0.36), 0 2px 6px rgba(15, 23, 42, 0.16);
+}

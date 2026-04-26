@@ -1,0 +1,39 @@
+:where(.ak-stacked-bar-chart-list, [data-slot="stacked-bar-chart-list"]) {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+}
+
+:where(.ak-stacked-bar-chart-item, [data-slot="stacked-bar-chart-item"]) {
+  display: grid;
+  grid-template-columns: minmax(0, 6rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+:where(.ak-stacked-bar-chart-label, [data-slot="stacked-bar-chart-label"]) {
+  font-weight: 600;
+}
+
+:where(.ak-stacked-bar-chart-track, [data-slot="stacked-bar-chart-track"]) {
+  display: flex;
+  min-height: 0.875rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ak-chart-color-muted);
+}
+
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]) {
+  display: block;
+  inline-size: var(--ak-chart-item-value, 0%);
+  min-inline-size: 0.25rem;
+  min-block-size: 0.875rem;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+}
+
+:where(.ak-stacked-bar-chart-value, [data-slot="stacked-bar-chart-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}

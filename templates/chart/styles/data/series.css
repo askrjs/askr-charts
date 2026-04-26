@@ -1,0 +1,18 @@
+:where(.chart-series, [data-slot="chart-series"]) {
+  display: grid;
+  gap: 0.5rem;
+}
+
+:where(.chart-series-bar, [data-slot="chart-series-bar"]) {
+  inline-size: var(--ak-chart-series-value, 0%);
+  block-size: 0.625rem;
+  border-radius: 999px;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+}
+
+:where(.chart-series-dot, [data-slot="chart-series-dot"]) {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+}

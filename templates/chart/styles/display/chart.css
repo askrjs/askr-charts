@@ -1,0 +1,24 @@
+:where(.chart-frame, [data-slot="chart-frame"]),
+:where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
+  position: relative;
+  overflow: hidden;
+  min-height: 16rem;
+  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  border: 1px solid var(--ak-chart-color-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
+    var(--ak-chart-color-surface);
+}
+
+:where(.chart-empty-state, [data-slot="chart-empty-state"]) {
+  place-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px dashed var(--ak-chart-color-border);
+  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  background: var(--ak-chart-color-surface);
+}
+
+:where(.chart-empty-state-content, [data-slot="chart-empty-state-content"]) {
+  justify-items: center;
+}

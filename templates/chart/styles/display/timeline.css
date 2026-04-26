@@ -1,0 +1,66 @@
+:where(.ak-timeline-graphic) {
+  padding: 1rem;
+}
+
+:where(.ak-timeline-list, [data-slot="timeline-list"]) {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.ak-timeline-item, [data-slot="timeline-item"]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.875rem;
+  align-items: start;
+}
+
+:where(.ak-timeline-marker, [data-slot="timeline-marker"]) {
+  position: relative;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  margin-top: 0.25rem;
+  border-radius: 999px;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
+}
+
+:where(.ak-timeline-item, [data-slot="timeline-item"]):not(:last-child)
+  :where(.ak-timeline-marker, [data-slot="timeline-marker"])::after {
+  content: "";
+  position: absolute;
+  inset: calc(100% + 0.25rem) auto auto 50%;
+  inline-size: 1px;
+  block-size: calc(100% + 1.75rem);
+  background: var(--ak-chart-color-border);
+  transform: translateX(-50%);
+}
+
+:where(.ak-timeline-content, [data-slot="timeline-content"]) {
+  display: grid;
+  gap: 0.25rem;
+}
+
+:where(.ak-timeline-header, [data-slot="timeline-header"]) {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+:where(.ak-timeline-label, [data-slot="timeline-label"]) {
+  font-weight: 600;
+}
+
+:where(.ak-timeline-value, [data-slot="timeline-value"]) {
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}
+
+:where(.ak-timeline-description, [data-slot="timeline-description"]) {
+  margin: 0;
+  color: var(--ak-chart-color-text-muted);
+}
