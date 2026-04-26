@@ -101,11 +101,11 @@ export function DonutChart({
               <span data-slot="donut-chart-value" className="ak-donut-chart-value">
                 {datum.formattedValue}
               </span>
-              <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
-                <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+              <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
+                <span className="chart-tooltip-title">
                   {datum.label}
                 </span>
-                <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                <span className="chart-tooltip-value">
                   {datum.formattedValue}
                 </span>
                 {datum.description ? <span>{datum.description}</span> : null}

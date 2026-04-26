@@ -11,11 +11,11 @@
   box-shadow: var(--ak-chart-shadow);
 }
 
-:where(.chart-tooltip-title, [data-slot="chart-tooltip-title"]) {
+:where(.chart-tooltip-title) {
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
-:where(.chart-tooltip-value, [data-slot="chart-tooltip-value"]) {
+:where(.chart-tooltip-value) {
   font-size: 0.9375rem;
 }

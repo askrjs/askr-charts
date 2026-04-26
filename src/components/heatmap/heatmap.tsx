@@ -94,11 +94,11 @@ export function Heatmap({
                         <span className="ak-chart-sr-only">
                           {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
                         </span>
-                        <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
-                          <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                        <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
+                          <span className="chart-tooltip-title">
                             {cellLabel}
                           </span>
-                          <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                          <span className="chart-tooltip-value">
                             {cell ? cell.formattedValue : "0"}
                           </span>
                           {cell?.description ? <span>{cell.description}</span> : null}
