@@ -10,8 +10,36 @@ export type ChartStyleValue = string | number | undefined;
 
 export type ChartStyle = Record<string, ChartStyleValue>;
 
-export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyle): ChartStyle {
-  return incoming ? { ...base, ...incoming } : base;
+export type ChartStyleInput = string | ChartStyle | undefined;
+
+function serializeChartStyle(style: ChartStyleInput): string {
+  if (typeof style === "string") {
+    return style.trim();
+  }
+
+  if (style && typeof style === "object") {
+    return Object.entries(style)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}:${String(value)}`)
+      .join(";");
+  }
+
+  return "";
+}
+
+export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyleInput): string {
+  const baseCss = serializeChartStyle(base);
+  const incomingCss = serializeChartStyle(incoming);
+
+  if (!incomingCss) {
+    return baseCss;
+  }
+
+  if (!baseCss) {
+    return incomingCss;
+  }
+
+  return `${baseCss};${incomingCss}`;
 }
 
 export function createChartId(prefix: string, value: string): string {

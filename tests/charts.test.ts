@@ -33,10 +33,11 @@ describe("chart components", () => {
         { label: "Referral", value: 50 },
       ],
     }) as { props: Record<string, unknown> };
-    const style = chart.props.style as Record<string, unknown>;
+    const style = String(chart.props.style);
 
     expect(chart.props["data-slot"]).toBe("donut-chart");
-    expect(String(style["--ak-chart-donut-stops"])).toContain("deg");
+    expect(style).toContain("--ak-chart-donut-stops:");
+    expect(style).toContain("deg");
   });
 
   it("renders a heatmap with CSS variable grid sizing", () => {
@@ -47,10 +48,10 @@ describe("chart components", () => {
         { x: "Tue", y: "Week 1", value: 4 },
       ],
     }) as { props: Record<string, unknown> };
-    const style = chart.props.style as Record<string, unknown>;
+    const style = String(chart.props.style);
 
     expect(chart.props["data-slot"]).toBe("heatmap");
-    expect(style["--ak-heatmap-columns"]).toBe(2);
+    expect(style).toContain("--ak-heatmap-columns:2");
   });
 
   it("renders a progress meter with semantic meter attributes", () => {
@@ -61,12 +62,7 @@ describe("chart components", () => {
     }) as { props: Record<string, unknown> };
 
     expect(chart.props["data-slot"]).toBe("progress-meter");
-    expect(
-      String(
-        chart.props.style &&
-          (chart.props.style as Record<string, unknown>)["--ak-chart-item-value"],
-      ),
-    ).toContain("%");
+    expect(String(chart.props.style)).toContain("--ak-chart-item-value:60%");
   });
 
   it("renders a sparkline with column layout points", () => {
