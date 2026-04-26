@@ -200,11 +200,11 @@ export function FlameGraph({
                       <span data-slot="flame-graph-value" className="ak-flame-graph-value">
                         {frame.formattedValue}
                       </span>
-                      <span data-slot="chart-tooltip" className="chart-tooltip" role="tooltip">
-                        <span data-slot="chart-tooltip-title" className="chart-tooltip-title">
+                      <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
+                        <span className="chart-tooltip-title">
                           {frame.path}
                         </span>
-                        <span data-slot="chart-tooltip-value" className="chart-tooltip-value">
+                        <span className="chart-tooltip-value">
                           {frame.formattedValue}
                         </span>
                         {frame.description ? <span>{frame.description}</span> : null}

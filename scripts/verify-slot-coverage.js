@@ -23,8 +23,6 @@ const ALLOWED_STYLE_ONLY_SLOTS = new Set([
   "chart-series-dot",
   "chart-surface",
   "chart-tooltip",
-  "chart-tooltip-title",
-  "chart-tooltip-value",
   "donut-chart-center",
   "donut-chart-item",
   "donut-chart-label",

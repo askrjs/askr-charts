@@ -205,9 +205,9 @@ describe("browser chart rendering", () => {
     await flushUpdates();
 
     const item = container.querySelector('[data-slot="bar-chart-item"]');
-    const tooltip = container.querySelector('[data-slot="chart-tooltip"]');
-    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
-    const tooltipValue = container.querySelector('[data-slot="chart-tooltip-value"]');
+    const tooltip = container.querySelector('[data-slot="tooltip-content"]');
+    const tooltipTitle = container.querySelector('.chart-tooltip-title');
+    const tooltipValue = container.querySelector('.chart-tooltip-value');
 
     expect(item?.getAttribute("tabindex")).toBe("0");
     expect(tooltip).toBeTruthy();
@@ -234,7 +234,7 @@ describe("browser chart rendering", () => {
     const ring = container.querySelector('[data-slot="donut-chart-ring"]');
     const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
     const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
-    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
+    const tooltipTitle = container.querySelector('.chart-tooltip-title');
 
     expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
@@ -264,8 +264,8 @@ describe("browser chart rendering", () => {
     const root = container.querySelector('[data-slot="timeline"]');
     const items = [...container.querySelectorAll('[data-slot="timeline-item"]')];
     const firstMarker = container.querySelector('[data-slot="timeline-marker"]');
-    const tooltipTitle = container.querySelector('[data-slot="chart-tooltip-title"]');
-    const tooltipValue = container.querySelector('[data-slot="chart-tooltip-value"]');
+    const tooltipTitle = container.querySelector('.chart-tooltip-title');
+    const tooltipValue = container.querySelector('.chart-tooltip-value');
 
     expect(root?.getAttribute("data-ak-animation")).toBe("slide");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
