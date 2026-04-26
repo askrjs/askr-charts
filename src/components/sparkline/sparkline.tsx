@@ -1,14 +1,18 @@
+import { For } from "@askrjs/askr";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
+  resolveChartAnimation,
   resolveValueFormatter,
 } from "../_internal/chart-helpers";
 import type { SparklineProps } from "./sparkline.types";
 
 export function Sparkline({
+  animate,
+  animation,
   className,
   data,
   id,
@@ -19,6 +23,9 @@ export function Sparkline({
   valueFormatter,
   ...rest
 }: SparklineProps) {
+  const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
+    type: "fade",
+  });
   const normalized = normalizeValueChartData(data, {
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
@@ -30,9 +37,10 @@ export function Sparkline({
     <section
       {...rest}
       id={id}
+      {...animationAttrs}
       data-slot="sparkline"
       className={cx("ak-chart", "ak-sparkline", className)}
-      style={style}
+      style={mergeChartStyles(animationStyle, style)}
     >
       <div
         data-slot="chart-graphic"
@@ -42,24 +50,27 @@ export function Sparkline({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="sparkline-list" className="ak-sparkline-list">
-          {normalized.data.map((datum, index) => (
-            <li
-              key={`${datum.label}-${index}`}
-              data-slot="sparkline-item"
-              className="ak-sparkline-item"
-              style={mergeChartStyles({
-                "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`,
-                "--ak-chart-item-value": `${Math.max(8, datum.fraction * 100)}%`,
-              })}
-              aria-label={`${datum.label}: ${datum.formattedValue}`}
-            >
-              <span data-slot="sparkline-stem" className="ak-sparkline-stem" />
-              <span data-slot="sparkline-dot" className="ak-sparkline-dot" />
-              <span className="ak-chart-sr-only">
-                {datum.label}: {datum.formattedValue}
-              </span>
-            </li>
-          ))}
+          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+            {(datum, index) => (
+              <li
+                data-ak-chart-item="true"
+                data-slot="sparkline-item"
+                className="ak-sparkline-item"
+                style={mergeChartStyles({
+                  "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-index": index(),
+                  "--ak-chart-item-value": `${Math.max(8, datum.fraction * 100)}%`,
+                })}
+                aria-label={`${datum.label}: ${datum.formattedValue}`}
+              >
+                <span data-slot="sparkline-stem" className="ak-sparkline-stem" />
+                <span data-slot="sparkline-dot" className="ak-sparkline-dot" />
+                <span className="ak-chart-sr-only">
+                  {datum.label}: {datum.formattedValue}
+                </span>
+              </li>
+            )}
+          </For>
         </ol>
       </div>
 
@@ -77,13 +88,15 @@ export function Sparkline({
           </tr>
         </thead>
         <tbody>
-          {normalized.data.map((datum, index) => (
-            <tr key={`${datum.label}-${index}`}>
-              <th scope="row">{datum.label}</th>
-              <td>{datum.formattedValue}</td>
-              <td>{datum.description ?? ""}</td>
-            </tr>
-          ))}
+          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+            {(datum) => (
+              <tr>
+                <th scope="row">{datum.label}</th>
+                <td>{datum.formattedValue}</td>
+                <td>{datum.description ?? ""}</td>
+              </tr>
+            )}
+          </For>
         </tbody>
       </table>
     </section>

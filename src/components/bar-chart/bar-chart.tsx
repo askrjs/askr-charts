@@ -1,14 +1,18 @@
+import { For } from "@askrjs/askr";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
+  resolveChartAnimation,
   resolveValueFormatter,
 } from "../_internal/chart-helpers";
 import type { BarChartProps } from "./bar-chart.types";
 
 export function BarChart({
+  animate,
+  animation,
   className,
   data,
   id,
@@ -19,6 +23,9 @@ export function BarChart({
   valueFormatter,
   ...rest
 }: BarChartProps) {
+  const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
+    type: "grow",
+  });
   const normalized = normalizeValueChartData(data, {
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
@@ -30,9 +37,16 @@ export function BarChart({
     <section
       {...rest}
       id={id}
+      {...animationAttrs}
       data-slot="bar-chart"
       className={cx("ak-chart", "ak-bar-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-max": normalized.max }, style)}
+      style={mergeChartStyles(
+        {
+          "--ak-chart-max": normalized.max,
+          ...animationStyle,
+        },
+        style,
+      )}
     >
       <div
         data-slot="chart-graphic"
@@ -42,27 +56,33 @@ export function BarChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="bar-chart-list" className="ak-bar-chart-list">
-          {normalized.data.map((datum, index) => (
-            <li
-              key={`${datum.label}-${index}`}
-              data-slot="bar-chart-item"
-              className="ak-bar-chart-item"
-              style={mergeChartStyles({
-                "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`,
-                "--ak-chart-item-value": `${Math.max(4, datum.fraction * 100)}%`,
-              })}
-            >
-              <span data-slot="bar-chart-label" className="ak-bar-chart-label">
-                {datum.label}
-              </span>
-              <span data-slot="bar-chart-track" className="ak-bar-chart-track">
-                <span data-slot="bar-chart-fill" className="ak-bar-chart-fill" />
-              </span>
-              <span data-slot="bar-chart-value" className="ak-bar-chart-value">
-                {datum.formattedValue}
-              </span>
-            </li>
-          ))}
+          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+            {(datum, index) => (
+              <li
+                data-slot="bar-chart-item"
+                className="ak-bar-chart-item"
+                style={mergeChartStyles({
+                  "--ak-chart-item-color": datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-index": index(),
+                  "--ak-chart-item-value": `${Math.max(4, datum.fraction * 100)}%`,
+                })}
+              >
+                <span data-slot="bar-chart-label" className="ak-bar-chart-label">
+                  {datum.label}
+                </span>
+                <span data-slot="bar-chart-track" className="ak-bar-chart-track">
+                  <span
+                    data-ak-chart-item="true"
+                    data-slot="bar-chart-fill"
+                    className="ak-bar-chart-fill"
+                  />
+                </span>
+                <span data-slot="bar-chart-value" className="ak-bar-chart-value">
+                  {datum.formattedValue}
+                </span>
+              </li>
+            )}
+          </For>
         </ol>
       </div>
 
@@ -80,13 +100,15 @@ export function BarChart({
           </tr>
         </thead>
         <tbody>
-          {normalized.data.map((datum, index) => (
-            <tr key={`${datum.label}-${index}`}>
-              <th scope="row">{datum.label}</th>
-              <td>{datum.formattedValue}</td>
-              <td>{datum.description ?? ""}</td>
-            </tr>
-          ))}
+          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+            {(datum) => (
+              <tr>
+                <th scope="row">{datum.label}</th>
+                <td>{datum.formattedValue}</td>
+                <td>{datum.description ?? ""}</td>
+              </tr>
+            )}
+          </For>
         </tbody>
       </table>
     </section>

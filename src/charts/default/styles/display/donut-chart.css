@@ -2,6 +2,10 @@
   align-items: start;
 }
 
+:where(.ak-donut-chart-label, [data-slot="donut-chart-label"]) {
+  font-weight: 600;
+}
+
 :where(.ak-donut-chart-graphic) {
   display: grid;
   place-items: center;

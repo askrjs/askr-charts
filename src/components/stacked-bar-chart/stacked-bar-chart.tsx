@@ -1,9 +1,17 @@
+import { For } from "@askrjs/askr";
 import { clampChartValue, formatChartValue, getValueChartMax } from "../../core";
 import { cx } from "../_internal/classnames";
-import { createChartId, mergeChartStyles, resolveValueFormatter } from "../_internal/chart-helpers";
+import {
+  createChartId,
+  mergeChartStyles,
+  resolveChartAnimation,
+  resolveValueFormatter,
+} from "../_internal/chart-helpers";
 import type { StackedBarChartProps } from "./stacked-bar-chart.types";
 
 export function StackedBarChart({
+  animate,
+  animation,
   className,
   data,
   id,
@@ -14,14 +22,21 @@ export function StackedBarChart({
   valueFormatter,
   ...rest
 }: StackedBarChartProps) {
+  const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
+    type: "grow",
+  });
+  const rows = data.map((datum) => ({
+    ...datum,
+    segments: [...datum.segments],
+  }));
   const formatter = resolveValueFormatter(valueFormatter);
-  const totals = data.map((datum) =>
+  const totals = rows.map((datum) =>
     datum.segments.reduce((sum, segment) => sum + clampChartValue(segment.value), 0),
   );
   const scaleMax =
     max == null
       ? getValueChartMax(
-          totals.map((value, index) => ({ label: data[index]?.label ?? String(index), value })),
+          totals.map((value, index) => ({ label: rows[index]?.label ?? String(index), value })),
         )
       : getValueChartMax([], max);
   const summaryId = createChartId("stacked-bar-chart-summary", id ?? label);
@@ -31,17 +46,18 @@ export function StackedBarChart({
     0,
   );
   const defaultSummary =
-    data.length === 0
+    rows.length === 0
       ? `${label}. No stacked bar rows available.`
-      : `${label}. ${data.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${data[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
+      : `${label}. ${rows.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${rows[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
 
   return (
     <section
       {...rest}
       id={id}
+      {...animationAttrs}
       data-slot="stacked-bar-chart"
       className={cx("ak-chart", "ak-stacked-bar-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-max": scaleMax }, style)}
+      style={mergeChartStyles({ "--ak-chart-max": scaleMax, ...animationStyle }, style)}
     >
       <div
         data-slot="chart-graphic"
@@ -51,38 +67,45 @@ export function StackedBarChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="stacked-bar-chart-list" className="ak-stacked-bar-chart-list">
-          {data.map((datum, rowIndex) => {
-            const total = totals[rowIndex] ?? 0;
-            return (
-              <li
-                key={`${datum.label}-${rowIndex}`}
-                data-slot="stacked-bar-chart-item"
-                className="ak-stacked-bar-chart-item"
-              >
-                <span data-slot="stacked-bar-chart-label" className="ak-stacked-bar-chart-label">
-                  {datum.label}
-                </span>
-                <span data-slot="stacked-bar-chart-track" className="ak-stacked-bar-chart-track">
-                  {datum.segments.map((segment, segmentIndex) => (
-                    <span
-                      key={`${segment.label}-${segmentIndex}`}
-                      data-slot="stacked-bar-chart-segment"
-                      className="ak-stacked-bar-chart-segment"
-                      aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
-                      style={mergeChartStyles({
-                        "--ak-chart-item-color":
-                          segment.color ?? `var(--ak-chart-series-${(segmentIndex % 6) + 1})`,
-                        "--ak-chart-item-value": `${total > 0 ? Math.max(2, (clampChartValue(segment.value) / total) * 100) : 0}%`,
-                      })}
-                    />
-                  ))}
-                </span>
-                <span data-slot="stacked-bar-chart-value" className="ak-stacked-bar-chart-value">
-                  {formatChartValue(total, formatter)}
-                </span>
-              </li>
-            );
-          })}
+          <For each={rows} by={(datum, rowIndex) => `${datum.label}-${rowIndex}`}>
+            {(datum, rowIndex) => {
+              const total = totals[rowIndex()] ?? 0;
+              return (
+                <li
+                  data-slot="stacked-bar-chart-item"
+                  className="ak-stacked-bar-chart-item"
+                >
+                  <span data-slot="stacked-bar-chart-label" className="ak-stacked-bar-chart-label">
+                    {datum.label}
+                  </span>
+                  <span data-slot="stacked-bar-chart-track" className="ak-stacked-bar-chart-track">
+                    <For
+                      each={datum.segments}
+                      by={(segment, segmentIndex) => `${segment.label}-${segmentIndex}`}
+                    >
+                      {(segment, segmentIndex) => (
+                        <span
+                          data-ak-chart-item="true"
+                          data-slot="stacked-bar-chart-segment"
+                          className="ak-stacked-bar-chart-segment"
+                          aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
+                          style={mergeChartStyles({
+                            "--ak-chart-item-color":
+                              segment.color ?? `var(--ak-chart-series-${(segmentIndex() % 6) + 1})`,
+                            "--ak-chart-item-index": segmentIndex(),
+                            "--ak-chart-item-value": `${total > 0 ? Math.max(2, (clampChartValue(segment.value) / total) * 100) : 0}%`,
+                          })}
+                        />
+                      )}
+                    </For>
+                  </span>
+                  <span data-slot="stacked-bar-chart-value" className="ak-stacked-bar-chart-value">
+                    {formatChartValue(total, formatter)}
+                  </span>
+                </li>
+              );
+            }}
+          </For>
         </ol>
       </div>
 
@@ -101,16 +124,23 @@ export function StackedBarChart({
           </tr>
         </thead>
         <tbody>
-          {data.flatMap((datum, rowIndex) =>
-            datum.segments.map((segment, segmentIndex) => (
-              <tr key={`${datum.label}-${segment.label}-${segmentIndex}`}>
-                <th scope="row">{datum.label}</th>
-                <td>{segment.label}</td>
-                <td>{formatChartValue(segment.value, formatter)}</td>
-                <td>{segment.description ?? datum.description ?? ""}</td>
-              </tr>
-            )),
-          )}
+          <For each={rows} by={(datum, rowIndex) => `${datum.label}-${rowIndex}`}>
+            {(datum) => (
+              <For
+                each={datum.segments}
+                by={(segment, segmentIndex) => `${datum.label}-${segment.label}-${segmentIndex}`}
+              >
+                {(segment) => (
+                  <tr>
+                    <th scope="row">{datum.label}</th>
+                    <td>{segment.label}</td>
+                    <td>{formatChartValue(segment.value, formatter)}</td>
+                    <td>{segment.description ?? datum.description ?? ""}</td>
+                  </tr>
+                )}
+              </For>
+            )}
+          </For>
         </tbody>
       </table>
     </section>

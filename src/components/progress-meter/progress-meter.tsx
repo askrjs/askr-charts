@@ -1,9 +1,16 @@
 import { clampChartValue, formatChartValue, toChartFraction } from "../../core";
 import { cx } from "../_internal/classnames";
-import { createChartId, mergeChartStyles, resolveValueFormatter } from "../_internal/chart-helpers";
+import {
+  createChartId,
+  mergeChartStyles,
+  resolveChartAnimation,
+  resolveValueFormatter,
+} from "../_internal/chart-helpers";
 import type { ProgressMeterProps } from "./progress-meter.types";
 
 export function ProgressMeter({
+  animate,
+  animation,
   className,
   description,
   id,
@@ -15,6 +22,9 @@ export function ProgressMeter({
   valueFormatter,
   ...rest
 }: ProgressMeterProps) {
+  const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
+    type: "grow",
+  });
   const formatter = resolveValueFormatter(valueFormatter);
   const normalizedMax = Math.max(1, clampChartValue(max));
   const normalizedValue = Math.min(clampChartValue(value), normalizedMax);
@@ -27,11 +37,13 @@ export function ProgressMeter({
     <section
       {...rest}
       id={id}
+      {...animationAttrs}
       data-slot="progress-meter"
       className={cx("ak-chart", "ak-progress-meter", className)}
       style={mergeChartStyles(
         {
           "--ak-chart-item-value": `${Math.max(2, percentage)}%`,
+          ...animationStyle,
         },
         style,
       )}
@@ -57,7 +69,12 @@ export function ProgressMeter({
         aria-valuenow={normalizedValue}
         aria-valuetext={`${percentage}%`}
       >
-        <span data-slot="progress-meter-fill" className="ak-progress-meter-fill" />
+        <span
+          data-ak-chart-item="true"
+          data-slot="progress-meter-fill"
+          className="ak-progress-meter-fill"
+          style={mergeChartStyles({ "--ak-chart-item-index": 0 })}
+        />
       </div>
 
       {description ? (

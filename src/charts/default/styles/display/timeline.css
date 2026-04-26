@@ -1,3 +1,7 @@
+:where(.ak-timeline, [data-slot="timeline"]) {
+  align-items: start;
+}
+
 :where(.ak-timeline-graphic) {
   padding: 1rem;
 }

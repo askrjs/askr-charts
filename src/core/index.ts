@@ -5,6 +5,7 @@ export type {
   NormalizedValueChartDatum,
   ValueChartDatum,
 } from "./data";
+export type { ChartAnimation, ChartAnimationDefaults, ChartAnimationType, NormalizedChartAnimation } from "./animation";
 export {
   buildDonutStops,
   buildHeatmapSummary,
@@ -18,3 +19,4 @@ export {
   toChartFraction,
   uniqueLabels,
 } from "./data";
+export { getAnimationDataAttrs, getAnimationStyle, normalizeAnimation } from "./animation";

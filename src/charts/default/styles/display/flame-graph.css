@@ -1,0 +1,57 @@
+:where(.ak-flame-graph, [data-slot="flame-graph"]) {
+  align-items: start;
+}
+
+:where(.ak-flame-graph-graphic) {
+  padding: 1rem;
+}
+
+:where(.ak-flame-graph-stack, [data-slot="flame-graph-stack"]) {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  min-block-size: 100%;
+}
+
+:where(.ak-flame-graph-row, [data-slot="flame-graph-row"]) {
+  position: relative;
+  min-block-size: 3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]) {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--ak-chart-item-offset, 0%);
+  inline-size: var(--ak-chart-item-value, 0%);
+  display: grid;
+  gap: 0.125rem;
+  align-content: start;
+  padding: 0.5rem 0.625rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 40%, var(--ak-chart-color-border));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%, var(--ak-chart-color-surface));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+:where(.ak-flame-graph-label, [data-slot="flame-graph-label"]) {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+:where(.ak-flame-graph-value, [data-slot="flame-graph-value"]) {
+  overflow: hidden;
+  font-family: var(--ak-chart-font-family-mono);
+  font-size: 0.75rem;
+  color: var(--ak-chart-color-text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

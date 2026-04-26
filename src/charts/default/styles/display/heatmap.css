@@ -6,6 +6,10 @@
   padding: 1rem;
 }
 
+:where([data-slot="heatmap-row"]) {
+  display: contents;
+}
+
 :where(.ak-heatmap-column-label, [data-slot="heatmap-column-label"]),
 :where(.ak-heatmap-row-label, [data-slot="heatmap-row-label"]) {
   color: var(--ak-chart-color-text-muted);

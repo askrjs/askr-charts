@@ -35,6 +35,7 @@ Included v1 components:
 
 - `BarChart`
 - `DonutChart`
+- `FlameGraph`
 - `Heatmap`
 - `ProgressMeter`
 - `Sparkline`
@@ -43,6 +44,14 @@ Included v1 components:
 
 Each chart renders semantic HTML, assigns dynamic values through CSS custom
 properties, and includes a text summary plus a screen-reader table fallback.
+
+Animation contract:
+
+- Animation remains decorative and must not be required for chart correctness.
+- Chart roots emit `data-ak-animate` and `data-ak-animation`.
+- Animation timing is configured only through `--ak-chart-animation-*` variables.
+- Animated items expose `--ak-chart-item-index` for CSS stagger.
+- Reduced motion disables chart animation by default.
 
 Testing expectations:
 

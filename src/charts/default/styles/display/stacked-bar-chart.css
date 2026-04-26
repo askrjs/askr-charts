@@ -1,3 +1,7 @@
+:where(.ak-stacked-bar-chart, [data-slot="stacked-bar-chart"]) {
+  align-items: start;
+}
+
 :where(.ak-stacked-bar-chart-list, [data-slot="stacked-bar-chart-list"]) {
   display: grid;
   gap: 0.75rem;
