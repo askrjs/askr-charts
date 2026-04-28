@@ -12,19 +12,75 @@
   padding: 1rem;
 }
 
-:where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
+:where(.ak-donut-chart-ring-wrap, [data-slot="donut-chart-ring-wrap"]) {
+  position: relative;
   inline-size: min(18rem, 100%);
   aspect-ratio: 1;
+}
+
+:where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
+  inline-size: 100%;
+  block-size: 100%;
   border-radius: 999px;
   background: conic-gradient(var(--ak-chart-donut-stops));
   mask: radial-gradient(circle, transparent 0 56%, black 57% 100%);
 }
 
+:where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"]) {
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  clip-path: var(--ak-donut-segment-clip-path, none);
+  background: rgb(255 255 255 / 0.001);
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.ak-donut-chart-ring-wrap > .ak-donut-chart-segment,
+[data-slot="donut-chart-ring-wrap"] > [data-slot="donut-chart-segment"] {
+  position: absolute;
+}
+
+:where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"])
+  :where(.chart-tooltip, [data-slot="tooltip-content"]) {
+  inset: auto auto calc(100% + 0.5rem) 50%;
+  transform: translate(-50%, 0.25rem);
+}
+
+:where(
+    .ak-donut-chart-segment:hover,
+    .ak-donut-chart-segment:focus-within,
+    [data-slot="donut-chart-segment"]:hover,
+    [data-slot="donut-chart-segment"]:focus-within
+  ) :where(.chart-tooltip, [data-slot="tooltip-content"]) {
+  transform: translate(-50%, 0);
+}
+
+:where(.ak-donut-chart-segment:focus-visible, [data-slot="donut-chart-segment"]:focus-visible) {
+  outline: 2px solid
+    color-mix(
+      in srgb,
+      var(--ak-color-focus-ring, var(--ak-chart-color-primary)) 70%,
+      white
+    );
+  outline-offset: 2px;
+}
+
 :where(.ak-donut-chart-center, [data-slot="donut-chart-center"]) {
   position: absolute;
+  inset: 50% auto auto 50%;
   display: grid;
   justify-items: center;
   gap: 0.25rem;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 :where(.ak-donut-chart-total-label, [data-slot="donut-chart-total-label"]) {

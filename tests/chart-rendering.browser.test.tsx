@@ -232,6 +232,7 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="donut-chart"]');
     const ring = container.querySelector('[data-slot="donut-chart-ring"]');
+    const ringSegments = [...container.querySelectorAll('[data-slot="donut-chart-segment"]')];
     const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
     const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
     const tooltipTitle = container.querySelector('.chart-tooltip-title');
@@ -240,6 +241,9 @@ describe("browser chart rendering", () => {
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(root?.getAttribute("style")).toContain("--ak-chart-donut-stops:");
     expect(ring?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(ringSegments).toHaveLength(3);
+    expect(ringSegments[0]?.getAttribute("tabindex")).toBe("0");
+    expect(ringSegments[0]?.getAttribute("style")).toContain("--ak-chart-item-color:tomato");
     expect(items).toHaveLength(3);
     expect(items[0]?.getAttribute("tabindex")).toBe("0");
     expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-color:tomato");
