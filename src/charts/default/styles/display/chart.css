@@ -1,7 +1,11 @@
-:where(.chart-frame, [data-slot="chart-frame"]),
-:where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
+:where(.chart-frame, [data-slot="chart-frame"]) {
   position: relative;
   overflow: hidden;
+}
+
+:where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
+  position: relative;
+  overflow: visible;
   min-height: 16rem;
   border-radius: calc(var(--ak-chart-radius) - 0.25rem);
   border: 1px solid var(--ak-chart-color-border);
