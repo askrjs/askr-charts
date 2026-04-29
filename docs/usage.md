@@ -1,4 +1,4 @@
-# Usage
+﻿# Usage
 
 ```tsx
 import {
@@ -10,9 +10,9 @@ import {
   Sparkline,
   StackedBarChart,
   Timeline,
-} from "@askrjs/askr-charts/components";
-import { createHeatmapLegendItems, createValueChartLegendItems } from "@askrjs/askr-charts/core";
-import "@askrjs/askr-charts/default";
+} from "@askrjs/charts/components";
+import { createHeatmapLegendItems, createValueChartLegendItems } from "@askrjs/charts/core";
+import "@askrjs/charts/default";
 
 export function AnalyticsPreview() {
   return (
@@ -223,3 +223,4 @@ CSS variable contract:
 
 SSR output includes `data-ak-animate`, `data-ak-animation`, and the animation
 CSS variables on the chart root so no mount-time JavaScript is required.
+

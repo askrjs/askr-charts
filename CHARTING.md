@@ -1,9 +1,9 @@
-# Charting
+﻿# Charting
 
 Import the default chart surface styles:
 
 ```css
-@import "@askrjs/askr-charts/default";
+@import "@askrjs/charts/default";
 ```
 
 Public hooks and contract points:
@@ -69,3 +69,4 @@ Testing expectations:
 
 Generated chart presets live under `src/charts/<name>/`.
 Use `npm run new:chart -- <chart-name>` to clone the template.
+

@@ -1,6 +1,6 @@
 {
-  "name": "@askrjs/askr-charts",
-  "version": "0.1.0",
+  "name": "@askrjs/charts",
+  "version": "0.0.1",
   "description": "Chart tokens, styles, and layout shells for Askr apps.",
   "keywords": [
     "askr",
@@ -84,8 +84,8 @@
   },
   "devDependencies": {
     "@askrjs/askr": "file:../askr",
-    "@askrjs/askr-ui": "file:../askr-ui",
-    "@askrjs/askr-vite": "file:../askr-vite",
+    "@askrjs/ui": "file:../askr-ui",
+    "@askrjs/vite": "file:../askr-vite",
     "@types/node": "^25.6.0",
     "jsdom": "^29.0.2",
     "playwright": "^1.59.1",
@@ -93,8 +93,8 @@
     "vite-plus": "^0.1.19"
   },
   "peerDependencies": {
-    "@askrjs/askr": "0.1.0",
-    "@askrjs/askr-ui": "0.1.0"
+    "@askrjs/askr": "0.0.1",
+    "@askrjs/ui": "0.0.1"
   },
   "engines": {
     "node": ">=18"
