@@ -171,7 +171,7 @@ const activityLegend = createHeatmapLegendItems(
 
 ## Animation API
 
-Every v1 chart accepts `animate?: boolean` and `animation?: ChartAnimation`.
+Every v1 chart accepts `animate": boolean` and `animation": ChartAnimation`.
 
 ```tsx
 <BarChart data={data} animate />
