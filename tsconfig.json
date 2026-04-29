@@ -1,4 +1,4 @@
-{
+﻿{
   "compilerOptions": {
     "baseUrl": ".",
     "target": "ES2020",
@@ -18,7 +18,7 @@
       "@askrjs/askr/jsx-runtime": ["../askr/dist/jsx-runtime.d.ts"],
       "@askrjs/askr/jsx-dev-runtime": ["../askr/dist/jsx-dev-runtime.d.ts"],
       "@askrjs/askr/foundations": ["../askr/dist/foundations/index.d.ts"],
-      "@askrjs/askr-ui/foundations": ["../askr-ui/src/foundations/index.ts"]
+      "@askrjs/ui/foundations": ["../askr-ui/src/foundations/index.ts"]
     }
   },
   "include": [
@@ -32,3 +32,4 @@
     "vitest.browser.config.ts"
   ]
 }
+

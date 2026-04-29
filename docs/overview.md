@@ -1,6 +1,6 @@
-# Askr Charts Overview
+﻿# Askr Charts Overview
 
-`@askrjs/askr-charts` provides chart-facing presentation primitives for Askr apps.
+`@askrjs/charts` provides chart-facing presentation primitives for Askr apps.
 
 Current package layers:
 
@@ -18,3 +18,4 @@ heatmaps, progress meters, sparklines, stacked bar charts, and timelines.
 Animations stay CSS-first and decorative. Chart components emit animation data
 attributes and CSS variables during SSR so charts remain correct without
 hydration, and `prefers-reduced-motion: reduce` disables motion by default.
+
