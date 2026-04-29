@@ -78,9 +78,8 @@
     "fmt": "vp fmt .",
     "lint": "vp fmt --check .",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
-    "build": "vp build && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots",
-    "pack": "npm run build",
-    "prepublishOnly": "npm run pack"
+    "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@askrjs/askr": "file:../askr",
