@@ -76,7 +76,7 @@
     "test:unit": "vp test run -c vitest.config.ts",
     "test:browser": "vp test run -c vitest.browser.config.ts",
     "fmt": "vp fmt .",
-    "lint": "vp fmt --check .",
+    "lint": "vp lint .",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
     "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots",
     "prepublishOnly": "npm run build"
