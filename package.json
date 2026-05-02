@@ -72,9 +72,10 @@
     "verify:token-contract": "node ./scripts/verify-token-contract.js",
     "verify:responsive": "node ./scripts/verify-responsive-chart.js",
     "verify:slots": "node ./scripts/verify-slot-coverage.js",
-    "test": "npm run test:unit && npm run test:browser",
-    "test:unit": "npx vite-plus test run -c vitest.config.ts",
-    "test:browser": "npx vite-plus test run -c vitest.browser.config.ts",
+    "test": "npm run test:unit && npm run test:jsdom && npm run test:browser",
+    "test:unit": "vp test run -c vitest.config.ts",
+    "test:jsdom": "npm run test:unit",
+    "test:browser": "vp test run -c vitest.browser.config.ts",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
@@ -83,8 +84,8 @@
   },
   "devDependencies": {
     "@askrjs/askr": ">=0.0.30 <0.1.0",
-    "@askrjs/ui": "0.0.1",
-    "@askrjs/vite": "0.0.1",
+    "@askrjs/ui": ">=0.0.1 <0.1.0",
+    "@askrjs/vite": ">=0.0.1 <0.1.0",
     "@types/node": "^25.6.0",
     "jsdom": "^29.0.2",
     "playwright": "^1.59.1",
@@ -93,7 +94,7 @@
   },
   "peerDependencies": {
     "@askrjs/askr": ">=0.0.30 <0.1.0",
-    "@askrjs/ui": "0.0.1"
+    "@askrjs/ui": ">=0.0.1 <0.1.0"
   },
   "engines": {
     "node": ">=18"
