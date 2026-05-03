@@ -1,7 +1,7 @@
 {
   "name": "@askrjs/charts",
   "version": "0.0.1",
-  "description": "Chart tokens, styles, and layout shells for Askr apps.",
+  "description": "CSS-first chart primitives that pair with askr themes.",
   "keywords": [
     "askr",
     "charts",
@@ -46,10 +46,13 @@
       "import": "./dist/core/index.js"
     },
     "./default/bar-chart.css": "./src/charts/default/styles/display/bar-chart.css",
+    "./default/area-chart.css": "./src/charts/default/styles/display/area-chart.css",
     "./default/donut-chart.css": "./src/charts/default/styles/display/donut-chart.css",
     "./default/flame-graph.css": "./src/charts/default/styles/display/flame-graph.css",
     "./default/heatmap.css": "./src/charts/default/styles/display/heatmap.css",
+    "./default/line-chart.css": "./src/charts/default/styles/display/line-chart.css",
     "./default/progress-meter.css": "./src/charts/default/styles/display/progress-meter.css",
+    "./default/radial-gauge.css": "./src/charts/default/styles/display/radial-gauge.css",
     "./default/sparkline.css": "./src/charts/default/styles/display/sparkline.css",
     "./default/stacked-bar-chart.css": "./src/charts/default/styles/display/stacked-bar-chart.css",
     "./default/timeline.css": "./src/charts/default/styles/display/timeline.css",
@@ -72,9 +75,8 @@
     "verify:token-contract": "node ./scripts/verify-token-contract.js",
     "verify:responsive": "node ./scripts/verify-responsive-chart.js",
     "verify:slots": "node ./scripts/verify-slot-coverage.js",
-    "test": "npm run test:unit && npm run test:jsdom && npm run test:browser",
+    "test": "npm run test:unit && npm run test:browser",
     "test:unit": "vp test run -c vitest.config.ts",
-    "test:jsdom": "npm run test:unit",
     "test:browser": "vp test run -c vitest.browser.config.ts",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
@@ -84,17 +86,16 @@
   },
   "devDependencies": {
     "@askrjs/askr": ">=0.0.30 <0.1.0",
-    "@askrjs/ui": ">=0.0.1 <0.1.0",
-    "@askrjs/vite": ">=0.0.1 <0.1.0",
+    "@askrjs/vite": "^0.0.2",
+    "@tsdown/css": "0.21.10",
     "@types/node": "^25.6.0",
-    "jsdom": "^29.0.2",
+    "jsdom": "^29.1.1",
     "playwright": "^1.59.1",
     "typescript": "^6.0.3",
-    "vite-plus": "^0.1.19"
+    "vite-plus": "^0.1.20"
   },
   "peerDependencies": {
-    "@askrjs/askr": ">=0.0.30 <0.1.0",
-    "@askrjs/ui": ">=0.0.1 <0.1.0"
+    "@askrjs/askr": ">=0.0.30 <0.1.0"
   },
   "engines": {
     "node": ">=18"
