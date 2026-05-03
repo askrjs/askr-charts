@@ -1,12 +1,19 @@
 ﻿# Usage
 
+Use this package alongside `@askrjs/themes` when you want shared shell tokens
+and app chrome, then layer in these chart primitives for compact visual
+summaries and simple trend approximations.
+
 ```tsx
 import {
+  AreaChart,
   BarChart,
   DonutChart,
   FlameGraph,
   Heatmap,
+  LineChart,
   ProgressMeter,
+  RadialGauge,
   Sparkline,
   StackedBarChart,
   Timeline,
@@ -24,6 +31,26 @@ export function AnalyticsPreview() {
           { label: "Jan", value: 42 },
           { label: "Feb", value: 61 },
           { label: "Mar", value: 38 },
+        ]}
+      />
+
+      <LineChart
+        label="Weekly signups"
+        animate
+        data={[
+          { label: "Mon", value: 12 },
+          { label: "Tue", value: 18 },
+          { label: "Wed", value: 14 },
+        ]}
+      />
+
+      <AreaChart
+        label="Weekly orders"
+        animate
+        data={[
+          { label: "Mon", value: 20 },
+          { label: "Tue", value: 26 },
+          { label: "Wed", value: 18 },
         ]}
       />
 
@@ -71,6 +98,8 @@ export function AnalyticsPreview() {
 
       <ProgressMeter label="Quarterly quota" value={72} max={100} animate />
 
+      <RadialGauge label="Fill rate" value={68} max={100} animate />
+
       <Sparkline
         label="Support trend"
         animation={{ type: "fade", duration: 180, stagger: 12 }}
@@ -112,7 +141,13 @@ export function AnalyticsPreview() {
 
 ## Data Shapes And Scale Controls
 
-`BarChart`, `DonutChart`, `Sparkline`, and `Heatmap` accept either object data or tuple data.
+`BarChart`, `LineChart`, `AreaChart`, `DonutChart`, `Sparkline`, and `Heatmap`
+accept either object data or tuple data.
+
+`LineChart` and `AreaChart` are best viewed as discrete CSS trend snapshots, and
+`RadialGauge` is a compact single-value dial. They are intentionally useful
+approximations for simple visuals rather than a replacement for a full SVG or
+canvas charting engine.
 
 ```tsx
 <BarChart
@@ -134,6 +169,16 @@ export function AnalyticsPreview() {
   ]}
   min={2}
   max={8}
+/>
+
+<LineChart
+  label="Weekly signups"
+  data={[
+    ["Mon", 12],
+    ["Tue", 18],
+  ]}
+  min={10}
+  max={20}
 />
 ```
 
@@ -199,12 +244,15 @@ Supported animation types:
 
 Default chart animations:
 
+- `AreaChart`: `grow`
 - `BarChart`: `grow`
 - `StackedBarChart`: `grow`
 - `DonutChart`: `sweep`
 - `FlameGraph`: `grow`
 - `Heatmap`: `fade`
+- `LineChart`: `fade`
 - `ProgressMeter`: `grow`
+- `RadialGauge`: `sweep`
 - `Timeline`: `slide`
 - `Sparkline`: `fade`
 
@@ -223,4 +271,3 @@ CSS variable contract:
 
 SSR output includes `data-ak-animate`, `data-ak-animation`, and the animation
 CSS variables on the chart root so no mount-time JavaScript is required.
-
