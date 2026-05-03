@@ -5,7 +5,7 @@
 
 :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
   position: absolute;
-  inset: auto auto calc(100% + 0.5rem) 0;
+  inset: auto auto calc(100% + 0.5rem) 50%;
   z-index: var(--ak-z-tooltip, 2);
   pointer-events: none;
   display: grid;
@@ -20,7 +20,7 @@
   box-shadow: var(--ak-shadow-md, var(--ak-chart-shadow));
   opacity: 0;
   visibility: hidden;
-  transform: translateY(0.25rem);
+  transform: translate(-50%, 0.25rem);
   transition:
     opacity 120ms ease-out,
     transform 120ms ease-out,
@@ -34,7 +34,7 @@
   :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translate(-50%, 0);
   animation: ak-tooltip-in var(--ak-duration-fast, 120ms) var(--ak-ease-standard, ease-out);
 }
 
