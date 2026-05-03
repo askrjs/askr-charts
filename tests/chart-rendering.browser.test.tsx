@@ -3,11 +3,14 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 import { cleanupApp, createIsland } from "@askrjs/askr";
 
 import {
+  AreaChart,
   BarChart,
   DonutChart,
   FlameGraph,
   Heatmap,
+  LineChart,
   ProgressMeter,
+  RadialGauge,
   Timeline,
 } from "../src/components";
 
@@ -34,6 +37,10 @@ function unmount(container: HTMLElement | undefined) {
   if (container?.parentNode) {
     container.parentNode.removeChild(container);
   }
+}
+
+function normalizeStyle(style: string | null | undefined): string {
+  return (style ?? "").replace(/\s*:\s*/g, ":").replace(/;\s*/g, ";");
 }
 
 describe("browser chart rendering", () => {
@@ -66,13 +73,51 @@ describe("browser chart rendering", () => {
     expect(
       container.querySelector('[data-slot="bar-chart"]')?.getAttribute("data-ak-animation"),
     ).toBe("grow");
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-value:100%");
-    expect(items[1]?.getAttribute("style")).toContain("--ak-chart-item-value:62.5%");
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:100%");
+    expect(normalizeStyle(items[1]?.getAttribute("style"))).toContain(
+      "--ak-chart-item-value:62.5%",
+    );
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(firstFill?.getAttribute("data-ak-chart-item")).toBe("true");
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Monthly revenue",
     );
+  });
+
+  it("should render line, area, and radial charts into the browser DOM", async () => {
+    container = mount(
+      <div>
+        <LineChart
+          label="Weekly signups"
+          animate
+          data={[
+            { label: "Mon", value: 12 },
+            { label: "Tue", value: 18 },
+          ]}
+        />
+        <AreaChart
+          label="Weekly orders"
+          animate
+          data={[
+            { label: "Mon", value: 20 },
+            { label: "Tue", value: 26 },
+          ]}
+        />
+        <RadialGauge label="Fill rate" value={68} max={100} animate />
+      </div>,
+    );
+    await flushUpdates();
+
+    const line = container.querySelector('[data-slot="line-chart"]');
+    const area = container.querySelector('[data-slot="area-chart"]');
+    const radial = container.querySelector('[data-slot="radial-gauge"]');
+
+    expect(line?.getAttribute("data-ak-animation")).toBe("fade");
+    expect(area?.getAttribute("data-ak-animation")).toBe("grow");
+    expect(radial?.getAttribute("data-ak-animation")).toBe("sweep");
+    expect(container.querySelector('[data-slot="line-chart-point"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="area-chart-point"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="radial-gauge-ring"]')).toBeTruthy();
   });
 
   it("should render heatmap grids with normalized column count and fallback cells", async () => {
@@ -92,13 +137,13 @@ describe("browser chart rendering", () => {
     const root = container.querySelector('[data-slot="heatmap"]');
     const cells = [...container.querySelectorAll('[data-slot="heatmap-cell"]')];
 
-    expect(root?.getAttribute("style")).toContain("--ak-heatmap-columns:2");
+    expect(normalizeStyle(root?.getAttribute("style"))).toContain("--ak-heatmap-columns:2");
     expect(root?.getAttribute("data-ak-animation")).toBe("fade");
     expect(cells).toHaveLength(4);
     expect(cells[0]?.getAttribute("aria-label")).toBe("Week 1, Mon: 8");
-    expect(cells[0]?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(cells[3]?.getAttribute("aria-label")).toBe("Week 2, Tue: 0");
-    expect(cells[3]?.getAttribute("style")).toContain("--ak-chart-item-index:3");
+    expect(normalizeStyle(cells[3]?.getAttribute("style"))).toContain("--ak-chart-item-index:3");
   });
 
   it("should render flame graph frames with positioned spans", async () => {
@@ -125,10 +170,10 @@ describe("browser chart rendering", () => {
 
     expect(root?.getAttribute("data-ak-animation")).toBe("grow");
     expect(cells).toHaveLength(3);
-    expect(cells[0]?.getAttribute("style")).toContain("--ak-chart-item-offset:0%");
-    expect(cells[0]?.getAttribute("style")).toContain("--ak-chart-item-value:100%");
-    expect(cells[1]?.getAttribute("style")).toContain("--ak-chart-item-value:40%");
-    expect(cells[2]?.getAttribute("style")).toContain("--ak-chart-item-offset:40%");
+    expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-offset:0%");
+    expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:100%");
+    expect(normalizeStyle(cells[1]?.getAttribute("style"))).toContain("--ak-chart-item-value:40%");
+    expect(normalizeStyle(cells[2]?.getAttribute("style"))).toContain("--ak-chart-item-offset:40%");
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Call stack",
     );
@@ -151,13 +196,13 @@ describe("browser chart rendering", () => {
     const description = container.querySelector('[data-slot="progress-meter-description"]');
     const fill = container.querySelector('[data-slot="progress-meter-fill"]');
 
-    expect(root?.getAttribute("style")).toContain("--ak-chart-item-value:60%");
+    expect(normalizeStyle(root?.getAttribute("style"))).toContain("--ak-chart-item-value:60%");
     expect(root?.getAttribute("data-ak-animation")).toBe("grow");
     expect(meter?.getAttribute("aria-valuemin")).toBe("0");
     expect(meter?.getAttribute("aria-valuemax")).toBe("80");
     expect(meter?.getAttribute("aria-valuenow")).toBe("48");
     expect(meter?.getAttribute("aria-valuetext")).toBe("60%");
-    expect(fill?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(normalizeStyle(fill?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(description?.textContent).toBe("Current quarter attainment");
   });
 
@@ -167,8 +212,8 @@ describe("browser chart rendering", () => {
 
     const item = container.querySelector('[data-slot="bar-chart-item"]');
 
-    expect(item?.getAttribute("style")).toContain("--ak-chart-item-value:0%");
-    expect(item?.getAttribute("style")).toContain("--ak-chart-item-min-size:0");
+    expect(normalizeStyle(item?.getAttribute("style"))).toContain("--ak-chart-item-value:0%");
+    expect(normalizeStyle(item?.getAttribute("style"))).toContain("--ak-chart-item-min-size:0");
   });
 
   it("should normalize tuple data and explicit minimums in live bar rendering", async () => {
@@ -191,8 +236,8 @@ describe("browser chart rendering", () => {
 
     expect(root?.getAttribute("data-ak-label-density")).toBe("minimal");
     expect(items).toHaveLength(2);
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-value:0%");
-    expect(items[1]?.getAttribute("style")).toContain("--ak-chart-item-value:100%");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:0%");
+    expect(normalizeStyle(items[1]?.getAttribute("style"))).toContain("--ak-chart-item-value:100%");
   });
 
   it("should render CSS-only tooltip content on chart items", async () => {
@@ -206,8 +251,8 @@ describe("browser chart rendering", () => {
 
     const item = container.querySelector('[data-slot="bar-chart-item"]');
     const tooltip = container.querySelector('[data-slot="tooltip-content"]');
-    const tooltipTitle = container.querySelector('.chart-tooltip-title');
-    const tooltipValue = container.querySelector('.chart-tooltip-value');
+    const tooltipTitle = container.querySelector(".chart-tooltip-title");
+    const tooltipValue = container.querySelector(".chart-tooltip-value");
 
     expect(item?.getAttribute("tabindex")).toBe("0");
     expect(tooltip).toBeTruthy();
@@ -235,18 +280,22 @@ describe("browser chart rendering", () => {
     const ringSegments = [...container.querySelectorAll('[data-slot="donut-chart-segment"]')];
     const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
     const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
-    const tooltipTitle = container.querySelector('.chart-tooltip-title');
+    const tooltipTitle = container.querySelector(".chart-tooltip-title");
 
     expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(root?.getAttribute("style")).toContain("--ak-chart-donut-stops:");
-    expect(ring?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(normalizeStyle(ring?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(ringSegments).toHaveLength(3);
     expect(ringSegments[0]?.getAttribute("tabindex")).toBe("0");
-    expect(ringSegments[0]?.getAttribute("style")).toContain("--ak-chart-item-color:tomato");
+    expect(normalizeStyle(ringSegments[0]?.getAttribute("style"))).toContain(
+      "--ak-chart-item-color:tomato",
+    );
     expect(items).toHaveLength(3);
     expect(items[0]?.getAttribute("tabindex")).toBe("0");
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-color:tomato");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain(
+      "--ak-chart-item-color:tomato",
+    );
     expect(totalValue?.textContent).toBe("100");
     expect(tooltipTitle?.textContent).toBe("Direct");
   });
@@ -268,15 +317,15 @@ describe("browser chart rendering", () => {
     const root = container.querySelector('[data-slot="timeline"]');
     const items = [...container.querySelectorAll('[data-slot="timeline-item"]')];
     const firstMarker = container.querySelector('[data-slot="timeline-marker"]');
-    const tooltipTitle = container.querySelector('.chart-tooltip-title');
-    const tooltipValue = container.querySelector('.chart-tooltip-value');
+    const tooltipTitle = container.querySelector(".chart-tooltip-title");
+    const tooltipValue = container.querySelector(".chart-tooltip-value");
 
     expect(root?.getAttribute("data-ak-animation")).toBe("slide");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(items).toHaveLength(2);
     expect(items[0]?.getAttribute("tabindex")).toBe("0");
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-color:gold");
-    expect(items[0]?.getAttribute("style")).toContain("--ak-chart-item-index:0");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-color:gold");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(firstMarker).toBeTruthy();
     expect(tooltipTitle?.textContent).toBe("Alpha");
     expect(tooltipValue?.textContent).toBe("Jan");

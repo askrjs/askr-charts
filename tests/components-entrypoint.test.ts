@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 
 import {
+  AreaChart,
   BarChart,
   ChartEmptyState,
   ChartLegend,
@@ -10,7 +11,9 @@ import {
   DonutChart,
   FlameGraph,
   Heatmap,
+  LineChart,
   ProgressMeter,
+  RadialGauge,
   Sparkline,
   StackedBarChart,
   Timeline,
@@ -19,14 +22,20 @@ import {
 describe("components entrypoint", () => {
   it("exposes chart layout primitives from one barrel", () => {
     expect(typeof ChartShell).toBe("function");
+    expect(typeof AreaChart).toBe("function");
     expect(typeof BarChart).toBe("function");
     expect(typeof DonutChart).toBe("function");
     expect(typeof FlameGraph).toBe("function");
     expect(typeof Heatmap).toBe("function");
+    expect(typeof LineChart).toBe("function");
     expect(typeof ProgressMeter).toBe("function");
+    expect(typeof RadialGauge).toBe("function");
     expect(typeof Sparkline).toBe("function");
     expect(typeof StackedBarChart).toBe("function");
     expect(typeof Timeline).toBe("function");
+    expect(
+      renderToStringSync(() => AreaChart({ label: "Trend", data: [{ label: "Mon", value: 42 }] })),
+    ).toContain('data-slot="area-chart"');
     expect(ChartShell({ title: "Traffic", children: "canvas" })).toBeTruthy();
     expect(ChartPanel({ title: "Revenue", children: "chart" })).toBeTruthy();
     expect(ChartEmptyState({ title: "No data", description: "Add a dataset" })).toBeTruthy();
@@ -49,11 +58,17 @@ describe("components entrypoint", () => {
       ),
     ).toContain('data-slot="flame-graph"');
     expect(
+      renderToStringSync(() => LineChart({ label: "Trend", data: [{ label: "Mon", value: 42 }] })),
+    ).toContain('data-slot="line-chart"');
+    expect(
       renderToStringSync(() =>
         Heatmap({ label: "Weekly activity", data: [{ x: "Mon", y: "Week 1", value: 8 }] }),
       ),
     ).toContain('data-slot="heatmap"');
     expect(ProgressMeter({ label: "Adoption", value: 72, max: 100 })).toBeTruthy();
+    expect(
+      renderToStringSync(() => RadialGauge({ label: "Fill rate", value: 68, max: 100 })),
+    ).toContain('data-slot="radial-gauge"');
     expect(
       renderToStringSync(() => Sparkline({ label: "Trend", data: [{ label: "Mon", value: 8 }] })),
     ).toContain('data-slot="sparkline"');

@@ -9,10 +9,19 @@ describe("package contract", () => {
     };
 
     expect(pkg.exports["."]).toBe("./src/index.css");
+    expect(pkg.exports["./default/area-chart.css"]).toBe(
+      "./src/charts/default/styles/display/area-chart.css",
+    );
     expect(pkg.exports["./components"]).toMatchObject({
       types: "./dist/components/index.d.ts",
       import: "./dist/components/index.js",
     });
+    expect(pkg.exports["./default/line-chart.css"]).toBe(
+      "./src/charts/default/styles/display/line-chart.css",
+    );
+    expect(pkg.exports["./default/radial-gauge.css"]).toBe(
+      "./src/charts/default/styles/display/radial-gauge.css",
+    );
     expect(pkg.exports["./core"]).toMatchObject({
       types: "./dist/core/index.d.ts",
       import: "./dist/core/index.js",

@@ -2,11 +2,14 @@ import { describe, expect, it } from "vite-plus/test";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 
 import {
+  AreaChart,
   BarChart,
   DonutChart,
   FlameGraph,
   Heatmap,
+  LineChart,
   ProgressMeter,
+  RadialGauge,
   Sparkline,
   StackedBarChart,
   Timeline,
@@ -23,6 +26,12 @@ function countOccurrences(value: string, needle: string): number {
 describe("accessibility contract", () => {
   it("should expose role img and fallback table content for visual charts", () => {
     const charts = [
+      renderChart(() =>
+        AreaChart({
+          label: "Weekly orders",
+          data: [{ label: "Mon", value: 18, description: "Launch week" }],
+        }),
+      ),
       renderChart(() =>
         BarChart({
           label: "Monthly revenue",
@@ -55,9 +64,23 @@ describe("accessibility contract", () => {
         }),
       ),
       renderChart(() =>
+        LineChart({
+          label: "Weekly signups",
+          data: [{ label: "Mon", value: 12, description: "Campaign lift" }],
+        }),
+      ),
+      renderChart(() =>
         Sparkline({
           label: "Response trend",
           data: [{ label: "Mon", value: 12, description: "Average response" }],
+        }),
+      ),
+      renderChart(() =>
+        RadialGauge({
+          label: "Fill rate",
+          value: 68,
+          max: 100,
+          description: "Current utilization",
         }),
       ),
       renderChart(() =>

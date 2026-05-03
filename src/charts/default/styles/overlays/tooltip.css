@@ -35,17 +35,12 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  animation: ak-tooltip-in var(--ak-duration-fast, 120ms)
-    var(--ak-ease-standard, ease-out);
+  animation: ak-tooltip-in var(--ak-duration-fast, 120ms) var(--ak-ease-standard, ease-out);
 }
 
 :where([data-ak-chart-tooltip-trigger="true"]:focus-visible) {
   outline: 2px solid
-    color-mix(
-      in srgb,
-      var(--ak-color-focus-ring, var(--ak-chart-color-primary)) 70%,
-      white
-    );
+    color-mix(in srgb, var(--ak-color-focus-ring, var(--ak-chart-color-primary)) 70%, white);
   outline-offset: 2px;
 }
 

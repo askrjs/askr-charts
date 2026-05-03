@@ -130,12 +130,8 @@ export function DonutChart({
                   {segment.datum.label}: {segment.datum.formattedValue}
                 </span>
                 <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                  <span className="chart-tooltip-title">
-                    {segment.datum.label}
-                  </span>
-                  <span className="chart-tooltip-value">
-                    {segment.datum.formattedValue}
-                  </span>
+                  <span className="chart-tooltip-title">{segment.datum.label}</span>
+                  <span className="chart-tooltip-value">{segment.datum.formattedValue}</span>
                   {segment.datum.description ? <span>{segment.datum.description}</span> : null}
                 </span>
               </button>
@@ -185,12 +181,8 @@ export function DonutChart({
                 {datum.formattedValue}
               </span>
               <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                <span className="chart-tooltip-title">
-                  {datum.label}
-                </span>
-                <span className="chart-tooltip-value">
-                  {datum.formattedValue}
-                </span>
+                <span className="chart-tooltip-title">{datum.label}</span>
+                <span className="chart-tooltip-value">{datum.formattedValue}</span>
                 {datum.description ? <span>{datum.description}</span> : null}
               </span>
             </li>

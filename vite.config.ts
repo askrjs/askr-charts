@@ -1,6 +1,6 @@
 import { defineConfig } from "vite-plus";
 
-const externalPackagePattern = /^@askrjs\/(?:askr|askr-ui)(?:\/.*)?$/;
+const externalPackagePattern = /^@askrjs\/askr(?:\/.*)?$/;
 
 export default defineConfig({
   esbuild: {
@@ -20,7 +20,7 @@ export default defineConfig({
     sourcemap: true,
     unbundle: true,
     deps: {
-      neverBundle: [/^@askrjs\/(?:askr|askr-ui)(?:\/.*)?$/],
+      neverBundle: [/^@askrjs\/askr(?:\/.*)?$/],
     },
   },
   build: {

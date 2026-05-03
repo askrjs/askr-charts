@@ -95,9 +95,7 @@ export function Heatmap({
                           {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
                         </span>
                         <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                          <span className="chart-tooltip-title">
-                            {cellLabel}
-                          </span>
+                          <span className="chart-tooltip-title">{cellLabel}</span>
                           <span className="chart-tooltip-value">
                             {cell ? cell.formattedValue : "0"}
                           </span>

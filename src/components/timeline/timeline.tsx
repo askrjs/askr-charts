@@ -80,14 +80,8 @@ export function Timeline({
                   ) : null}
                 </div>
                 <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                  <span className="chart-tooltip-title">
-                    {datum.label}
-                  </span>
-                  {datum.value ? (
-                    <span className="chart-tooltip-value">
-                      {datum.value}
-                    </span>
-                  ) : null}
+                  <span className="chart-tooltip-title">{datum.label}</span>
+                  {datum.value ? <span className="chart-tooltip-value">{datum.value}</span> : null}
                   {datum.description ? <span>{datum.description}</span> : null}
                 </span>
               </li>
