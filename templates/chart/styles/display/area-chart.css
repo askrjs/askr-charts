@@ -1,0 +1,110 @@
+:where(.ak-area-chart, [data-slot="area-chart"]) {
+  align-items: start;
+}
+
+:where(.ak-area-chart-graphic) {
+  display: flex;
+  align-items: stretch;
+  padding: 1rem;
+}
+
+:where(.ak-area-chart-list, [data-slot="area-chart-list"]) {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.375rem;
+  inline-size: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.ak-area-chart-item, [data-slot="area-chart-item"]) {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    "stage stage"
+    "label value";
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.5rem 0.625rem;
+  min-block-size: 14rem;
+}
+
+:where(.ak-area-chart-stage, [data-slot="area-chart-stage"]) {
+  position: relative;
+  grid-area: stage;
+  display: block;
+  min-block-size: 11rem;
+  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+    var(--ak-chart-color-surface);
+}
+
+:where(.ak-area-chart-fill, [data-slot="area-chart-fill"]) {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: block;
+  block-size: var(--ak-chart-item-value, 0%);
+  min-block-size: var(--ak-chart-item-min-block-size, 0);
+  border-radius: calc(var(--ak-chart-radius) - 0.25rem) calc(var(--ak-chart-radius) - 0.25rem) 0 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%, white),
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 28%, transparent)
+  );
+  opacity: 0.9;
+}
+
+:where(.ak-area-chart-connector, [data-slot="area-chart-connector"]) {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-inline-end: 0;
+  inset-block-end: calc(var(--ak-chart-item-value, 0%) - 1px);
+  display: block;
+  block-size: 1px;
+  background: color-mix(
+    in srgb,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 84%,
+    transparent
+  );
+}
+
+:where(.ak-area-chart-point, [data-slot="area-chart-point"]) {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: calc(var(--ak-chart-item-value, 0%) - 0.25rem);
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  transform: translate(-50%, 50%);
+  border-radius: 999px;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ak-chart-item-color) 14%, transparent);
+}
+
+:where(.ak-area-chart-label, [data-slot="area-chart-label"]) {
+  grid-area: label;
+  color: var(--ak-chart-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+:where(.ak-area-chart-value, [data-slot="area-chart-value"]) {
+  grid-area: value;
+  justify-self: end;
+  font-family: var(--ak-chart-font-family-mono);
+  color: var(--ak-chart-color-text-muted);
+}
+
+:where(.ak-area-chart, [data-slot="area-chart"])[data-ak-label-density="compact"]
+  :where(.ak-area-chart-value, [data-slot="area-chart-value"]),
+:where(.ak-area-chart, [data-slot="area-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-area-chart-value, [data-slot="area-chart-value"]) {
+  display: none;
+}
+
+:where(.ak-area-chart, [data-slot="area-chart"])[data-ak-label-density="minimal"]
+  :where(.ak-area-chart-label, [data-slot="area-chart-label"]) {
+  display: none;
+}

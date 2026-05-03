@@ -5,10 +5,13 @@
 @import "./styles/layout/responsive-layout.css";
 @import "./styles/display/chart.css";
 @import "./styles/display/bar-chart.css";
+@import "./styles/display/area-chart.css";
 @import "./styles/display/donut-chart.css";
 @import "./styles/display/flame-graph.css";
 @import "./styles/display/heatmap.css";
+@import "./styles/display/line-chart.css";
 @import "./styles/display/progress-meter.css";
+@import "./styles/display/radial-gauge.css";
 @import "./styles/display/sparkline.css";
 @import "./styles/display/stacked-bar-chart.css";
 @import "./styles/display/timeline.css";

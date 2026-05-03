@@ -201,12 +201,8 @@ export function FlameGraph({
                         {frame.formattedValue}
                       </span>
                       <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                        <span className="chart-tooltip-title">
-                          {frame.path}
-                        </span>
-                        <span className="chart-tooltip-value">
-                          {frame.formattedValue}
-                        </span>
+                        <span className="chart-tooltip-title">{frame.path}</span>
+                        <span className="chart-tooltip-value">{frame.formattedValue}</span>
                         {frame.description ? <span>{frame.description}</span> : null}
                       </span>
                     </li>

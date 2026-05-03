@@ -8,9 +8,9 @@ import {
   resolveChartAnimation,
   resolveValueFormatter,
 } from "../_internal/chart-helpers";
-import type { BarChartProps } from "./bar-chart.types";
+import type { AreaChartProps } from "./area-chart.types";
 
-export function BarChart({
+export function AreaChart({
   animate,
   animation,
   className,
@@ -24,7 +24,7 @@ export function BarChart({
   summary,
   valueFormatter,
   ...rest
-}: BarChartProps) {
+}: AreaChartProps) {
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "grow",
   });
@@ -33,8 +33,8 @@ export function BarChart({
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
-  const summaryId = createChartId("bar-chart-summary", id ?? label);
-  const tableId = createChartId("bar-chart-table", id ?? label);
+  const summaryId = createChartId("area-chart-summary", id ?? label);
+  const tableId = createChartId("area-chart-table", id ?? label);
 
   return (
     <section
@@ -42,8 +42,8 @@ export function BarChart({
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}
-      data-slot="bar-chart"
-      className={cx("ak-chart", "ak-bar-chart", className)}
+      data-slot="area-chart"
+      className={cx("ak-chart", "ak-area-chart", className)}
       style={mergeChartStyles(
         {
           "--ak-chart-max": normalized.max,
@@ -54,38 +54,41 @@ export function BarChart({
     >
       <div
         data-slot="chart-graphic"
-        className="ak-chart-graphic"
+        className="ak-chart-graphic ak-area-chart-graphic"
         role="img"
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
-        <ol data-slot="bar-chart-list" className="ak-bar-chart-list">
+        <ol data-slot="area-chart-list" className="ak-area-chart-list">
           <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
               <li
+                data-ak-chart-item="true"
                 data-ak-chart-tooltip-trigger="true"
-                data-slot="bar-chart-item"
-                className="ak-bar-chart-item"
+                data-slot="area-chart-item"
+                className="ak-area-chart-item"
                 tabIndex={0}
                 style={mergeChartStyles({
                   "--ak-chart-item-color":
                     datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
                   "--ak-chart-item-index": index(),
-                  "--ak-chart-item-min-size": datum.value > 0 ? "0.5rem" : 0,
+                  "--ak-chart-item-min-block-size": datum.value > 0 ? "1rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,
                 })}
               >
-                <span data-slot="bar-chart-label" className="ak-bar-chart-label">
+                <span
+                  data-slot="area-chart-stage"
+                  className="ak-area-chart-stage"
+                  aria-hidden="true"
+                >
+                  <span data-slot="area-chart-fill" className="ak-area-chart-fill" />
+                  <span data-slot="area-chart-connector" className="ak-area-chart-connector" />
+                  <span data-slot="area-chart-point" className="ak-area-chart-point" />
+                </span>
+                <span data-slot="area-chart-label" className="ak-area-chart-label">
                   {datum.label}
                 </span>
-                <span data-slot="bar-chart-track" className="ak-bar-chart-track">
-                  <span
-                    data-ak-chart-item="true"
-                    data-slot="bar-chart-fill"
-                    className="ak-bar-chart-fill"
-                  />
-                </span>
-                <span data-slot="bar-chart-value" className="ak-bar-chart-value">
+                <span data-slot="area-chart-value" className="ak-area-chart-value">
                   {datum.formattedValue}
                 </span>
                 <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
@@ -100,14 +103,14 @@ export function BarChart({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {getValueChartSummary(label, normalized.data, normalized.max, summary)}
+        {summary ?? getValueChartSummary(label, normalized.data, normalized.max, summary)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">
         <caption>{label}</caption>
         <thead>
           <tr>
-            <th scope="col">Label</th>
+            <th scope="col">Point</th>
             <th scope="col">Value</th>
             <th scope="col">Description</th>
           </tr>

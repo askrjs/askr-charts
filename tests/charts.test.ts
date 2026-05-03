@@ -2,11 +2,14 @@ import { describe, expect, it } from "vite-plus/test";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 
 import {
+  AreaChart,
   BarChart,
   DonutChart,
   FlameGraph,
   Heatmap,
+  LineChart,
   ProgressMeter,
+  RadialGauge,
   Sparkline,
   StackedBarChart,
   Timeline,
@@ -35,6 +38,37 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-animation-duration:300ms");
     expect(html).toContain("ak-bar-chart");
     expect(html).toContain("--ak-chart-item-index:0");
+  });
+
+  it("renders line and area charts with point series hooks", () => {
+    const line = renderChart(() =>
+      LineChart({
+        label: "Weekly signups",
+        data: [
+          { label: "Mon", value: 12 },
+          { label: "Tue", value: 18 },
+        ],
+        animate: true,
+      }),
+    );
+    const area = renderChart(() =>
+      AreaChart({
+        label: "Weekly orders",
+        data: [
+          { label: "Mon", value: 20 },
+          { label: "Tue", value: 26 },
+        ],
+        animate: true,
+      }),
+    );
+
+    expect(line).toContain('data-slot="line-chart"');
+    expect(line).toContain('data-ak-animation="fade"');
+    expect(line).toContain("--ak-chart-item-index:0");
+    expect(line).toContain("--ak-chart-item-value:");
+    expect(area).toContain('data-slot="area-chart"');
+    expect(area).toContain('data-ak-animation="grow"');
+    expect(area).toContain("--ak-chart-item-index:0");
   });
 
   it("accepts tuple chart data and explicit minimum scales", () => {
@@ -201,6 +235,20 @@ describe("chart components", () => {
 
     expect(chart.props["data-slot"]).toBe("progress-meter");
     expect(String(chart.props.style)).toContain("--ak-chart-item-value:60%");
+  });
+
+  it("renders a radial gauge with a conic progress dial", () => {
+    const html = renderChart(() =>
+      RadialGauge({
+        label: "Fill rate",
+        value: 68,
+        max: 100,
+      }),
+    );
+
+    expect(html).toContain('data-slot="radial-gauge"');
+    expect(html).toContain("--ak-chart-gauge-angle:244.8deg");
+    expect(html).toContain("Fill rate");
   });
 
   it("renders zero values truthfully without forcing non-zero sizes", () => {

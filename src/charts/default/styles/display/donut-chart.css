@@ -59,17 +59,14 @@
     .ak-donut-chart-segment:focus-within,
     [data-slot="donut-chart-segment"]:hover,
     [data-slot="donut-chart-segment"]:focus-within
-  ) :where(.chart-tooltip, [data-slot="tooltip-content"]) {
+  )
+  :where(.chart-tooltip, [data-slot="tooltip-content"]) {
   transform: translate(-50%, 0);
 }
 
 :where(.ak-donut-chart-segment:focus-visible, [data-slot="donut-chart-segment"]:focus-visible) {
   outline: 2px solid
-    color-mix(
-      in srgb,
-      var(--ak-color-focus-ring, var(--ak-chart-color-primary)) 70%,
-      white
-    );
+    color-mix(in srgb, var(--ak-color-focus-ring, var(--ak-chart-color-primary)) 70%, white);
   outline-offset: 2px;
 }
 

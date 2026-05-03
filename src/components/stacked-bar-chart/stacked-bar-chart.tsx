@@ -96,7 +96,11 @@ export function StackedBarChart({
                             "--ak-chart-item-value": `${total > 0 ? (clampChartValue(segment.value) / total) * 100 : 0}%`,
                           })}
                         >
-                          <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
+                          <span
+                            data-slot="tooltip-content"
+                            className="chart-tooltip"
+                            role="tooltip"
+                          >
                             <span className="chart-tooltip-title">
                               {datum.label}: {segment.label}
                             </span>
