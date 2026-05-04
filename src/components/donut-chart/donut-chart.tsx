@@ -1,7 +1,9 @@
 import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { buildDonutStops, getValueChartTotal, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
+  chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
@@ -63,6 +65,7 @@ export function DonutChart({
   const summaryId = createChartId("donut-chart-summary", id ?? label);
   const tableId = createChartId("donut-chart-table", id ?? label);
   const donutStops = buildDonutStops(normalized.data);
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
   let cursor = 0;
   const donutSegments = normalized.data
     .map((datum, index) => {
@@ -86,7 +89,7 @@ export function DonutChart({
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}

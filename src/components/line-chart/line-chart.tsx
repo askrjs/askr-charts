@@ -1,7 +1,9 @@
 import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
+  chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
@@ -33,12 +35,22 @@ export function LineChart({
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
+  const points = normalized.data.map((datum, index, all) => {
+    const next = all[index + 1];
+    const angle = next ? Math.atan2(next.fraction - datum.fraction, 1) * (180 / Math.PI) : 0;
+
+    return {
+      ...datum,
+      nextAngle: angle,
+    };
+  });
   const summaryId = createChartId("line-chart-summary", id ?? label);
   const tableId = createChartId("line-chart-table", id ?? label);
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}
@@ -60,7 +72,7 @@ export function LineChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="line-chart-list" className="ak-line-chart-list">
-          <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
+          <For each={points} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
               <li
                 data-ak-chart-item="true"
@@ -74,6 +86,7 @@ export function LineChart({
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-block-size": datum.value > 0 ? "0.75rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,
+                  "--ak-line-chart-segment-angle": `${datum.nextAngle}deg`,
                 })}
               >
                 <span
@@ -81,7 +94,6 @@ export function LineChart({
                   className="ak-line-chart-stage"
                   aria-hidden="true"
                 >
-                  <span data-slot="line-chart-fill" className="ak-line-chart-fill" />
                   <span data-slot="line-chart-connector" className="ak-line-chart-connector" />
                   <span data-slot="line-chart-point" className="ak-line-chart-point" />
                 </span>

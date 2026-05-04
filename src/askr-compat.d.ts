@@ -8,6 +8,11 @@ declare module "@askrjs/askr/foundations" {
     ref?: unknown;
   };
 
+  export function mergeProps<TBase extends Record<string, unknown>, TInjected extends Record<string, unknown>>(
+    base: TBase,
+    injected: TInjected,
+  ): TBase & TInjected;
+
   export interface JSXElement {
     $$typeof: symbol;
     type: string | ((props: Props) => unknown) | symbol;

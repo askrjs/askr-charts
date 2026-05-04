@@ -1,3 +1,10 @@
+:where(.ak-chart, [data-slot="area-chart"], [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="flame-graph"], [data-slot="heatmap"], [data-slot="line-chart"], [data-slot="progress-meter"], [data-slot="radial-gauge"], [data-slot="sparkline"], [data-slot="stacked-bar-chart"], [data-slot="timeline"]) {
+  --ak-chart-graphic-padding: 0.875rem;
+  --ak-chart-graphic-min-block-size: 12rem;
+  --ak-chart-track-thickness: 0.875rem;
+  --ak-chart-cell-size: 2rem;
+}
+
 :where(.chart-frame, [data-slot="chart-frame"]) {
   position: relative;
   overflow: hidden;
@@ -6,7 +13,8 @@
 :where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
   position: relative;
   overflow: visible;
-  min-height: 16rem;
+  min-height: var(--ak-chart-graphic-min-block-size, 14rem);
+  padding: var(--ak-chart-graphic-padding, 1rem);
   border-radius: calc(var(--ak-chart-radius) - 0.25rem);
   border: 1px solid var(--ak-chart-color-border);
   background:

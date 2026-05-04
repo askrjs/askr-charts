@@ -1,6 +1,12 @@
 import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { cx } from "../_internal/classnames";
-import { createChartId, mergeChartStyles, resolveChartAnimation } from "../_internal/chart-helpers";
+import {
+  chartTooltipTriggerProps,
+  createChartId,
+  mergeChartStyles,
+  resolveChartAnimation,
+} from "../_internal/chart-helpers";
 import type { TimelineProps } from "./timeline.types";
 
 export function Timeline({
@@ -21,6 +27,7 @@ export function Timeline({
   const items = [...data];
   const summaryId = createChartId("timeline-summary", id ?? label);
   const tableId = createChartId("timeline-table", id ?? label);
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
   const defaultSummary =
     items.length === 0
       ? `${label}. No timeline entries available.`
@@ -28,7 +35,7 @@ export function Timeline({
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}

@@ -5,14 +5,14 @@
 :where(.ak-radial-gauge-graphic) {
   display: grid;
   place-items: center;
-  padding: 1rem;
+  padding: 0.75rem 0.875rem 0.875rem;
 }
 
 :where(.ak-radial-gauge-dial, [data-slot="radial-gauge-dial"]) {
   position: relative;
   display: grid;
   place-items: center;
-  inline-size: min(18rem, 100%);
+  inline-size: min(14.5rem, 100%);
   aspect-ratio: 1;
 }
 
@@ -33,26 +33,26 @@
   z-index: 1;
   display: grid;
   justify-items: center;
-  gap: 0.25rem;
+  gap: 0.125rem;
   text-align: center;
 }
 
 :where(.ak-radial-gauge-label, [data-slot="radial-gauge-label"]) {
   color: var(--ak-chart-color-text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 :where(.ak-radial-gauge-value, [data-slot="radial-gauge-value"]) {
   font-family: var(--ak-chart-font-family-mono);
-  font-size: 1.5rem;
+  font-size: 1.125rem;
 }
 
 :where(.ak-radial-gauge-scale, [data-slot="radial-gauge-scale"]) {
   color: var(--ak-chart-color-text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 :where(.ak-radial-gauge-description, [data-slot="radial-gauge-description"]) {
   color: var(--ak-chart-color-text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }

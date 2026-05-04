@@ -1,12 +1,13 @@
 :where(.ak-progress-meter, [data-slot="progress-meter"]) {
   gap: 0.5rem;
+  --ak-chart-track-thickness: 0.625rem;
 }
 
 :where(.ak-progress-meter-header, [data-slot="progress-meter-header"]) {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 :where(.ak-progress-meter-label, [data-slot="progress-meter-label"]) {
@@ -20,7 +21,7 @@
 
 :where(.ak-progress-meter-track, [data-slot="progress-meter-track"]) {
   position: relative;
-  min-height: 0.875rem;
+  min-height: var(--ak-chart-track-thickness, 0.625rem);
   overflow: hidden;
   border-radius: 999px;
   background: var(--ak-chart-color-muted);
@@ -30,7 +31,7 @@
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
-  min-block-size: 0.875rem;
+  min-block-size: var(--ak-chart-track-thickness, 0.625rem);
   border-radius: inherit;
   background: var(--ak-chart-color-primary);
 }
@@ -38,4 +39,5 @@
 :where(.ak-progress-meter-description, [data-slot="progress-meter-description"]) {
   margin: 0;
   color: var(--ak-chart-color-text-muted);
+  font-size: 0.8125rem;
 }

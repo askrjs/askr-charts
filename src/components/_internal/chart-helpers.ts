@@ -48,6 +48,64 @@ export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyleInput): 
   return `${baseCss};${incomingCss}`;
 }
 
+const CHART_TOOLTIP_TRIGGER_SELECTOR = '[data-ak-chart-tooltip-trigger="true"]';
+const CHART_TOOLTIP_X_VAR = "--ak-chart-tooltip-x";
+const CHART_TOOLTIP_Y_VAR = "--ak-chart-tooltip-y";
+const CHART_TOOLTIP_MARGIN = 12;
+const CHART_TOOLTIP_OFFSET = 14;
+
+function getChartTooltipTrigger(event: Event): HTMLElement | null {
+  if (!(event.target instanceof HTMLElement)) {
+    return null;
+  }
+
+  return event.target.closest(CHART_TOOLTIP_TRIGGER_SELECTOR) as HTMLElement | null;
+}
+
+function centerChartTooltip(event: Event): void {
+  const trigger = getChartTooltipTrigger(event);
+  if (!trigger) {
+    return;
+  }
+
+  const rect = trigger.getBoundingClientRect();
+  const x = Math.min(
+    Math.max(rect.left + rect.width / 2, CHART_TOOLTIP_MARGIN),
+    window.innerWidth - CHART_TOOLTIP_MARGIN,
+  );
+  const y = Math.max(rect.top, CHART_TOOLTIP_MARGIN + CHART_TOOLTIP_OFFSET);
+
+  trigger.style.setProperty(CHART_TOOLTIP_X_VAR, `${x}px`);
+  trigger.style.setProperty(CHART_TOOLTIP_Y_VAR, `${y}px`);
+}
+
+function positionChartTooltip(event: Event): void {
+  const trigger = getChartTooltipTrigger(event);
+  if (!trigger || !("clientX" in event)) {
+    return;
+  }
+
+  const pointerEvent = event as PointerEvent;
+  const x = Math.min(
+    Math.max(pointerEvent.clientX, CHART_TOOLTIP_MARGIN),
+    window.innerWidth - CHART_TOOLTIP_MARGIN,
+  );
+  const y =
+    typeof pointerEvent.clientY === "number" && Number.isFinite(pointerEvent.clientY)
+      ? Math.max(pointerEvent.clientY - CHART_TOOLTIP_OFFSET, CHART_TOOLTIP_MARGIN)
+      : Math.max(trigger.getBoundingClientRect().top, CHART_TOOLTIP_MARGIN + CHART_TOOLTIP_OFFSET);
+
+  trigger.style.setProperty(CHART_TOOLTIP_X_VAR, `${x}px`);
+  trigger.style.setProperty(CHART_TOOLTIP_Y_VAR, `${y}px`);
+}
+
+export const chartTooltipTriggerProps = {
+  onPointerEnter: positionChartTooltip,
+  onPointerOver: positionChartTooltip,
+  onPointerMove: positionChartTooltip,
+  onFocusIn: centerChartTooltip,
+} as const;
+
 export function createChartId(prefix: string, value: string): string {
   const slug =
     value

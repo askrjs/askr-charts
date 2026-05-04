@@ -1,9 +1,13 @@
 :where(.ak-heatmap-grid, [data-slot="heatmap-grid"]) {
   display: grid;
-  grid-template-columns: max-content repeat(var(--ak-heatmap-columns, 1), minmax(2rem, 1fr));
-  gap: 0.375rem;
+  grid-template-columns: max-content repeat(var(--ak-heatmap-columns, 1), minmax(1.5rem, 1fr));
+  gap: 0.25rem;
   align-items: center;
-  padding: 1rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+:where(.ak-heatmap, [data-slot="heatmap"]) {
+  --ak-chart-cell-size: 1.5rem;
 }
 
 :where([data-slot="heatmap-row"]) {
@@ -13,14 +17,14 @@
 :where(.ak-heatmap-column-label, [data-slot="heatmap-column-label"]),
 :where(.ak-heatmap-row-label, [data-slot="heatmap-row-label"]) {
   color: var(--ak-chart-color-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
 }
 
 :where(.ak-heatmap-cell, [data-slot="heatmap-cell"]) {
   display: block;
-  min-inline-size: 2rem;
-  min-block-size: 2rem;
-  border-radius: 0.65rem;
+  min-inline-size: var(--ak-chart-cell-size, 1.75rem);
+  min-block-size: var(--ak-chart-cell-size, 1.75rem);
+  border-radius: 0.55rem;
   background: var(--ak-chart-cell-bg, var(--ak-chart-color-muted));
   border: 1px solid var(--ak-chart-color-border);
 }

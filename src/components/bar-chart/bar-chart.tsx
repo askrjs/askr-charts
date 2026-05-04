@@ -1,7 +1,9 @@
 import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
+  chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
@@ -35,10 +37,11 @@ export function BarChart({
   });
   const summaryId = createChartId("bar-chart-summary", id ?? label);
   const tableId = createChartId("bar-chart-table", id ?? label);
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}

@@ -1,16 +1,16 @@
 :where(.ak-bar-chart-list, [data-slot="bar-chart-list"]) {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   list-style: none;
   margin: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
 :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]) {
   display: grid;
-  grid-template-columns: minmax(0, 6rem) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 5rem) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
@@ -19,7 +19,7 @@
 
 :where(.ak-bar-chart-track, [data-slot="bar-chart-track"]) {
   position: relative;
-  min-height: 0.875rem;
+  min-height: var(--ak-chart-track-thickness, 0.75rem);
   border-radius: 999px;
   overflow: hidden;
   background: var(--ak-chart-color-muted);
@@ -29,7 +29,7 @@
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
-  min-block-size: 0.875rem;
+  min-block-size: var(--ak-chart-track-thickness, 0.75rem);
   border-radius: inherit;
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
 }
@@ -37,6 +37,7 @@
 :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
   font-family: var(--ak-chart-font-family-mono);
   color: var(--ak-chart-color-text-muted);
+  font-size: 0.8125rem;
 }
 
 :where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="compact"]

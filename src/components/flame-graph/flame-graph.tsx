@@ -1,7 +1,8 @@
-import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { clampChartValue, formatChartValue } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
+  chartTooltipTriggerProps,
   createChartId,
   mergeChartStyles,
   resolveChartAnimation,
@@ -149,10 +150,11 @@ export function FlameGraph({
     flattened.length === 0
       ? `${label}. No flame graph frames available.`
       : `${label}. ${flattened.length} frames across ${rows.length} levels. Widest frame is ${dominantFrame?.path ?? ""} at ${formatChartValue(dominantFrame?.spanValue ?? 0, formatter)}. Total span is ${formatChartValue(total, formatter)}.`;
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}
@@ -174,43 +176,39 @@ export function FlameGraph({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <div data-slot="flame-graph-stack" className="ak-flame-graph-stack">
-          <For each={rows} by={(row) => row.depth}>
-            {(row) => (
-              <ol data-slot="flame-graph-row" className="ak-flame-graph-row">
-                <For each={row.frames} by={(frame) => `${frame.path}-${frame.itemIndex}`}>
-                  {(frame) => (
-                    <li
-                      data-ak-chart-item="true"
-                      data-ak-chart-tooltip-trigger="true"
-                      data-slot="flame-graph-cell"
-                      className="ak-flame-graph-cell"
-                      aria-label={`${frame.path}: ${frame.formattedValue}`}
-                      tabIndex={0}
-                      style={mergeChartStyles({
-                        "--ak-chart-item-color":
-                          frame.color ?? `var(--ak-chart-series-${(frame.depth % 6) + 1})`,
-                        "--ak-chart-item-index": frame.itemIndex,
-                        "--ak-chart-item-offset": `${frame.startFraction * 100}%`,
-                        "--ak-chart-item-value": `${frame.widthFraction * 100}%`,
-                      })}
-                    >
-                      <span data-slot="flame-graph-label" className="ak-flame-graph-label">
-                        {frame.label}
-                      </span>
-                      <span data-slot="flame-graph-value" className="ak-flame-graph-value">
-                        {frame.formattedValue}
-                      </span>
-                      <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                        <span className="chart-tooltip-title">{frame.path}</span>
-                        <span className="chart-tooltip-value">{frame.formattedValue}</span>
-                        {frame.description ? <span>{frame.description}</span> : null}
-                      </span>
-                    </li>
-                  )}
-                </For>
-              </ol>
-            )}
-          </For>
+          {rows.map((row) => (
+            <ol data-slot="flame-graph-row" className="ak-flame-graph-row">
+              {row.frames.map((frame) => (
+                <li
+                  data-ak-chart-item="true"
+                  data-ak-chart-tooltip-trigger="true"
+                  data-slot="flame-graph-cell"
+                  className="ak-flame-graph-cell"
+                  aria-label={`${frame.path}: ${frame.formattedValue}`}
+                  tabIndex={0}
+                  style={mergeChartStyles({
+                    "--ak-chart-item-color":
+                      frame.color ?? `var(--ak-chart-series-${(frame.depth % 6) + 1})`,
+                    "--ak-chart-item-index": frame.itemIndex,
+                    "--ak-chart-item-offset": `${frame.startFraction * 100}%`,
+                    "--ak-chart-item-value": `${frame.widthFraction * 100}%`,
+                  })}
+                >
+                  <span data-slot="flame-graph-label" className="ak-flame-graph-label">
+                    {frame.label}
+                  </span>
+                  <span data-slot="flame-graph-value" className="ak-flame-graph-value">
+                    {frame.formattedValue}
+                  </span>
+                  <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
+                    <span className="chart-tooltip-title">{frame.path}</span>
+                    <span className="chart-tooltip-value">{frame.formattedValue}</span>
+                    {frame.description ? <span>{frame.description}</span> : null}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ))}
         </div>
       </div>
 
@@ -231,18 +229,16 @@ export function FlameGraph({
           </tr>
         </thead>
         <tbody>
-          <For each={flattened} by={(frame) => `${frame.path}-${frame.itemIndex}`}>
-            {(frame) => (
-              <tr>
-                <th scope="row">{frame.path}</th>
-                <td>{frame.depth + 1}</td>
-                <td>{frame.formattedValue}</td>
-                <td>{formatChartValue(frame.spanValue, formatter)}</td>
-                <td>{frame.parentLabel ?? ""}</td>
-                <td>{frame.description ?? ""}</td>
-              </tr>
-            )}
-          </For>
+          {flattened.map((frame) => (
+            <tr>
+              <th scope="row">{frame.path}</th>
+              <td>{frame.depth + 1}</td>
+              <td>{frame.formattedValue}</td>
+              <td>{formatChartValue(frame.spanValue, formatter)}</td>
+              <td>{frame.parentLabel ?? ""}</td>
+              <td>{frame.description ?? ""}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </section>

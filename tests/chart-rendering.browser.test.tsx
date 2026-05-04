@@ -11,6 +11,8 @@ import {
   LineChart,
   ProgressMeter,
   RadialGauge,
+  StackedBarChart,
+  Sparkline,
   Timeline,
 } from "../src/components";
 
@@ -84,6 +86,36 @@ describe("browser chart rendering", () => {
     );
   });
 
+  it("should align chart tooltips to the pointer inside the hovered trigger", async () => {
+    container = mount(<BarChart label="Monthly revenue" data={[{ label: "Jan", value: 40 }]} />);
+    await flushUpdates();
+
+    const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
+    expect(item).toBeTruthy();
+
+    Object.defineProperty(item, "getBoundingClientRect", {
+      value: () => ({
+        bottom: 60,
+        height: 40,
+        left: 100,
+        right: 300,
+        top: 20,
+        width: 200,
+        x: 100,
+        y: 20,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const event = new Event("pointermove", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clientX", { value: 150 });
+    Object.defineProperty(event, "clientY", { value: 40 });
+    item.dispatchEvent(event);
+
+    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-x:150px");
+    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-y:26px");
+  });
+
   it("should render line, area, and radial charts into the browser DOM", async () => {
     container = mount(
       <div>
@@ -111,13 +143,22 @@ describe("browser chart rendering", () => {
     const line = container.querySelector('[data-slot="line-chart"]');
     const area = container.querySelector('[data-slot="area-chart"]');
     const radial = container.querySelector('[data-slot="radial-gauge"]');
+    const lineStage = container.querySelector('[data-slot="line-chart-stage"]') as HTMLElement;
+    const areaStage = container.querySelector('[data-slot="area-chart-stage"]') as HTMLElement;
+    const areaGraphic = container.querySelector('[data-slot="area-chart"] [data-slot="chart-graphic"]') as HTMLElement;
 
     expect(line?.getAttribute("data-ak-animation")).toBe("fade");
     expect(area?.getAttribute("data-ak-animation")).toBe("grow");
     expect(radial?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(container.querySelector('[data-slot="line-chart-point"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="line-chart-fill"]')).toBeNull();
     expect(container.querySelector('[data-slot="area-chart-point"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="radial-gauge-ring"]')).toBeTruthy();
+    expect(getComputedStyle(areaStage).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(getComputedStyle(areaStage).borderBottomStyle).toBe("solid");
+    expect(getComputedStyle(lineStage).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(getComputedStyle(lineStage).borderBottomStyle).toBe("solid");
+    expect(parseFloat(getComputedStyle(areaGraphic).minHeight)).toBeLessThanOrEqual(180);
   });
 
   it("should render heatmap grids with normalized column count and fallback cells", async () => {
@@ -136,6 +177,7 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="heatmap"]');
     const cells = [...container.querySelectorAll('[data-slot="heatmap-cell"]')];
+    const firstCell = container.querySelector('[data-slot="heatmap-cell"]') as HTMLElement;
 
     expect(normalizeStyle(root?.getAttribute("style"))).toContain("--ak-heatmap-columns:2");
     expect(root?.getAttribute("data-ak-animation")).toBe("fade");
@@ -144,6 +186,7 @@ describe("browser chart rendering", () => {
     expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(cells[3]?.getAttribute("aria-label")).toBe("Week 2, Tue: 0");
     expect(normalizeStyle(cells[3]?.getAttribute("style"))).toContain("--ak-chart-item-index:3");
+    expect(parseFloat(getComputedStyle(firstCell).minInlineSize)).toBeLessThanOrEqual(30);
   });
 
   it("should render flame graph frames with positioned spans", async () => {
@@ -204,6 +247,80 @@ describe("browser chart rendering", () => {
     expect(meter?.getAttribute("aria-valuetext")).toBe("60%");
     expect(normalizeStyle(fill?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(description?.textContent).toBe("Current quarter attainment");
+  });
+
+  it("should render donut and radial charts with compact circular geometry", async () => {
+    container = mount(
+      <div>
+        <DonutChart
+          label="Traffic split"
+          data={[
+            { label: "Direct", value: 44 },
+            { label: "Referral", value: 21 },
+            { label: "Social", value: 35 },
+          ]}
+        />
+        <RadialGauge label="Fill rate" value={68} max={100} />
+      </div>,
+    );
+    await flushUpdates();
+
+    const donutRing = container.querySelector('[data-slot="donut-chart-ring-wrap"]') as HTMLElement;
+    const radialDial = container.querySelector('[data-slot="radial-gauge-dial"]') as HTMLElement;
+    const donutItems = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
+
+    expect(donutItems).toHaveLength(3);
+    expect(parseFloat(getComputedStyle(donutRing).inlineSize)).toBeLessThanOrEqual(232);
+    expect(parseFloat(getComputedStyle(radialDial).inlineSize)).toBeLessThanOrEqual(232);
+  });
+
+  it("should render stacked bar charts with compact track geometry", async () => {
+    container = mount(
+      <StackedBarChart
+        label="Pipeline mix"
+        data={[
+          {
+            label: "Q1",
+            segments: [
+              { label: "Open", value: 12 },
+              { label: "Won", value: 9 },
+            ],
+          },
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const track = container.querySelector('[data-slot="stacked-bar-chart-track"]') as HTMLElement;
+    const segments = [...container.querySelectorAll('[data-slot="stacked-bar-chart-segment"]')];
+
+    expect(segments).toHaveLength(2);
+    expect(parseFloat(getComputedStyle(track).minHeight)).toBeLessThanOrEqual(12);
+  });
+
+  it("should render sparkline and progress meter surfaces compactly", async () => {
+    container = mount(
+      <div>
+        <Sparkline
+          label="Response time trend"
+          data={[
+            { label: "Mon", value: 8 },
+            { label: "Tue", value: 4 },
+            { label: "Wed", value: 6 },
+          ]}
+        />
+        <ProgressMeter label="Quota progress" value={48} max={80} />
+      </div>,
+    );
+    await flushUpdates();
+
+    const sparklineGraphic = container.querySelector('[data-slot="sparkline-list"]') as HTMLElement;
+    const sparklineDot = container.querySelector('[data-slot="sparkline-dot"]') as HTMLElement;
+    const progressTrack = container.querySelector('[data-slot="progress-meter-track"]') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(sparklineGraphic).minBlockSize)).toBeLessThanOrEqual(56);
+    expect(parseFloat(getComputedStyle(sparklineDot).inlineSize)).toBeLessThanOrEqual(6);
+    expect(parseFloat(getComputedStyle(progressTrack).minHeight)).toBeLessThanOrEqual(10);
   });
 
   it("should keep zero values at zero width in live rendering", async () => {
@@ -316,6 +433,7 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="timeline"]');
     const items = [...container.querySelectorAll('[data-slot="timeline-item"]')];
+    const list = container.querySelector('[data-slot="timeline-list"]') as HTMLElement;
     const firstMarker = container.querySelector('[data-slot="timeline-marker"]');
     const tooltipTitle = container.querySelector(".chart-tooltip-title");
     const tooltipValue = container.querySelector(".chart-tooltip-value");
@@ -329,6 +447,7 @@ describe("browser chart rendering", () => {
     expect(firstMarker).toBeTruthy();
     expect(tooltipTitle?.textContent).toBe("Alpha");
     expect(tooltipValue?.textContent).toBe("Jan");
+    expect(parseFloat(getComputedStyle(list).rowGap)).toBeLessThanOrEqual(12);
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Release timeline",
     );

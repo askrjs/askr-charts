@@ -1,7 +1,9 @@
 import { For } from "@askrjs/askr";
+import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
+  chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
   mergeChartStyles,
@@ -34,10 +36,11 @@ export function Sparkline({
   });
   const summaryId = createChartId("sparkline-summary", id ?? label);
   const tableId = createChartId("sparkline-table", id ?? label);
+  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
-      {...rest}
+      {...sectionProps}
       id={id}
       {...animationAttrs}
       data-slot="sparkline"
