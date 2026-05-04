@@ -1,20 +1,21 @@
 :where(.ak-stacked-bar-chart, [data-slot="stacked-bar-chart"]) {
   align-items: start;
+  --ak-chart-track-thickness: 0.625rem;
 }
 
 :where(.ak-stacked-bar-chart-list, [data-slot="stacked-bar-chart-list"]) {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   list-style: none;
   margin: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
 :where(.ak-stacked-bar-chart-item, [data-slot="stacked-bar-chart-item"]) {
   display: grid;
   grid-template-columns: minmax(0, 6rem) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 :where(.ak-stacked-bar-chart-label, [data-slot="stacked-bar-chart-label"]) {
@@ -23,7 +24,7 @@
 
 :where(.ak-stacked-bar-chart-track, [data-slot="stacked-bar-chart-track"]) {
   display: flex;
-  min-height: 0.875rem;
+  min-height: var(--ak-chart-track-thickness, 0.625rem);
   overflow: hidden;
   border-radius: 999px;
   background: var(--ak-chart-color-muted);
@@ -33,7 +34,7 @@
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
-  min-block-size: 0.875rem;
+  min-block-size: var(--ak-chart-track-thickness, 0.625rem);
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
 }
 
