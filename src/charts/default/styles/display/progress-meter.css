@@ -1,6 +1,6 @@
 :where(.ak-progress-meter, [data-slot="progress-meter"]) {
-  gap: 0.5rem;
-  --ak-chart-track-thickness: 0.625rem;
+  gap: 0.4rem;
+  --ak-chart-track-thickness: 0.55rem;
 }
 
 :where(.ak-progress-meter-header, [data-slot="progress-meter-header"]) {

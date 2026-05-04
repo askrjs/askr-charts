@@ -35,6 +35,16 @@ export function AreaChart({
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
+  const areaPoints = normalized.data.map((datum, index, all) => {
+    const x = all.length <= 1 ? 50 : (index / (all.length - 1)) * 100;
+    const y = 100 - datum.fraction * 100;
+
+    return `${x.toFixed(3)}% ${y.toFixed(3)}%`;
+  });
+  const areaPolygon =
+    areaPoints.length > 0
+      ? `polygon(0% 100%, ${areaPoints.join(", ")}, 100% 100%)`
+      : "polygon(0% 100%, 100% 100%)";
   const summaryId = createChartId("area-chart-summary", id ?? label);
   const tableId = createChartId("area-chart-table", id ?? label);
   const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
@@ -62,6 +72,14 @@ export function AreaChart({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
+        <span
+          data-slot="area-chart-surface"
+          className="ak-area-chart-surface"
+          aria-hidden="true"
+          style={mergeChartStyles({
+            "--ak-area-chart-polygon": areaPolygon,
+          })}
+        />
         <ol data-slot="area-chart-list" className="ak-area-chart-list">
           <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
@@ -73,7 +91,7 @@ export function AreaChart({
                 tabIndex={0}
                 style={mergeChartStyles({
                   "--ak-chart-item-color":
-                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                    datum.color ?? "var(--ak-chart-color-primary)",
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-block-size": datum.value > 0 ? "1rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,

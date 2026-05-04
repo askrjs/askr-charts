@@ -35,15 +35,21 @@ export function LineChart({
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
-  const points = normalized.data.map((datum, index, all) => {
-    const next = all[index + 1];
-    const angle = next ? Math.atan2(next.fraction - datum.fraction, 1) * (180 / Math.PI) : 0;
+  const points = normalized.data;
+  const linePoints = points.map((datum, index, all) => {
+    const x = all.length <= 1 ? 50 : (index / (all.length - 1)) * 100;
+    const y = 100 - datum.fraction * 100;
 
-    return {
-      ...datum,
-      nextAngle: angle,
-    };
+    return { x, y };
   });
+  const lineTop = linePoints.map(({ x, y }) => `${x.toFixed(3)}% ${Math.max(y - 1.1, 0)}%`);
+  const lineBottom = [...linePoints]
+    .reverse()
+    .map(({ x, y }) => `${x.toFixed(3)}% ${Math.min(y + 1.1, 100)}%`);
+  const linePolygon =
+    linePoints.length > 0
+      ? `polygon(${[...lineTop, ...lineBottom].join(", ")})`
+      : "polygon(0% 50%, 100% 50%)";
   const summaryId = createChartId("line-chart-summary", id ?? label);
   const tableId = createChartId("line-chart-table", id ?? label);
   const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
@@ -71,6 +77,14 @@ export function LineChart({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
+        <span
+          data-slot="line-chart-stroke"
+          className="ak-line-chart-stroke"
+          aria-hidden="true"
+          style={mergeChartStyles({
+            "--ak-line-chart-polygon": linePolygon,
+          })}
+        />
         <ol data-slot="line-chart-list" className="ak-line-chart-list">
           <For each={points} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
@@ -78,15 +92,15 @@ export function LineChart({
                 data-ak-chart-item="true"
                 data-ak-chart-tooltip-trigger="true"
                 data-slot="line-chart-item"
+                data-ak-line-terminal={index() === points.length - 1 ? "true" : undefined}
                 className="ak-line-chart-item"
                 tabIndex={0}
                 style={mergeChartStyles({
                   "--ak-chart-item-color":
-                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                    datum.color ?? "var(--ak-chart-color-primary)",
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-block-size": datum.value > 0 ? "0.75rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,
-                  "--ak-line-chart-segment-angle": `${datum.nextAngle}deg`,
                 })}
               >
                 <span

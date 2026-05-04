@@ -1,7 +1,7 @@
 :where(.ak-sparkline, [data-slot="sparkline"]) {
   align-items: start;
   --ak-chart-graphic-padding: 0.5rem 0.75rem 0.625rem;
-  --ak-chart-graphic-min-block-size: 5rem;
+  --ak-chart-graphic-min-block-size: 4.25rem;
 }
 
 :where(.ak-sparkline-graphic) {
@@ -16,7 +16,7 @@
   align-items: end;
   gap: 0.1875rem;
   inline-size: 100%;
-  min-block-size: 3.5rem;
+  min-block-size: 2.75rem;
   list-style: none;
   margin: 0;
   padding: 0;

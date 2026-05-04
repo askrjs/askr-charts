@@ -1,5 +1,6 @@
 :where(.ak-radial-gauge, [data-slot="radial-gauge"]) {
   align-items: start;
+  --ak-chart-graphic-min-block-size: 10rem;
 }
 
 :where(.ak-radial-gauge-graphic) {
@@ -12,7 +13,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  inline-size: min(14.5rem, 100%);
+  inline-size: min(10.5rem, 100%);
   aspect-ratio: 1;
 }
 
@@ -25,7 +26,7 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary)) 0 var(--ak-chart-gauge-angle, 0deg),
     var(--ak-chart-color-muted) var(--ak-chart-gauge-angle, 0deg) 360deg
   );
-  mask: radial-gradient(circle, transparent 0 60%, black 61% 100%);
+  mask: radial-gradient(circle, transparent 0 57%, black 58% 100%);
 }
 
 :where(.ak-radial-gauge-center, [data-slot="radial-gauge-center"]) {

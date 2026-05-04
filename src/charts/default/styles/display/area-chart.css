@@ -1,78 +1,71 @@
 :where(.ak-area-chart, [data-slot="area-chart"]) {
   align-items: start;
   --ak-chart-graphic-padding: 0.75rem 0.875rem 0.875rem;
-  --ak-chart-graphic-min-block-size: 11rem;
+  --ak-chart-graphic-min-block-size: 9.5rem;
 }
 
 :where(.ak-area-chart-graphic) {
   display: flex;
   align-items: stretch;
+  overflow: hidden;
 }
 
 :where(.ak-area-chart-list, [data-slot="area-chart-list"]) {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: 0.0625rem;
+  gap: 0;
   inline-size: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+:where(.ak-area-chart-surface, [data-slot="area-chart-surface"]) {
+  position: absolute;
+  inset: 0.75rem 0.875rem 2.65rem;
+  display: block;
+  border-block-end: 1px solid var(--ak-chart-color-border);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-primary) 42%, transparent) 0%,
+      color-mix(in srgb, var(--ak-chart-color-primary) 14%, transparent) 64%,
+      transparent 100%
+    );
+  clip-path: var(--ak-area-chart-polygon);
+  pointer-events: none;
+}
+
 :where(.ak-area-chart-item, [data-slot="area-chart-item"]) {
   position: relative;
   display: grid;
   grid-template-areas:
-    "stage stage"
-    "label value";
-  grid-template-columns: minmax(0, 1fr) auto;
+    "stage"
+    "label";
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
-  gap: 0.5rem 0.625rem;
-  min-block-size: 11rem;
+  gap: 0.5rem;
+  min-block-size: 9.5rem;
 }
 
 :where(.ak-area-chart-stage, [data-slot="area-chart-stage"]) {
   position: relative;
   grid-area: stage;
   display: block;
-  min-block-size: 8.75rem;
-  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  min-block-size: 7rem;
   border-block-end: 1px solid var(--ak-chart-color-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
-    transparent;
+  background: transparent;
 }
 
 :where(.ak-area-chart-fill, [data-slot="area-chart-fill"]) {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
-  display: block;
-  block-size: var(--ak-chart-item-value, 0%);
-  min-block-size: var(--ak-chart-item-min-block-size, 0);
-  border-radius: calc(var(--ak-chart-radius) - 0.25rem) calc(var(--ak-chart-radius) - 0.25rem) 0 0;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 76%, white),
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%, transparent)
-  );
-  opacity: 0.82;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  display: none;
 }
 
 :where(.ak-area-chart-connector, [data-slot="area-chart-connector"]) {
-  position: absolute;
-  inset-inline-start: 50%;
-  inset-inline-end: 0;
-  inset-block-end: calc(var(--ak-chart-item-value, 0%) - 1px);
-  display: block;
-  block-size: 1px;
-  background: color-mix(
-    in srgb,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 84%,
-    transparent
-  );
+  display: none;
 }
 
 :where(.ak-area-chart-point, [data-slot="area-chart-point"]) {
@@ -91,13 +84,11 @@
   grid-area: label;
   color: var(--ak-chart-color-text-muted);
   font-size: 0.8125rem;
+  text-align: center;
 }
 
 :where(.ak-area-chart-value, [data-slot="area-chart-value"]) {
-  grid-area: value;
-  justify-self: end;
-  font-family: var(--ak-chart-font-family-mono);
-  color: var(--ak-chart-color-text-muted);
+  display: none;
 }
 
 :where(.ak-area-chart, [data-slot="area-chart"])[data-ak-label-density="compact"]

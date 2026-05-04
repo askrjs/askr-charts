@@ -72,6 +72,7 @@
   },
   "scripts": {
     "new:chart": "node ./scripts/new-chart.js",
+    "verify:chart-contract-docs": "node ./scripts/verify-chart-contract-docs.js",
     "verify:token-contract": "node ./scripts/verify-token-contract.js",
     "verify:responsive": "node ./scripts/verify-responsive-chart.js",
     "verify:slots": "node ./scripts/verify-slot-coverage.js",
@@ -81,7 +82,7 @@
     "fmt": "vp fmt .",
     "lint": "vp lint .",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
-    "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots",
+    "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots && npm run verify:chart-contract-docs",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
