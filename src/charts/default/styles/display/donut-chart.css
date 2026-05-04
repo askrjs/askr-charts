@@ -1,5 +1,6 @@
 :where(.ak-donut-chart, [data-slot="donut-chart"]) {
   align-items: start;
+  --ak-chart-graphic-min-block-size: 10rem;
 }
 
 :where(.ak-donut-chart-label, [data-slot="donut-chart-label"]) {
@@ -14,7 +15,7 @@
 
 :where(.ak-donut-chart-ring-wrap, [data-slot="donut-chart-ring-wrap"]) {
   position: relative;
-  inline-size: min(14.5rem, 100%);
+  inline-size: min(10.5rem, 100%);
   aspect-ratio: 1;
 }
 
@@ -23,7 +24,7 @@
   block-size: 100%;
   border-radius: 999px;
   background: conic-gradient(var(--ak-chart-donut-stops));
-  mask: radial-gradient(circle, transparent 0 60%, black 61% 100%);
+  mask: radial-gradient(circle, transparent 0 57%, black 58% 100%);
 }
 
 :where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"]) {

@@ -1,14 +1,25 @@
 :where([data-ak-chart-tooltip-trigger="true"]) {
-  position: relative;
   outline: none;
   --ak-chart-tooltip-x: 0px;
   --ak-chart-tooltip-y: 0px;
 }
 
+:where(
+    [data-slot="area-chart-item"],
+    [data-slot="bar-chart-item"],
+    [data-slot="line-chart-item"],
+    [data-slot="stacked-bar-chart-segment"],
+    [data-slot="sparkline-item"],
+    [data-slot="heatmap-cell"],
+    [data-slot="timeline-item"],
+    [data-slot="donut-chart-item"]
+  )[data-ak-chart-tooltip-trigger="true"] {
+  position: relative;
+}
+
 :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
-  position: fixed;
-  left: var(--ak-chart-tooltip-x, 0px);
-  top: var(--ak-chart-tooltip-y, 0px);
+  inset-inline-start: 50%;
+  inset-block-end: calc(100% + 0.5rem);
   z-index: var(--ak-z-tooltip, 20);
   pointer-events: none;
   display: grid;
@@ -30,12 +41,18 @@
   box-shadow: 0 16px 36px color-mix(in srgb, var(--ak-color-text) 14%, transparent);
   opacity: 0;
   visibility: hidden;
-  transform: translate(-50%, calc(-100% - 0.35rem));
-  will-change: transform, left, top, opacity;
+  transform: translate(-50%, 0.25rem);
+  will-change: transform, opacity;
   transition:
     opacity 120ms ease-out,
     transform 120ms ease-out,
     visibility 120ms ease-out;
+}
+
+.chart-tooltip,
+[data-slot="tooltip-content"],
+[data-slot="chart-tooltip"] {
+  position: absolute;
 }
 
 :where(
@@ -45,7 +62,7 @@
   :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, calc(-100% - 0.25rem));
+  transform: translate(-50%, 0);
   animation: ak-tooltip-in var(--ak-duration-fast, 120ms) var(--ak-ease-standard, ease-out);
 }
 

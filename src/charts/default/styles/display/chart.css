@@ -1,8 +1,8 @@
 :where(.ak-chart, [data-slot="area-chart"], [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="flame-graph"], [data-slot="heatmap"], [data-slot="line-chart"], [data-slot="progress-meter"], [data-slot="radial-gauge"], [data-slot="sparkline"], [data-slot="stacked-bar-chart"], [data-slot="timeline"]) {
-  --ak-chart-graphic-padding: 0.875rem;
-  --ak-chart-graphic-min-block-size: 12rem;
-  --ak-chart-track-thickness: 0.875rem;
-  --ak-chart-cell-size: 2rem;
+  --ak-chart-graphic-padding: 0.75rem;
+  --ak-chart-graphic-min-block-size: 9.5rem;
+  --ak-chart-track-thickness: 0.75rem;
+  --ak-chart-cell-size: 1.625rem;
 }
 
 :where(.chart-frame, [data-slot="chart-frame"]) {
@@ -17,9 +17,7 @@
   padding: var(--ak-chart-graphic-padding, 1rem);
   border-radius: calc(var(--ak-chart-radius) - 0.25rem);
   border: 1px solid var(--ak-chart-color-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
-    var(--ak-chart-color-surface);
+  background: var(--ak-chart-color-surface);
 }
 
 :where(.chart-empty-state, [data-slot="chart-empty-state"]) {

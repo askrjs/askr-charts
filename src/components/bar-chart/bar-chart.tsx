@@ -57,7 +57,7 @@ export function BarChart({
     >
       <div
         data-slot="chart-graphic"
-        className="ak-chart-graphic"
+        className="ak-chart-graphic ak-bar-chart-graphic"
         role="img"
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
