@@ -145,7 +145,9 @@ describe("browser chart rendering", () => {
     const radial = container.querySelector('[data-slot="radial-gauge"]');
     const lineStage = container.querySelector('[data-slot="line-chart-stage"]') as HTMLElement;
     const areaStage = container.querySelector('[data-slot="area-chart-stage"]') as HTMLElement;
-    const areaGraphic = container.querySelector('[data-slot="area-chart"] [data-slot="chart-graphic"]') as HTMLElement;
+    const areaGraphic = container.querySelector(
+      '[data-slot="area-chart"] [data-slot="chart-graphic"]',
+    ) as HTMLElement;
 
     expect(line?.getAttribute("data-ak-animation")).toBe("fade");
     expect(area?.getAttribute("data-ak-animation")).toBe("grow");
@@ -316,7 +318,9 @@ describe("browser chart rendering", () => {
 
     const sparklineGraphic = container.querySelector('[data-slot="sparkline-list"]') as HTMLElement;
     const sparklineDot = container.querySelector('[data-slot="sparkline-dot"]') as HTMLElement;
-    const progressTrack = container.querySelector('[data-slot="progress-meter-track"]') as HTMLElement;
+    const progressTrack = container.querySelector(
+      '[data-slot="progress-meter-track"]',
+    ) as HTMLElement;
 
     expect(parseFloat(getComputedStyle(sparklineGraphic).minBlockSize)).toBeLessThanOrEqual(56);
     expect(parseFloat(getComputedStyle(sparklineDot).inlineSize)).toBeLessThanOrEqual(6);

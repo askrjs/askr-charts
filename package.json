@@ -76,8 +76,9 @@
     "verify:token-contract": "node ./scripts/verify-token-contract.js",
     "verify:responsive": "node ./scripts/verify-responsive-chart.js",
     "verify:slots": "node ./scripts/verify-slot-coverage.js",
-    "test": "npm run test:unit && npm run test:browser",
-    "test:unit": "vp test run -c vitest.config.ts",
+    "test": "npm run test:unit && npm run test:jsdom && npm run test:browser",
+    "test:unit": "vp test run -c vitest.node.config.ts",
+    "test:jsdom": "vp test run -c vitest.jsdom.config.ts",
     "test:browser": "vp test run -c vitest.browser.config.ts",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
@@ -86,7 +87,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@askrjs/askr": ">=0.0.30 <0.1.0",
+    "@askrjs/askr": "^0.0.33",
     "@askrjs/vite": "^0.0.2",
     "@tsdown/css": "0.21.10",
     "@types/node": "^25.6.0",

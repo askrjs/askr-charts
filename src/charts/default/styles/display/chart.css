@@ -1,4 +1,17 @@
-:where(.ak-chart, [data-slot="area-chart"], [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="flame-graph"], [data-slot="heatmap"], [data-slot="line-chart"], [data-slot="progress-meter"], [data-slot="radial-gauge"], [data-slot="sparkline"], [data-slot="stacked-bar-chart"], [data-slot="timeline"]) {
+:where(
+  .ak-chart,
+  [data-slot="area-chart"],
+  [data-slot="bar-chart"],
+  [data-slot="donut-chart"],
+  [data-slot="flame-graph"],
+  [data-slot="heatmap"],
+  [data-slot="line-chart"],
+  [data-slot="progress-meter"],
+  [data-slot="radial-gauge"],
+  [data-slot="sparkline"],
+  [data-slot="stacked-bar-chart"],
+  [data-slot="timeline"]
+) {
   --ak-chart-graphic-padding: 0.75rem;
   --ak-chart-graphic-min-block-size: 9.5rem;
   --ak-chart-track-thickness: 0.75rem;
