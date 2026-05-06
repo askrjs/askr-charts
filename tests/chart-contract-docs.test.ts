@@ -31,9 +31,7 @@ describe("chart contract documentation", () => {
       expect(exportsFile).toContain(`export { ${chartName} }`);
       expect(docs).toContain(`### ${chartName}`);
       expect(docs).toContain(`../my-app/src/components/${exampleFile}`);
-      expect(
-        existsSync(join(repoRoot, "my-app", "src", "components", exampleFile)),
-      ).toBe(true);
+      expect(existsSync(join(repoRoot, "my-app", "src", "components", exampleFile))).toBe(true);
       expect(gallery).toContain(`data-chart-contract="${chartName}"`);
       expect(gallery).toContain(`import ${importName} from '../components/${importPath}'`);
       expect(gallery).toContain(`<${importName} `);

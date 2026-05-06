@@ -96,8 +96,7 @@ export function LineChart({
                 className="ak-line-chart-item"
                 tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color":
-                    datum.color ?? "var(--ak-chart-color-primary)",
+                  "--ak-chart-item-color": datum.color ?? "var(--ak-chart-color-primary)",
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-block-size": datum.value > 0 ? "0.75rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,

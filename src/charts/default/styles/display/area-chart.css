@@ -28,13 +28,12 @@
   inset: 0.75rem 0.875rem 2.65rem;
   display: block;
   border-block-end: 1px solid var(--ak-chart-color-border);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-primary) 42%, transparent) 0%,
-      color-mix(in srgb, var(--ak-chart-color-primary) 14%, transparent) 64%,
-      transparent 100%
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-primary) 42%, transparent) 0%,
+    color-mix(in srgb, var(--ak-chart-color-primary) 14%, transparent) 64%,
+    transparent 100%
+  );
   clip-path: var(--ak-area-chart-polygon);
   pointer-events: none;
 }

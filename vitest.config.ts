@@ -2,7 +2,6 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   test: {
-    include: ["tests/**/*.test.{ts,tsx}"],
-    exclude: ["tests/**/*.browser.test.tsx"],
+    projects: ["./vitest.node.config.ts", "./vitest.jsdom.config.ts", "./vitest.browser.config.ts"],
   },
 });

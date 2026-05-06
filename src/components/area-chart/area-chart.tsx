@@ -90,8 +90,7 @@ export function AreaChart({
                 className="ak-area-chart-item"
                 tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color":
-                    datum.color ?? "var(--ak-chart-color-primary)",
+                  "--ak-chart-item-color": datum.color ?? "var(--ak-chart-color-primary)",
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-block-size": datum.value > 0 ? "1rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,

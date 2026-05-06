@@ -36,19 +36,19 @@ The library does not aim to be:
 Shape-contract charts define data contracts, visual grammar, behavior
 guarantees, and acceptance criteria:
 
-| Chart | Visual target | Live example |
-| --- | --- | --- |
-| `AreaChart` | Filled trend over time | `../my-app/src/components/area-chart-example.tsx` |
-| `BarChart` | Discrete category comparison via bars | `../my-app/src/components/bar-chart-example.tsx` |
-| `LineChart` | Trend lines across an ordered axis | `../my-app/src/components/line-chart-example.tsx` |
-| `DonutChart` | Circular part-to-whole with a center void | `../my-app/src/components/donut-chart-example.tsx` |
-| `StackedBarChart` | Bars split into stacked segments | `../my-app/src/components/stacked-bar-chart-example.tsx` |
-| `Sparkline` | Tiny minimal trend with no axes or legend | `../my-app/src/components/sparkline-example.tsx` |
-| `Heatmap` | Grid of colored intensity cells | `../my-app/src/components/heatmap-example.tsx` |
-| `Timeline` | Ordered sequence of events or intervals | `../my-app/src/components/timeline-example.tsx` |
-| `FlameGraph` | Hierarchical stacked rectangles for cost visualization | `../my-app/src/components/flame-graph-example.tsx` |
-| `ProgressMeter` | Linear progress fill versus max | `../my-app/src/components/progress-meter-example.tsx` |
-| `RadialGauge` | Circular scalar gauge | `../my-app/src/components/radial-gauge-example.tsx` |
+| Chart             | Visual target                                          | Live example                                             |
+| ----------------- | ------------------------------------------------------ | -------------------------------------------------------- |
+| `AreaChart`       | Filled trend over time                                 | `../my-app/src/components/area-chart-example.tsx`        |
+| `BarChart`        | Discrete category comparison via bars                  | `../my-app/src/components/bar-chart-example.tsx`         |
+| `LineChart`       | Trend lines across an ordered axis                     | `../my-app/src/components/line-chart-example.tsx`        |
+| `DonutChart`      | Circular part-to-whole with a center void              | `../my-app/src/components/donut-chart-example.tsx`       |
+| `StackedBarChart` | Bars split into stacked segments                       | `../my-app/src/components/stacked-bar-chart-example.tsx` |
+| `Sparkline`       | Tiny minimal trend with no axes or legend              | `../my-app/src/components/sparkline-example.tsx`         |
+| `Heatmap`         | Grid of colored intensity cells                        | `../my-app/src/components/heatmap-example.tsx`           |
+| `Timeline`        | Ordered sequence of events or intervals                | `../my-app/src/components/timeline-example.tsx`          |
+| `FlameGraph`      | Hierarchical stacked rectangles for cost visualization | `../my-app/src/components/flame-graph-example.tsx`       |
+| `ProgressMeter`   | Linear progress fill versus max                        | `../my-app/src/components/progress-meter-example.tsx`    |
+| `RadialGauge`     | Circular scalar gauge                                  | `../my-app/src/components/radial-gauge-example.tsx`      |
 
 Supporting primitives are not shape-contract charts:
 
