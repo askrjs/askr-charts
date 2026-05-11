@@ -1,5 +1,10 @@
 import { mergeProps } from "@askrjs/askr/foundations";
-import { clampChartValue, formatChartValue, getValueChartMax } from "../../core";
+import {
+  clampChartValue,
+  formatChartValue,
+  getChartSeriesColor,
+  getValueChartMax,
+} from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -86,8 +91,7 @@ export function StackedBarChart({
                       aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
                       tabIndex={0}
                       style={mergeChartStyles({
-                        "--ak-chart-item-color":
-                          segment.color ?? `var(--ak-chart-series-${(segmentIndex % 6) + 1})`,
+                        "--ak-chart-item-color": getChartSeriesColor(segmentIndex, segment.color),
                         "--ak-chart-item-index": segmentIndex,
                         "--ak-chart-item-min-size": segment.value > 0 ? "0.25rem" : 0,
                         "--ak-chart-item-value": `${total > 0 ? (clampChartValue(segment.value) / total) * 100 : 0}%`,

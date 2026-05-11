@@ -3,9 +3,10 @@
 :where(.chart-legend, [data-slot="chart-legend"]),
 :where(.chart-empty-state, [data-slot="chart-empty-state"]),
 :where(.ak-chart, [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="heatmap"]) {
-  font-family: var(--ak-chart-font-family);
+  font-family: var(--ak-chart-font-family-body);
   color: var(--ak-chart-color-text);
   font-size: var(--ak-chart-font-size);
+  line-height: var(--ak-chart-line-height-normal);
 }
 
 :where(.chart-shell-title, [data-slot="chart-shell-title"]),
@@ -13,10 +14,32 @@
 :where(.chart-legend-title, [data-slot="chart-legend-title"]),
 :where(.chart-empty-state-title, [data-slot="chart-empty-state-title"]) {
   margin: 0;
-  font-size: 0.98rem;
-  font-weight: 650;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-family: var(--ak-chart-font-family-heading);
+  text-wrap: balance;
+}
+
+:where(.chart-shell-title, [data-slot="chart-shell-title"]) {
+  font-size: var(--ak-chart-font-size-heading);
+  font-weight: var(--ak-chart-font-weight-bold);
+  line-height: var(--ak-chart-line-height-tight);
+  letter-spacing: -0.035em;
+}
+
+:where(.chart-panel-title, [data-slot="chart-panel-title"]),
+:where(.chart-empty-state-title, [data-slot="chart-empty-state-title"]) {
+  font-size: var(--ak-chart-font-size-lg);
+  font-weight: var(--ak-chart-font-weight-semibold);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+:where(.chart-legend-title, [data-slot="chart-legend-title"]) {
+  color: var(--ak-chart-color-text-muted);
+  font-size: var(--ak-chart-font-size-sm);
+  font-weight: var(--ak-chart-font-weight-bold);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 :where(.chart-shell-description, [data-slot="chart-shell-description"]),
@@ -24,13 +47,15 @@
 :where(.chart-empty-state-description, [data-slot="chart-empty-state-description"]) {
   margin: 0;
   color: var(--ak-chart-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--ak-chart-font-size);
+  line-height: var(--ak-chart-line-height-normal);
+  max-inline-size: 58ch;
 }
 
 :where(.ak-chart-summary, [data-slot="chart-summary"]) {
   margin: 0;
   color: var(--ak-chart-color-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--ak-chart-font-size-sm);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }

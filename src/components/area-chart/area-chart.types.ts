@@ -8,4 +8,5 @@ export interface AreaChartProps extends ChartVisualBaseProps {
   summary?: string;
   max?: number;
   valueFormatter?: ChartValueFormatter;
+  showGrid?: boolean;
 }

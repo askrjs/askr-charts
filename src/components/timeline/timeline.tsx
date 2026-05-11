@@ -1,5 +1,6 @@
 import { For } from "@askrjs/askr";
 import { mergeProps } from "@askrjs/askr/foundations";
+import { getChartStatusColor } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -56,11 +57,12 @@ export function Timeline({
               <li
                 data-ak-chart-item="true"
                 data-ak-chart-tooltip-trigger="true"
+                data-ak-status={datum.status ?? "default"}
                 data-slot="timeline-item"
                 className="ak-timeline-item"
                 tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color": datum.accentColor,
+                  "--ak-chart-item-color": getChartStatusColor(datum.status, datum.accentColor),
                   "--ak-chart-item-index": index(),
                 })}
               >

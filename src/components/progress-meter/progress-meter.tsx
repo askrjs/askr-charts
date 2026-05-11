@@ -1,4 +1,4 @@
-import { clampChartValue, formatChartValue, toChartFraction } from "../../core";
+import { clampChartValue, formatChartValue, getChartStatusColor, toChartFraction } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   createChartId,
@@ -12,6 +12,7 @@ export function ProgressMeter({
   animate,
   animation,
   className,
+  color,
   description,
   id,
   label,
@@ -20,6 +21,7 @@ export function ProgressMeter({
   summary,
   value,
   valueFormatter,
+  variant = "default",
   ...rest
 }: ProgressMeterProps) {
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
@@ -38,12 +40,14 @@ export function ProgressMeter({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-variant={variant}
       data-slot="progress-meter"
       className={cx("ak-chart", "ak-progress-meter", className)}
       style={mergeChartStyles(
         {
           "--ak-chart-item-min-size": normalizedValue > 0 ? "0.5rem" : 0,
           "--ak-chart-item-value": `${percentage}%`,
+          "--ak-chart-item-color": getChartStatusColor(variant, color),
           ...animationStyle,
         },
         style,

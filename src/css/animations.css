@@ -1,7 +1,7 @@
 :where(.ak-chart) {
   --ak-chart-animation-duration: 300ms;
   --ak-chart-animation-delay: 0ms;
-  --ak-chart-animation-stagger: 0ms;
+  --ak-chart-animation-stagger: 24ms;
   --ak-chart-animation-easing: ease-out;
 }
 
@@ -21,6 +21,7 @@
 
 :where(.ak-chart[data-ak-animate="true"][data-ak-animation="scale"] [data-ak-chart-item="true"]) {
   animation-name: ak-chart-scale-in;
+
 }
 
 :where(.ak-chart[data-ak-animate="true"][data-ak-animation="slide"] [data-ak-chart-item="true"]) {
@@ -75,11 +76,18 @@
   initial-value: 0deg;
 }
 
+@property --ak-chart-reveal-progress {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 @supports (
   (mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg)) or
     (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))
 ) {
   :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
+
     :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
     --ak-chart-reveal-angle: 0deg;
     mask:
@@ -100,6 +108,19 @@
     -webkit-mask-composite: source-in;
     animation-name: ak-chart-donut-sweep;
   }
+}
+
+:where(.ak-line-chart[data-ak-animate="true"][data-ak-animation="reveal"])
+  :where(.ak-line-chart-stroke-wrap, [data-slot="line-chart-stroke-wrap"]),
+:where(.ak-area-chart[data-ak-animate="true"][data-ak-animation="reveal"])
+  :where(.ak-area-chart-surface-wrap, [data-slot="area-chart-surface-wrap"]) {
+  --ak-chart-reveal-progress: 0;
+  clip-path: inset(0 calc((1 - var(--ak-chart-reveal-progress, 0)) * 100%) 0 0);
+  animation-name: ak-chart-reveal-line;
+  animation-duration: var(--ak-chart-animation-duration);
+  animation-delay: var(--ak-chart-animation-delay);
+  animation-fill-mode: both;
+  animation-timing-function: var(--ak-chart-animation-easing);
 }
 
 @keyframes ak-chart-grow-y {
@@ -183,6 +204,63 @@
     opacity: 1;
     transform: scale(1);
     --ak-chart-reveal-angle: 360deg;
+  }
+}
+
+@keyframes ak-chart-reveal-line {
+  from {
+    opacity: 0.2;
+    transform: scale(0.98);
+    --ak-chart-reveal-progress: 0;
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+    --ak-chart-reveal-progress: 1;
+  }
+}
+
+@supports (
+  (mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg)) or
+    (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))
+) {
+  :where(.ak-radial-gauge[data-ak-animate="true"][data-ak-animation="sweep"])
+    :where(.ak-radial-gauge-ring, [data-slot="radial-gauge-ring"]) {
+    --ak-chart-reveal-angle: 0deg;
+    mask:
+      radial-gradient(circle, transparent 0 57%, #000 58% 100%),
+      conic-gradient(
+        from 225deg,
+        #000 0deg var(--ak-chart-reveal-angle),
+        transparent var(--ak-chart-reveal-angle) 270deg,
+        #000 270deg 360deg
+      );
+    mask-composite: intersect;
+    -webkit-mask:
+      radial-gradient(circle, transparent 0 57%, #000 58% 100%),
+      conic-gradient(
+        from 225deg,
+        #000 0deg var(--ak-chart-reveal-angle),
+        transparent var(--ak-chart-reveal-angle) 270deg,
+        #000 270deg 360deg
+      );
+    -webkit-mask-composite: source-in;
+    animation-name: ak-chart-gauge-sweep;
+  }
+}
+
+@keyframes ak-chart-gauge-sweep {
+  from {
+    opacity: 0.2;
+    transform: scale(0.98);
+    --ak-chart-reveal-angle: 0deg;
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+    --ak-chart-reveal-angle: 270deg;
   }
 }
 

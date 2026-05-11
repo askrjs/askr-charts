@@ -1,4 +1,7 @@
-export type ChartAnimationType = "grow" | "fade" | "scale" | "sweep" | "slide" | "none";
+export const CHART_EASING_SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+export const CHART_EASING_SPRING_SUBTLE = "cubic-bezier(0.22, 1.00, 0.36, 1)";
+
+export type ChartAnimationType = "grow" | "fade" | "scale" | "sweep" | "slide" | "reveal" | "none";
 
 export type ChartAnimation =
   | boolean
@@ -8,7 +11,15 @@ export type ChartAnimation =
       duration?: number;
       delay?: number;
       stagger?: number;
-      easing?: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | string;
+      easing?:
+        | "linear"
+        | "ease"
+        | "ease-in"
+        | "ease-out"
+        | "ease-in-out"
+        | "spring"
+        | "spring-subtle"
+        | string;
     };
 
 export type NormalizedChartAnimation = {
@@ -36,6 +47,18 @@ function normalizeMs(value: number | undefined, fallback: number): number {
   }
 
   return Math.max(0, Number(value));
+}
+
+function resolveEasing(easing: string): string {
+  if (easing === "spring") {
+    return CHART_EASING_SPRING;
+  }
+
+  if (easing === "spring-subtle") {
+    return CHART_EASING_SPRING_SUBTLE;
+  }
+
+  return easing;
 }
 
 export function normalizeAnimation(
@@ -89,7 +112,7 @@ export function getAnimationStyle(animation: NormalizedChartAnimation): Record<s
     "--ak-chart-animation-duration": `${animation.duration}ms`,
     "--ak-chart-animation-delay": `${animation.delay}ms`,
     "--ak-chart-animation-stagger": `${animation.stagger}ms`,
-    "--ak-chart-animation-easing": animation.easing,
+    "--ak-chart-animation-easing": resolveEasing(animation.easing),
   };
 }
 

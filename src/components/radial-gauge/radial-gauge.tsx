@@ -1,4 +1,4 @@
-import { clampChartValue, formatChartValue, toChartFraction } from "../../core";
+import { clampChartValue, formatChartValue, getChartStatusColor, toChartFraction } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   createChartId,
@@ -12,6 +12,7 @@ export function RadialGauge({
   animate,
   animation,
   className,
+  color,
   description,
   id,
   label,
@@ -20,6 +21,7 @@ export function RadialGauge({
   summary,
   value,
   valueFormatter,
+  variant = "default",
   ...rest
 }: RadialGaugeProps) {
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
@@ -40,12 +42,14 @@ export function RadialGauge({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-variant={variant}
       data-slot="radial-gauge"
       className={cx("ak-chart", "ak-radial-gauge", className)}
       style={mergeChartStyles(
         {
           "--ak-chart-item-value": `${percentage}%`,
           "--ak-chart-gauge-angle": `${fraction * 360}deg`,
+          "--ak-chart-item-color": getChartStatusColor(variant, color),
           ...animationStyle,
         },
         style,

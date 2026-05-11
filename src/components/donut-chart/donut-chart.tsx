@@ -1,6 +1,11 @@
 import { For } from "@askrjs/askr";
 import { mergeProps } from "@askrjs/askr/foundations";
-import { buildDonutStops, getValueChartTotal, normalizeValueChartData } from "../../core";
+import {
+  buildDonutStops,
+  getChartSeriesColor,
+  getValueChartTotal,
+  normalizeValueChartData,
+} from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -80,7 +85,7 @@ export function DonutChart({
 
       return {
         clipPath: buildDonutSegmentClipPath(start, end),
-        color: datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`,
+        color: getChartSeriesColor(index, datum.color),
         datum,
         index,
       };
@@ -167,8 +172,7 @@ export function DonutChart({
               className="ak-donut-chart-item"
               tabIndex={0}
               style={mergeChartStyles({
-                "--ak-chart-item-color":
-                  datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                "--ak-chart-item-color": getChartSeriesColor(index(), datum.color),
                 "--ak-chart-item-index": index(),
               })}
             >

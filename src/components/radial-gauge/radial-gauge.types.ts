@@ -1,6 +1,8 @@
 import type { ChartValueFormatter } from "../../core";
 import type { ChartVisualBaseProps } from "../_internal/types";
 
+export type RadialGaugeVariant = "default" | "success" | "warning" | "danger";
+
 export interface RadialGaugeProps extends ChartVisualBaseProps {
   label: string;
   value: number;
@@ -8,4 +10,6 @@ export interface RadialGaugeProps extends ChartVisualBaseProps {
   summary?: string;
   valueFormatter?: ChartValueFormatter;
   description?: string;
+  variant?: RadialGaugeVariant;
+  color?: string;
 }

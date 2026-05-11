@@ -37,7 +37,17 @@
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: var(--ak-chart-track-thickness, 0.625rem);
-  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, white 10%) 0%,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 100%
+  );
+  transition: filter 120ms ease-out;
+}
+
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):hover,
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):focus-within {
+  filter: brightness(1.1);
 }
 
 :where(.ak-stacked-bar-chart-value, [data-slot="stacked-bar-chart-value"]) {

@@ -1,2 +1,2 @@
 export { Sparkline } from "./sparkline";
-export type { SparklineProps } from "./sparkline.types";
+export type { SparklineProps, SparklineVariant } from "./sparkline.types";

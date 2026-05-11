@@ -1,6 +1,6 @@
 import { For } from "@askrjs/askr";
 import { mergeProps } from "@askrjs/askr/foundations";
-import { normalizeValueChartData } from "../../core";
+import { getChartSeriesColor, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -21,6 +21,7 @@ export function Sparkline({
   label,
   min,
   max,
+  variant = "bar",
   style,
   summary,
   valueFormatter,
@@ -34,6 +35,22 @@ export function Sparkline({
     max,
     valueFormatter: resolveValueFormatter(valueFormatter),
   });
+  const sparklineLineColor = normalized.data.find((datum) => datum.color)?.color;
+  const sparklineLinePoints = normalized.data.map((datum, index, all) => {
+    const x = all.length <= 1 ? 50 : (index / (all.length - 1)) * 100;
+    const y = 100 - datum.fraction * 100;
+
+    return { x, y };
+  });
+  const sparklineLinePolygon =
+    variant === "line" && sparklineLinePoints.length > 0
+      ? `polygon(${[
+          ...sparklineLinePoints.map(({ x, y }) => `${x.toFixed(3)}% ${Math.max(y - 2.5, 0).toFixed(3)}%`),
+          ...[...sparklineLinePoints]
+            .reverse()
+            .map(({ x, y }) => `${x.toFixed(3)}% ${Math.min(y + 2.5, 100).toFixed(3)}%`),
+        ].join(", ")})`
+      : undefined;
   const summaryId = createChartId("sparkline-summary", id ?? label);
   const tableId = createChartId("sparkline-table", id ?? label);
   const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
@@ -43,9 +60,18 @@ export function Sparkline({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-variant={variant}
       data-slot="sparkline"
       className={cx("ak-chart", "ak-sparkline", className)}
-      style={mergeChartStyles(animationStyle, style)}
+      style={mergeChartStyles(
+        {
+          ...(variant === "line" && sparklineLineColor
+            ? { "--ak-chart-item-color": sparklineLineColor }
+            : {}),
+          ...animationStyle,
+        },
+        style,
+      )}
     >
       <div
         data-slot="chart-graphic"
@@ -54,6 +80,16 @@ export function Sparkline({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
+        {variant === "line" && sparklineLinePolygon ? (
+          <span
+            data-slot="sparkline-stroke"
+            className="ak-sparkline-stroke"
+            aria-hidden="true"
+            style={mergeChartStyles({
+              "--ak-sparkline-polygon": sparklineLinePolygon,
+            })}
+          />
+        ) : null}
         <ol data-slot="sparkline-list" className="ak-sparkline-list">
           <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (
@@ -64,15 +100,17 @@ export function Sparkline({
                 className="ak-sparkline-item"
                 tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color":
-                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-color": getChartSeriesColor(index(), datum.color),
                   "--ak-chart-item-index": index(),
-                  "--ak-chart-item-min-block-size": datum.value > 0 ? "0.5rem" : 0,
+                  "--ak-chart-item-min-block-size":
+                    variant === "line" ? 0 : datum.value > 0 ? "0.5rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,
                 })}
                 aria-label={`${datum.label}: ${datum.formattedValue}`}
               >
-                <span data-slot="sparkline-stem" className="ak-sparkline-stem" />
+                {variant === "line" ? null : (
+                  <span data-slot="sparkline-stem" className="ak-sparkline-stem" />
+                )}
                 <span data-slot="sparkline-dot" className="ak-sparkline-dot" />
                 <span className="ak-chart-sr-only">
                   {datum.label}: {datum.formattedValue}
