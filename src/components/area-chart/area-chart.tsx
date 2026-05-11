@@ -22,6 +22,7 @@ export function AreaChart({
   labelDensity = "full",
   min,
   max,
+  showGrid,
   style,
   summary,
   valueFormatter,
@@ -54,6 +55,7 @@ export function AreaChart({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-show-grid={showGrid ? "true" : undefined}
       data-ak-label-density={labelDensity}
       data-slot="area-chart"
       className={cx("ak-chart", "ak-area-chart", className)}
@@ -73,13 +75,19 @@ export function AreaChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <span
-          data-slot="area-chart-surface"
-          className="ak-area-chart-surface"
+          data-slot="area-chart-surface-wrap"
+          className="ak-area-chart-surface-wrap"
           aria-hidden="true"
-          style={mergeChartStyles({
-            "--ak-area-chart-polygon": areaPolygon,
-          })}
-        />
+        >
+          <span
+            data-slot="area-chart-surface"
+            className="ak-area-chart-surface"
+            aria-hidden="true"
+            style={mergeChartStyles({
+              "--ak-area-chart-polygon": areaPolygon,
+            })}
+          />
+        </span>
         <ol data-slot="area-chart-list" className="ak-area-chart-list">
           <For each={normalized.data} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (

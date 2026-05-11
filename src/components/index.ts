@@ -21,11 +21,11 @@ export type { LineChartProps } from "./line-chart";
 export { Heatmap } from "./heatmap";
 export type { HeatmapProps } from "./heatmap";
 export { ProgressMeter } from "./progress-meter";
-export type { ProgressMeterProps } from "./progress-meter";
+export type { ProgressMeterProps, ProgressMeterVariant } from "./progress-meter";
 export { RadialGauge } from "./radial-gauge";
-export type { RadialGaugeProps } from "./radial-gauge";
+export type { RadialGaugeProps, RadialGaugeVariant } from "./radial-gauge";
 export { Sparkline } from "./sparkline";
-export type { SparklineProps } from "./sparkline";
+export type { SparklineProps, SparklineVariant } from "./sparkline";
 export { StackedBarChart } from "./stacked-bar-chart";
 export type {
   StackedBarChartDatum,
@@ -33,4 +33,4 @@ export type {
   StackedBarChartSegment,
 } from "./stacked-bar-chart";
 export { Timeline } from "./timeline";
-export type { TimelineDatum, TimelineProps } from "./timeline";
+export type { TimelineDatum, TimelineItemStatus, TimelineProps } from "./timeline";

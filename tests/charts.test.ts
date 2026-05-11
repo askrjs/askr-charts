@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vite-plus/test";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 
@@ -69,6 +72,38 @@ describe("chart components", () => {
     expect(area).toContain('data-slot="area-chart"');
     expect(area).toContain('data-ak-animation="grow"');
     expect(area).toContain("--ak-chart-item-index:0");
+  });
+
+  it("renders reveal animation wrappers for line and area charts", () => {
+    const line = renderChart(() =>
+      LineChart({
+        label: "Weekly signups",
+        data: [
+          { label: "Mon", value: 12 },
+          { label: "Tue", value: 18 },
+        ],
+        animate: true,
+        animation: { type: "reveal" },
+      }),
+    );
+    const area = renderChart(() =>
+      AreaChart({
+        label: "Weekly orders",
+        data: [
+          { label: "Mon", value: 20 },
+          { label: "Tue", value: 26 },
+        ],
+        animate: true,
+        animation: { type: "reveal" },
+      }),
+    );
+
+    expect(line).toContain('data-ak-animation="reveal"');
+    expect(line).toContain('data-slot="line-chart-stroke-wrap"');
+    expect(line).toContain('data-slot="line-chart-stroke"');
+    expect(area).toContain('data-ak-animation="reveal"');
+    expect(area).toContain('data-slot="area-chart-surface-wrap"');
+    expect(area).toContain('data-slot="area-chart-surface"');
   });
 
   it("accepts tuple chart data and explicit minimum scales", () => {
@@ -251,6 +286,64 @@ describe("chart components", () => {
     expect(html).toContain("Fill rate");
   });
 
+  it("wires semantic chart variants and grid toggles through the rendered markup", () => {
+    const html = [
+      renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "success" })),
+      renderChart(() => RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "danger" })),
+      renderChart(() => Timeline({ label: "Release timeline", data: [{ label: "Alpha", status: "info" }] })),
+      renderChart(() => LineChart({ label: "Trend", data: [{ label: "Mon", value: 12 }], showGrid: true })),
+      renderChart(() => AreaChart({ label: "Orders", data: [{ label: "Mon", value: 12 }], showGrid: true })),
+    ].join("");
+
+    expect(html).toContain('data-ak-variant="success"');
+    expect(html).toContain('data-ak-variant="danger"');
+    expect(html).toContain('data-ak-status="info"');
+    expect(html).toContain('data-ak-show-grid="true"');
+    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-success)');
+    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-danger)');
+    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-info)');
+  });
+
+  it("keeps the phase 3 visual polish hooks in the default chart styles", () => {
+    const displayRoot = join(__dirname, "..", "src", "charts", "default", "styles", "display");
+    const barCss = readFileSync(join(displayRoot, "bar-chart.css"), "utf8");
+    const stackedBarCss = readFileSync(join(displayRoot, "stacked-bar-chart.css"), "utf8");
+    const progressCss = readFileSync(join(displayRoot, "progress-meter.css"), "utf8");
+    const areaCss = readFileSync(join(displayRoot, "area-chart.css"), "utf8");
+    const lineCss = readFileSync(join(displayRoot, "line-chart.css"), "utf8");
+    const heatmapCss = readFileSync(join(displayRoot, "heatmap.css"), "utf8");
+
+    expect(barCss).toContain("linear-gradient(");
+    expect(barCss).toContain("brightness(1.08)");
+    expect(stackedBarCss).toContain("linear-gradient(");
+    expect(stackedBarCss).toContain("brightness(1.1)");
+    expect(progressCss).toContain("linear-gradient(");
+    expect(areaCss).toContain("52%, transparent");
+    expect(areaCss).toContain("repeating-linear-gradient");
+    expect(lineCss).toContain('data-ak-show-grid="true"');
+    expect(heatmapCss).toContain("saturate(1.1)");
+    expect(heatmapCss).toContain("outline: 2px solid");
+  });
+
+  it("keeps the phase 9 typography polish hooks in the shared styles", () => {
+    const baseRoot = join(__dirname, "..", "src", "charts", "default", "styles", "base");
+    const typographyCss = readFileSync(join(baseRoot, "typography.css"), "utf8");
+    const legendCss = readFileSync(
+      join(__dirname, "..", "src", "charts", "default", "styles", "display", "legend.css"),
+      "utf8",
+    );
+    const tokensCss = readFileSync(join(__dirname, "..", "src", "charts", "default", "tokens.css"), "utf8");
+
+    expect(tokensCss).toContain("--ak-chart-font-family-heading");
+    expect(tokensCss).toContain("--ak-chart-font-weight-semibold");
+    expect(typographyCss).toContain("font-family: var(--ak-chart-font-family-heading)");
+    expect(typographyCss).toContain("text-wrap: balance");
+    expect(typographyCss).toContain("font-variant-numeric: tabular-nums");
+    expect(legendCss).toContain("font-weight: 600");
+    expect(legendCss).toContain("font-variant-numeric: tabular-nums");
+    expect(legendCss).toContain("color: var(--ak-chart-color-text)");
+  });
+
   it("renders zero values truthfully without forcing non-zero sizes", () => {
     const bar = renderChart(() =>
       BarChart({
@@ -298,6 +391,26 @@ describe("chart components", () => {
     );
 
     expect(html).toContain('data-slot="sparkline"');
+  });
+
+  it("renders a sparkline line variant with stroke overlay and floating dots", () => {
+    const html = renderChart(() =>
+      Sparkline({
+        label: "Response time trend",
+        data: [
+          { label: "Mon", value: 8 },
+          { label: "Tue", value: 4 },
+          { label: "Wed", value: 6 },
+        ],
+        variant: "line",
+      }),
+    );
+
+    expect(html).toContain('data-ak-variant="line"');
+    expect(html).toContain('data-slot="sparkline-stroke"');
+    expect(html).toContain('data-slot="sparkline-dot"');
+    expect(html).not.toContain('data-slot="sparkline-stem"');
+    expect(html).toContain("--ak-sparkline-polygon:");
   });
 
   it("renders a stacked bar chart with stacked segments", () => {

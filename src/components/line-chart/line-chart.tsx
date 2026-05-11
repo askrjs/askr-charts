@@ -22,6 +22,7 @@ export function LineChart({
   labelDensity = "full",
   min,
   max,
+  showGrid,
   style,
   summary,
   valueFormatter,
@@ -59,6 +60,7 @@ export function LineChart({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-show-grid={showGrid ? "true" : undefined}
       data-ak-label-density={labelDensity}
       data-slot="line-chart"
       className={cx("ak-chart", "ak-line-chart", className)}
@@ -77,14 +79,16 @@ export function LineChart({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
-        <span
-          data-slot="line-chart-stroke"
-          className="ak-line-chart-stroke"
-          aria-hidden="true"
-          style={mergeChartStyles({
-            "--ak-line-chart-polygon": linePolygon,
-          })}
-        />
+        <span data-slot="line-chart-stroke-wrap" className="ak-line-chart-stroke-wrap" aria-hidden="true">
+          <span
+            data-slot="line-chart-stroke"
+            className="ak-line-chart-stroke"
+            aria-hidden="true"
+            style={mergeChartStyles({
+              "--ak-line-chart-polygon": linePolygon,
+            })}
+          />
+        </span>
         <ol data-slot="line-chart-list" className="ak-line-chart-list">
           <For each={points} by={(datum, index) => `${datum.label}-${index}`}>
             {(datum, index) => (

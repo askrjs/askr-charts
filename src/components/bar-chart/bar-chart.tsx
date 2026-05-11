@@ -1,6 +1,6 @@
 import { For } from "@askrjs/askr";
 import { mergeProps } from "@askrjs/askr/foundations";
-import { normalizeValueChartData } from "../../core";
+import { getChartSeriesColor, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -71,8 +71,7 @@ export function BarChart({
                 className="ak-bar-chart-item"
                 tabIndex={0}
                 style={mergeChartStyles({
-                  "--ak-chart-item-color":
-                    datum.color ?? `var(--ak-chart-series-${(index() % 6) + 1})`,
+                  "--ak-chart-item-color": getChartSeriesColor(index(), datum.color),
                   "--ak-chart-item-index": index(),
                   "--ak-chart-item-min-size": datum.value > 0 ? "0.5rem" : 0,
                   "--ak-chart-item-value": `${datum.fraction * 100}%`,

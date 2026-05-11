@@ -1,2 +1,2 @@
 export { ProgressMeter } from "./progress-meter";
-export type { ProgressMeterProps } from "./progress-meter.types";
+export type { ProgressMeterProps, ProgressMeterVariant } from "./progress-meter.types";

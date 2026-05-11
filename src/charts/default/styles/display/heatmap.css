@@ -28,6 +28,13 @@
   border-radius: 0.35rem;
   background: var(--ak-chart-cell-bg, var(--ak-chart-color-muted));
   border: 1px solid var(--ak-chart-color-border);
+  transition: filter 120ms ease-out, outline 80ms ease-out;
+}
+
+:where(.ak-heatmap-cell, [data-slot="heatmap-cell"]):hover {
+  filter: brightness(1.14) saturate(1.1);
+  outline: 2px solid color-mix(in srgb, var(--ak-chart-color-primary) 50%, transparent);
+  outline-offset: 1px;
 }
 
 :where(.ak-heatmap-corner, [data-slot="heatmap-corner"]) {

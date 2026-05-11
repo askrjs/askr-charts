@@ -1,5 +1,5 @@
 import { mergeProps } from "@askrjs/askr/foundations";
-import { clampChartValue, formatChartValue } from "../../core";
+import { clampChartValue, formatChartValue, getChartSeriesColor } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -187,8 +187,7 @@ export function FlameGraph({
                   aria-label={`${frame.path}: ${frame.formattedValue}`}
                   tabIndex={0}
                   style={mergeChartStyles({
-                    "--ak-chart-item-color":
-                      frame.color ?? `var(--ak-chart-series-${(frame.depth % 6) + 1})`,
+                    "--ak-chart-item-color": getChartSeriesColor(frame.depth, frame.color),
                     "--ak-chart-item-index": frame.itemIndex,
                     "--ak-chart-item-offset": `${frame.startFraction * 100}%`,
                     "--ak-chart-item-value": `${frame.widthFraction * 100}%`,

@@ -212,21 +212,58 @@ export function buildValueChartSummary(
   return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(max)}.`;
 }
 
+export function getChartSeriesColor(index: number, color?: string): string {
+  return color ?? `var(--ak-chart-series-${(index % 10) + 1})`;
+}
+
+export type ChartStatusTone = "default" | "success" | "warning" | "danger" | "info";
+
+export function getChartStatusColor(
+  tone: ChartStatusTone | undefined,
+  color?: string,
+): string | undefined {
+  if (color) {
+    return color;
+  }
+
+  switch (tone) {
+    case "success":
+      return "var(--ak-chart-color-success)";
+    case "warning":
+      return "var(--ak-chart-color-warning)";
+    case "danger":
+      return "var(--ak-chart-color-danger)";
+    case "info":
+      return "var(--ak-chart-color-info)";
+    default:
+      return undefined;
+  }
+}
+
 export function buildDonutStops(data: readonly NormalizedValueChartDatum[]): string {
   const total = data.reduce((sum, datum) => sum + datum.value, 0);
   if (total <= 0) {
     return "var(--ak-chart-color-muted) 0deg 360deg";
   }
 
+  const GAP_DEG = 2;
   let cursor = 0;
   const stops: string[] = [];
+  const lastIndex = data.length - 1;
 
   for (const [index, datum] of data.entries()) {
     const slice = (datum.value / total) * 360;
     const start = cursor;
-    const end = index === data.length - 1 ? 360 : cursor + slice;
-    const color = datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`;
-    stops.push(`${color} ${start}deg ${end}deg`);
+    const end = index === lastIndex ? 360 : cursor + slice;
+    const gap = index === lastIndex ? 0 : Math.min(GAP_DEG, Math.max(0, end - start));
+    const segmentEnd = Math.max(start, end - gap);
+    const color = getChartSeriesColor(index, datum.color);
+    if (segmentEnd > start) {
+      stops.push(`${color} ${start}deg ${segmentEnd}deg`);
+    }
+    if (gap > 0) {
+      stops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
+    }
     cursor = end;
   }
 
@@ -244,7 +281,7 @@ export function createValueChartLegendItems(
   return normalized.data.map((datum, index) => ({
     label: datum.label,
     value: datum.formattedValue,
-    color: datum.color ?? `var(--ak-chart-series-${(index % 6) + 1})`,
+    color: getChartSeriesColor(index, datum.color),
   }));
 }
 

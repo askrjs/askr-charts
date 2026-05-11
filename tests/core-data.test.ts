@@ -57,6 +57,7 @@ describe("core data contract", () => {
     const stops = buildDonutStops(normalized);
     expect(stops).toContain("0deg");
     expect(stops).toContain("360deg");
+    expect(stops).toContain("var(--ak-chart-color-muted)");
   });
 
   it("should normalize heatmap data into ordered axes and mixed backgrounds", () => {

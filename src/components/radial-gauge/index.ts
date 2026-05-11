@@ -1,2 +1,2 @@
 export { RadialGauge } from "./radial-gauge";
-export type { RadialGaugeProps } from "./radial-gauge.types";
+export type { RadialGaugeProps, RadialGaugeVariant } from "./radial-gauge.types";
