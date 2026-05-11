@@ -2,6 +2,10 @@
   align-items: start;
 }
 
+:where(.ak-line-chart, [data-slot="line-chart"]) {
+  align-items: start;
+}
+
 :where(.ak-line-chart-graphic) {
   display: flex;
   align-items: stretch;
@@ -109,4 +113,30 @@
 :where(.ak-line-chart, [data-slot="line-chart"])[data-ak-label-density="minimal"]
   :where(.ak-line-chart-label, [data-slot="line-chart-label"]) {
   display: none;
+}
+
+:where(.ak-line-chart-stroke-wrap, [data-slot="line-chart-stroke-wrap"]) {
+  position: absolute;
+  inset: 0.75rem 0.875rem 2.65rem;
+  pointer-events: none;
+}
+
+:where(.ak-line-chart-stroke, [data-slot="line-chart-stroke"]) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: var(--ak-chart-color-primary);
+  clip-path: var(--ak-line-chart-polygon);
+  pointer-events: none;
+}
+
+:where(.ak-line-chart, [data-slot="line-chart"])[data-ak-show-grid="true"]
+  :where(.ak-line-chart-stage, [data-slot="line-chart-stage"]) {
+  background-image: repeating-linear-gradient(
+    to top,
+    var(--ak-chart-grid) 0px,
+    var(--ak-chart-grid) 1px,
+    transparent 1px,
+    transparent 25%
+  );
 }
