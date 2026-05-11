@@ -2,6 +2,10 @@
   align-items: start;
 }
 
+:where(.ak-area-chart, [data-slot="area-chart"]) {
+  align-items: start;
+}
+
 :where(.ak-area-chart-graphic) {
   display: flex;
   align-items: stretch;
@@ -107,4 +111,37 @@
 :where(.ak-area-chart, [data-slot="area-chart"])[data-ak-label-density="minimal"]
   :where(.ak-area-chart-label, [data-slot="area-chart-label"]) {
   display: none;
+}
+
+:where(.ak-area-chart-surface-wrap, [data-slot="area-chart-surface-wrap"]) {
+  position: absolute;
+  inset: 0.75rem 0.875rem 2.65rem;
+  pointer-events: none;
+}
+
+:where(.ak-area-chart-surface, [data-slot="area-chart-surface"]) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-block-end: 1px solid var(--ak-chart-color-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-primary) 52%, transparent) 0%,
+    color-mix(in srgb, var(--ak-chart-color-primary) 26%, transparent) 40%,
+    color-mix(in srgb, var(--ak-chart-color-primary) 10%, transparent) 72%,
+    transparent 100%
+  );
+  clip-path: var(--ak-area-chart-polygon);
+  pointer-events: none;
+}
+
+:where(.ak-area-chart, [data-slot="area-chart"])[data-ak-show-grid="true"]
+  :where(.ak-area-chart-stage, [data-slot="area-chart-stage"]) {
+  background-image: repeating-linear-gradient(
+    to top,
+    var(--ak-chart-grid) 0px,
+    var(--ak-chart-grid) 1px,
+    transparent 1px,
+    transparent 25%
+  );
 }

@@ -32,7 +32,12 @@
   min-inline-size: 0.5rem;
   min-block-size: 0.875rem;
   border-radius: inherit;
-  background: var(--ak-chart-color-primary);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, black 10%) 0%,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 60%,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 94%, white 6%) 100%
+  );
 }
 
 :where(.ak-progress-meter-description, [data-slot="progress-meter-description"]) {

@@ -21,9 +21,14 @@
   inset: 0;
   border-radius: 999px;
   background: conic-gradient(
-    from -90deg,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 0 var(--ak-chart-gauge-angle, 0deg),
-    var(--ak-chart-color-muted) var(--ak-chart-gauge-angle, 0deg) 360deg
+    from 225deg,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary))
+      0
+      calc(var(--ak-chart-gauge-angle, 0deg) * 0.75),
+    var(--ak-chart-color-muted)
+      calc(var(--ak-chart-gauge-angle, 0deg) * 0.75)
+      270deg,
+    transparent 270deg 360deg
   );
   mask: radial-gradient(circle, transparent 0 60%, black 61% 100%);
 }
