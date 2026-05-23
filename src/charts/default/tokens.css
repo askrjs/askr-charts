@@ -1,38 +1,77 @@
 :root {
-  --ak-chart-font-size-sm: 0.8125rem;
-  --ak-chart-font-size-md: 0.875rem;
-  --ak-chart-font-size-lg: 1rem;
-  --ak-chart-font-size-heading: clamp(1rem, 0.94rem + 0.55vw, 1.4rem);
+  --ak-chart-font-size-sm: var(--ak-font-size-sm, 0.8125rem);
+  --ak-chart-font-size-md: var(--ak-font-size-md, 0.875rem);
+  --ak-chart-font-size-lg: var(--ak-font-size-lg, 1rem);
+  --ak-chart-font-size-heading: clamp(1rem, 0.96rem + 0.4vw, 1.25rem);
   --ak-chart-font-size: var(--ak-chart-font-size-md);
   --ak-chart-font-family-body:
-    "Aptos", "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", Inter, ui-sans-serif, system-ui,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    var(
+      --ak-font-family-body,
+      "Aptos",
+      "Segoe UI Variable Text",
+      "Segoe UI",
+      "SF Pro Text",
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji"
+    );
   --ak-chart-font-family-heading:
-    "Aptos Display", "Aptos", "Segoe UI Variable Display", "Segoe UI Variable Text",
-    "Segoe UI", "SF Pro Display", Inter, ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji";
+    var(
+      --ak-font-family-heading,
+      "Aptos Display",
+      "Aptos",
+      "Segoe UI Variable Display",
+      "Segoe UI Variable Text",
+      "Segoe UI",
+      "SF Pro Display",
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji"
+    );
   --ak-chart-font-family-mono:
-    "IBM Plex Mono", "SFMono-Regular", "Menlo", "Consolas", ui-monospace, monospace,
-    "Apple Color Emoji", "Segoe UI Emoji";
+    var(
+      --ak-font-family-mono,
+      "IBM Plex Mono",
+      "SFMono-Regular",
+      "Menlo",
+      "Consolas",
+      ui-monospace,
+      monospace,
+      "Apple Color Emoji",
+      "Segoe UI Emoji"
+    );
   --ak-chart-font-family: var(--ak-chart-font-family-body);
-  --ak-chart-font-weight-medium: 500;
-  --ak-chart-font-weight-semibold: 600;
-  --ak-chart-font-weight-bold: 700;
+  --ak-chart-font-weight-medium: var(--ak-font-weight-medium, 500);
+  --ak-chart-font-weight-semibold: var(--ak-font-weight-semibold, 600);
+  --ak-chart-font-weight-bold: var(--ak-font-weight-bold, 700);
   --ak-chart-line-height-tight: 1.15;
-  --ak-chart-line-height-normal: 1.55;
-  --ak-chart-radius: 1rem;
-  --ak-chart-gap: 1rem;
-  --ak-chart-padding: 1.25rem;
-  --ak-chart-series-1: #2563eb;
-  --ak-chart-series-2: #7c3aed;
-  --ak-chart-series-3: #10b981;
-  --ak-chart-series-4: #f59e0b;
-  --ak-chart-series-5: #f43f5e;
-  --ak-chart-series-6: #06b6d4;
-  --ak-chart-series-7: #ec4899;
-  --ak-chart-series-8: #f97316;
-  --ak-chart-series-9: #14b8a6;
-  --ak-chart-series-10: #8b5cf6;
+  --ak-chart-line-height-normal: 1.5;
+  --ak-chart-radius: var(--ak-radius-md, 0.5rem);
+  --ak-chart-radius-sm: var(--ak-radius-sm, 0.375rem);
+  --ak-chart-radius-lg: var(--ak-radius-lg, 0.625rem);
+  --ak-chart-gap: var(--ak-space-4, 1rem);
+  --ak-chart-padding: var(--ak-space-5, 1.25rem);
+  --ak-chart-duration-fast: var(--ak-duration-fast, 120ms);
+  --ak-chart-duration-normal: var(--ak-duration-normal, 220ms);
+  --ak-chart-ease-standard: var(--ak-ease-standard, cubic-bezier(0.2, 0, 0, 1));
+  --ak-chart-ease-out: var(--ak-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  --ak-chart-z-tooltip: var(--ak-z-tooltip, 20);
+  --ak-chart-series-1: var(--ak-color-blue-600, #2563eb);
+  --ak-chart-series-2: var(--ak-color-violet-600, #7c3aed);
+  --ak-chart-series-3: var(--ak-color-emerald-500, #10b981);
+  --ak-chart-series-4: var(--ak-color-amber-500, #f59e0b);
+  --ak-chart-series-5: var(--ak-color-rose-500, #f43f5e);
+  --ak-chart-series-6: var(--ak-color-cyan-500, #06b6d4);
+  --ak-chart-series-7: var(--ak-color-pink-500, #ec4899);
+  --ak-chart-series-8: var(--ak-color-orange-500, #f97316);
+  --ak-chart-series-9: var(--ak-color-teal-500, #14b8a6);
+  --ak-chart-series-10: var(--ak-color-indigo-500, #6366f1);
 }
 
 :root,
@@ -40,55 +79,94 @@
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --ak-chart-color-primary: #2563eb;
-  --ak-chart-color-muted: #cbd5e1;
-  --ak-chart-color-surface: #ffffff;
-  --ak-chart-color-border: rgba(15, 23, 42, 0.1);
-  --ak-chart-color-text: #0f172a;
-  --ak-chart-color-text-muted: #475569;
-  --ak-chart-color-tooltip-bg: rgba(15, 23, 42, 0.96);
-  --ak-chart-color-tooltip-fg: #f8fafc;
-  --ak-chart-color-success: #10b981;
-  --ak-chart-color-warning: #f59e0b;
-  --ak-chart-color-danger: #f43f5e;
-  --ak-chart-color-info: #2563eb;
-  --ak-chart-bg: #f8fafc;
-  --ak-chart-surface: #ffffff;
-  --ak-chart-surface-elevated: #f1f5f9;
-  --ak-chart-border: rgba(15, 23, 42, 0.1);
-  --ak-chart-text: #0f172a;
-  --ak-chart-text-muted: #475569;
-  --ak-chart-grid: rgba(100, 116, 139, 0.14);
-  --ak-chart-axis: rgba(100, 116, 139, 0.48);
-  --ak-chart-tooltip-bg: rgba(15, 23, 42, 0.96);
-  --ak-chart-tooltip-fg: #f8fafc;
-  --ak-chart-hover-overlay: rgba(255, 255, 255, 0.1);
-  --ak-chart-shadow: 0 22px 48px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --ak-chart-color-primary: var(--ak-color-accent, #2563eb);
+  --ak-chart-color-muted: var(--ak-color-muted, #e2e8f0);
+  --ak-chart-color-surface: var(--ak-color-surface, #ffffff);
+  --ak-chart-color-border: var(--ak-color-border, rgba(15, 23, 42, 0.11));
+  --ak-chart-color-text: var(--ak-color-text, #0f172a);
+  --ak-chart-color-text-muted: var(--ak-color-text-muted, #475569);
+  --ak-chart-color-tooltip-bg: var(--ak-color-tooltip-bg, rgba(15, 23, 42, 0.96));
+  --ak-chart-color-tooltip-fg: var(--ak-color-tooltip-fg, #f8fafc);
+  --ak-chart-color-success: var(--ak-color-success, #10b981);
+  --ak-chart-color-warning: var(--ak-color-warning, #f59e0b);
+  --ak-chart-color-danger: var(--ak-color-danger, #f43f5e);
+  --ak-chart-color-info: var(--ak-color-info, #2563eb);
+  --ak-chart-bg: var(--ak-color-canvas, #f8fafc);
+  --ak-chart-surface: var(--ak-color-surface, #ffffff);
+  --ak-chart-surface-elevated: var(--ak-color-surface-elevated, #f8fafc);
+  --ak-chart-border: var(--ak-color-border, rgba(15, 23, 42, 0.11));
+  --ak-chart-text: var(--ak-color-text, #0f172a);
+  --ak-chart-text-muted: var(--ak-color-text-muted, #475569);
+  --ak-chart-grid: color-mix(in srgb, var(--ak-chart-color-text-muted) 18%, transparent);
+  --ak-chart-axis: color-mix(in srgb, var(--ak-chart-color-text-muted) 44%, transparent);
+  --ak-chart-plot-bg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-surface) 96%, var(--ak-chart-color-primary) 4%),
+      var(--ak-chart-color-surface)
+    );
+  --ak-chart-track-bg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-muted) 78%, white 22%),
+      color-mix(in srgb, var(--ak-chart-color-muted) 92%, var(--ak-chart-color-text) 8%)
+    );
+  --ak-chart-track-border: color-mix(in srgb, var(--ak-chart-color-border) 70%, transparent);
+  --ak-chart-tooltip-bg: var(--ak-chart-color-tooltip-bg);
+  --ak-chart-tooltip-fg: var(--ak-chart-color-tooltip-fg);
+  --ak-chart-tooltip-border: color-mix(in srgb, var(--ak-chart-color-tooltip-fg) 14%, transparent);
+  --ak-chart-focus-ring: var(--ak-color-focus-ring, #2563eb);
+  --ak-chart-hover-overlay: rgba(255, 255, 255, 0.45);
+  --ak-chart-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --ak-chart-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --ak-chart-tooltip-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.16);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --ak-chart-color-primary: #60a5fa;
-  --ak-chart-color-muted: #334155;
-  --ak-chart-color-surface: #0f172a;
-  --ak-chart-color-border: rgba(148, 163, 184, 0.18);
-  --ak-chart-color-text: #e2e8f0;
-  --ak-chart-color-text-muted: #94a3b8;
-  --ak-chart-color-tooltip-bg: rgba(15, 23, 42, 0.98);
-  --ak-chart-color-tooltip-fg: #f8fafc;
-  --ak-chart-color-success: #34d399;
-  --ak-chart-color-warning: #fbbf24;
-  --ak-chart-color-danger: #fb7185;
-  --ak-chart-color-info: #60a5fa;
-  --ak-chart-bg: #020617;
-  --ak-chart-surface: #0f172a;
-  --ak-chart-surface-elevated: #111827;
-  --ak-chart-border: rgba(148, 163, 184, 0.18);
-  --ak-chart-text: #e2e8f0;
-  --ak-chart-text-muted: #94a3b8;
-  --ak-chart-grid: rgba(148, 163, 184, 0.18);
-  --ak-chart-axis: rgba(148, 163, 184, 0.42);
-  --ak-chart-tooltip-bg: rgba(15, 23, 42, 0.98);
-  --ak-chart-tooltip-fg: #f8fafc;
-  --ak-chart-shadow: 0 22px 48px rgba(2, 6, 23, 0.36), 0 2px 6px rgba(15, 23, 42, 0.16);
+  --ak-chart-color-primary: var(--ak-color-accent, #60a5fa);
+  --ak-chart-color-muted: var(--ak-color-muted, #334155);
+  --ak-chart-color-surface: var(--ak-color-surface, #0f172a);
+  --ak-chart-color-border: var(--ak-color-border, rgba(148, 163, 184, 0.18));
+  --ak-chart-color-text: var(--ak-color-text, #e2e8f0);
+  --ak-chart-color-text-muted: var(--ak-color-text-muted, #94a3b8);
+  --ak-chart-color-tooltip-bg: var(--ak-color-tooltip-bg, rgba(2, 6, 23, 0.98));
+  --ak-chart-color-tooltip-fg: var(--ak-color-tooltip-fg, #f8fafc);
+  --ak-chart-color-success: var(--ak-color-success, #34d399);
+  --ak-chart-color-warning: var(--ak-color-warning, #fbbf24);
+  --ak-chart-color-danger: var(--ak-color-danger, #fb7185);
+  --ak-chart-color-info: var(--ak-color-info, #60a5fa);
+  --ak-chart-bg: var(--ak-color-canvas, #020617);
+  --ak-chart-surface: var(--ak-color-surface, #0f172a);
+  --ak-chart-surface-elevated: var(--ak-color-surface-elevated, #111827);
+  --ak-chart-border: var(--ak-color-border, rgba(148, 163, 184, 0.18));
+  --ak-chart-text: var(--ak-color-text, #e2e8f0);
+  --ak-chart-text-muted: var(--ak-color-text-muted, #94a3b8);
+  --ak-chart-grid: color-mix(in srgb, var(--ak-chart-color-text-muted) 20%, transparent);
+  --ak-chart-axis: color-mix(in srgb, var(--ak-chart-color-text-muted) 42%, transparent);
+  --ak-chart-plot-bg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-surface) 88%, var(--ak-chart-color-primary) 12%),
+      var(--ak-chart-color-surface)
+    );
+  --ak-chart-track-bg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-muted) 88%, white 8%),
+      color-mix(in srgb, var(--ak-chart-color-muted) 92%, black 8%)
+    );
+  --ak-chart-track-border: color-mix(in srgb, var(--ak-chart-color-border) 80%, transparent);
+  --ak-chart-tooltip-bg: var(--ak-chart-color-tooltip-bg);
+  --ak-chart-tooltip-fg: var(--ak-chart-color-tooltip-fg);
+  --ak-chart-tooltip-border: color-mix(in srgb, var(--ak-chart-color-tooltip-fg) 12%, transparent);
+  --ak-chart-focus-ring: var(--ak-color-focus-ring, #60a5fa);
+  --ak-chart-hover-overlay: rgba(255, 255, 255, 0.08);
+  --ak-chart-shadow-soft: 0 1px 2px rgba(2, 6, 23, 0.24);
+  --ak-chart-shadow:
+    0 18px 42px rgba(2, 6, 23, 0.38), 0 1px 2px rgba(15, 23, 42, 0.28);
+  --ak-chart-tooltip-shadow:
+    0 20px 48px rgba(2, 6, 23, 0.54), 0 2px 8px rgba(2, 6, 23, 0.38);
 }

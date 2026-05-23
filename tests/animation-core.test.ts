@@ -152,22 +152,16 @@ describe("chart animation core", () => {
   });
 
   it("keeps the phase 1 chart animation hooks in sync with the CSS files", () => {
-    const animationsCss = readFileSync(join(__dirname, "..", "src", "css", "animations.css"), "utf-8");
+    const animationsCss = readFileSync(
+      join(__dirname, "..", "src", "css", "animations.css"),
+      "utf-8",
+    );
     const tooltipCss = readFileSync(
       join(__dirname, "..", "src", "charts", "default", "styles", "overlays", "tooltip.css"),
       "utf-8",
     );
     const radialGaugeCss = readFileSync(
-      join(
-        __dirname,
-        "..",
-        "src",
-        "charts",
-        "default",
-        "styles",
-        "display",
-        "radial-gauge.css",
-      ),
+      join(__dirname, "..", "src", "charts", "default", "styles", "display", "radial-gauge.css"),
       "utf-8",
     );
 

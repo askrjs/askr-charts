@@ -1,8 +1,8 @@
 :where(.ak-chart) {
-  --ak-chart-animation-duration: 300ms;
+  --ak-chart-animation-duration: var(--ak-chart-duration-normal, 300ms);
   --ak-chart-animation-delay: 0ms;
   --ak-chart-animation-stagger: 24ms;
-  --ak-chart-animation-easing: ease-out;
+  --ak-chart-animation-easing: var(--ak-chart-ease-out, ease-out);
 }
 
 :where(.ak-chart[data-ak-animate="true"] [data-ak-chart-item="true"]) {
@@ -21,7 +21,6 @@
 
 :where(.ak-chart[data-ak-animate="true"][data-ak-animation="scale"] [data-ak-chart-item="true"]) {
   animation-name: ak-chart-scale-in;
-
 }
 
 :where(.ak-chart[data-ak-animate="true"][data-ak-animation="slide"] [data-ak-chart-item="true"]) {
@@ -29,12 +28,7 @@
 }
 
 :where(.ak-bar-chart[data-ak-animate="true"][data-ak-animation="grow"])
-  :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
-  transform: scaleY(1);
-  transform-origin: bottom;
-  animation-name: ak-chart-grow-y;
-}
-
+  :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]),
 :where(.ak-progress-meter[data-ak-animate="true"][data-ak-animation="grow"])
   :where(.ak-progress-meter-fill, [data-slot="progress-meter-fill"]),
 :where(.ak-flame-graph[data-ak-animate="true"][data-ak-animation="grow"])
@@ -87,7 +81,6 @@
     (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))
 ) {
   :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
-
     :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
     --ak-chart-reveal-angle: 0deg;
     mask:

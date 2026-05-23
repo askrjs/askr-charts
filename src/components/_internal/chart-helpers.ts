@@ -106,6 +106,39 @@ export const chartTooltipTriggerProps = {
   onFocusIn: centerChartTooltip,
 } as const;
 
+function mergeChartEventHandlers(left: unknown, right: unknown): unknown {
+  if (typeof left !== "function" || typeof right !== "function") {
+    return right ?? left;
+  }
+
+  return (event: Event) => {
+    left(event);
+    right(event);
+  };
+}
+
+export function mergeChartProps(
+  ...sources: Array<Record<string, unknown> | undefined>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {};
+
+  for (const source of sources) {
+    if (!source) {
+      continue;
+    }
+
+    for (const [key, value] of Object.entries(source)) {
+      if (key.startsWith("on") && key in merged) {
+        merged[key] = mergeChartEventHandlers(merged[key], value);
+      } else {
+        merged[key] = value;
+      }
+    }
+  }
+
+  return merged;
+}
+
 export function createChartId(prefix: string, value: string): string {
   const slug =
     value

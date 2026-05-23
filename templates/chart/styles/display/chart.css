@@ -1,13 +1,60 @@
-:where(.chart-frame, [data-slot="chart-frame"]),
-:where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
+:where(
+  .ak-chart,
+  [data-slot="area-chart"],
+  [data-slot="bar-chart"],
+  [data-slot="donut-chart"],
+  [data-slot="flame-graph"],
+  [data-slot="heatmap"],
+  [data-slot="line-chart"],
+  [data-slot="progress-meter"],
+  [data-slot="radial-gauge"],
+  [data-slot="sparkline"],
+  [data-slot="stacked-bar-chart"],
+  [data-slot="timeline"]
+) {
+  --ak-chart-graphic-padding: 0.875rem;
+  --ak-chart-graphic-min-block-size: 9.5rem;
+  --ak-chart-track-thickness: 0.625rem;
+  --ak-chart-cell-size: 1.5rem;
+}
+
+:where(.chart-frame, [data-slot="chart-frame"]) {
   position: relative;
   overflow: hidden;
-  min-height: 16rem;
-  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  border-radius: var(--ak-chart-radius);
+}
+
+:where(.ak-chart-graphic, [data-slot="chart-graphic"]) {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  min-height: var(--ak-chart-graphic-min-block-size, 14rem);
+  padding: var(--ak-chart-graphic-padding, 1rem);
+  border-radius: var(--ak-chart-radius);
   border: 1px solid var(--ak-chart-color-border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
-    var(--ak-chart-color-surface);
+    linear-gradient(180deg, color-mix(in srgb, var(--ak-chart-color-surface) 92%, white 8%), transparent 70%),
+    var(--ak-chart-plot-bg, var(--ak-chart-color-surface));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 54%, transparent),
+    var(--ak-chart-shadow-soft);
+}
+
+:where(.ak-chart-graphic, [data-slot="chart-graphic"])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-grid) 42%, transparent) 0 1px,
+      transparent 1px 33.333%
+    );
+  background-size: 100% 33.333%;
+  opacity: 0.45;
 }
 
 :where(.chart-empty-state, [data-slot="chart-empty-state"]) {
@@ -15,8 +62,13 @@
   text-align: center;
   padding: 1.5rem;
   border: 1px dashed var(--ak-chart-color-border);
-  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
-  background: var(--ak-chart-color-surface);
+  border-radius: var(--ak-chart-radius);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-surface) 92%, var(--ak-chart-color-muted) 8%),
+      var(--ak-chart-color-surface)
+    );
 }
 
 :where(.chart-empty-state-content, [data-slot="chart-empty-state-content"]) {

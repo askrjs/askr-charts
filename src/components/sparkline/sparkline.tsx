@@ -1,11 +1,11 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { getChartSeriesColor, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -45,7 +45,9 @@ export function Sparkline({
   const sparklineLinePolygon =
     variant === "line" && sparklineLinePoints.length > 0
       ? `polygon(${[
-          ...sparklineLinePoints.map(({ x, y }) => `${x.toFixed(3)}% ${Math.max(y - 2.5, 0).toFixed(3)}%`),
+          ...sparklineLinePoints.map(
+            ({ x, y }) => `${x.toFixed(3)}% ${Math.max(y - 2.5, 0).toFixed(3)}%`,
+          ),
           ...[...sparklineLinePoints]
             .reverse()
             .map(({ x, y }) => `${x.toFixed(3)}% ${Math.min(y + 2.5, 100).toFixed(3)}%`),
@@ -53,7 +55,7 @@ export function Sparkline({
       : undefined;
   const summaryId = createChartId("sparkline-summary", id ?? label);
   const tableId = createChartId("sparkline-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section

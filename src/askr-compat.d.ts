@@ -8,11 +8,6 @@ declare module "@askrjs/askr/foundations" {
     ref?: unknown;
   };
 
-  export function mergeProps<
-    TBase extends Record<string, unknown>,
-    TInjected extends Record<string, unknown>,
-  >(base: TBase, injected: TInjected): TBase & TInjected;
-
   export interface JSXElement {
     $$typeof: symbol;
     type: string | ((props: Props) => unknown) | symbol;
@@ -33,13 +28,20 @@ declare module "@askrjs/askr/foundations" {
   export function Presence(props: PresenceProps): JSXElement | null;
 }
 
-declare module "@askrjs/askr" {
+declare module "@askrjs/askr/boot" {
   import type { JSXElement } from "@askrjs/askr/foundations";
 
   export interface CreateIslandOptions {
     root: Element | DocumentFragment;
     component: () => JSXElement;
   }
+
+  export function createIsland(options: CreateIslandOptions): void;
+  export function cleanupApp(root: Element | DocumentFragment): void;
+}
+
+declare module "@askrjs/askr" {
+  import type { JSXElement } from "@askrjs/askr/foundations";
 
   export interface State<T> {
     (): T;
@@ -79,8 +81,6 @@ declare module "@askrjs/askr" {
   export function state<T>(initialValue: T): State<T>;
   export function defineContext<T>(defaultValue: T): Context<T>;
   export function readContext<T>(context: Context<T>): T;
-  export function createIsland(options: CreateIslandOptions): void;
-  export function cleanupApp(root: Element | DocumentFragment): void;
   export const For: <T, K extends string | number = string | number>(
     props: ForProps<T, K>,
   ) => JSXElement;

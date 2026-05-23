@@ -1,8 +1,9 @@
 ﻿# Usage
 
-Use this package alongside `@askrjs/themes` when you want shared shell tokens
-and app chrome, then layer in these chart primitives for compact visual
-summaries and simple trend approximations.
+Use this package on its own for compact visual summaries and simple trend
+approximations. It does not depend on `@askrjs/themes`; when theme styles are
+present, chart-owned tokens use compatible defaults so the visuals still feel
+like part of the same Askr design world.
 
 ```tsx
 import {

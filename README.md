@@ -2,24 +2,23 @@
 
 CSS-first chart primitives for Askr dashboards and product UI.
 
-`@askrjs/charts` pairs with `@askrjs/themes` and keeps chart rendering
-composable, responsive, and themeable. Use it when you want charts that read
+`@askrjs/charts` keeps chart rendering composable, responsive, and themeable
+without depending on `@askrjs/themes`. Use it when you want charts that read
 quickly in product interfaces without turning into a general-purpose plotting
 library.
 
 ## Install
 
 ```bash
-npm install @askrjs/charts @askrjs/themes
+npm install @askrjs/charts
 ```
 
 ## Quick Start
 
-Import the default chart and theme styles in your app stylesheet:
+Import the default chart styles in your app stylesheet:
 
 ```css
 @import "@askrjs/charts/default";
-@import "@askrjs/themes/default";
 ```
 
 Then render from the component surface:
@@ -55,6 +54,9 @@ export function RevenueChart() {
   legend helpers for advanced composition.
 - The package is CSS-first, so the chart visuals still come from the imported
   stylesheets.
+- `@askrjs/themes` is optional. Chart tokens are self-sufficient, while their
+  defaults are shaped to sit naturally beside Askr theme styles when both are
+  present.
 
 ## Design Rules
 

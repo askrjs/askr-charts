@@ -1,11 +1,11 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeHeatmapData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
   getHeatmapSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -36,7 +36,7 @@ export function Heatmap({
   });
   const summaryId = createChartId("heatmap-summary", id ?? label);
   const tableId = createChartId("heatmap-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section

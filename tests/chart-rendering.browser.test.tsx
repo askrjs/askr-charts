@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
-import { cleanupApp, createIsland } from "@askrjs/askr";
+import { cleanupApp, createIsland } from "@askrjs/askr/boot";
 
 import {
   AreaChart,

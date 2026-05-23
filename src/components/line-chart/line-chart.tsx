@@ -1,11 +1,11 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -53,7 +53,7 @@ export function LineChart({
       : "polygon(0% 50%, 100% 50%)";
   const summaryId = createChartId("line-chart-summary", id ?? label);
   const tableId = createChartId("line-chart-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
@@ -79,7 +79,11 @@ export function LineChart({
         aria-label={label}
         aria-describedby={`${summaryId} ${tableId}`}
       >
-        <span data-slot="line-chart-stroke-wrap" className="ak-line-chart-stroke-wrap" aria-hidden="true">
+        <span
+          data-slot="line-chart-stroke-wrap"
+          className="ak-line-chart-stroke-wrap"
+          aria-hidden="true"
+        >
           <span
             data-slot="line-chart-stroke"
             className="ak-line-chart-stroke"
