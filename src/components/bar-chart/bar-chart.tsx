@@ -1,11 +1,11 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { getChartSeriesColor, normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -37,7 +37,7 @@ export function BarChart({
   });
   const summaryId = createChartId("bar-chart-summary", id ?? label);
   const tableId = createChartId("bar-chart-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section

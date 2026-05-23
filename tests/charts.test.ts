@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
@@ -20,6 +20,22 @@ import {
 
 function renderChart(render: () => unknown): string {
   return renderToStringSync(() => render());
+}
+
+function listCssFiles(dir: string): string[] {
+  function collect(currentDir: string): string[] {
+    return readdirSync(currentDir, { withFileTypes: true }).flatMap((entry: Dirent) => {
+      const entryPath = join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        return collect(entryPath);
+      }
+
+      return entry.name.endsWith(".css") ? [entryPath] : [];
+    });
+  }
+
+  return collect(dir).sort();
 }
 
 describe("chart components", () => {
@@ -289,19 +305,27 @@ describe("chart components", () => {
   it("wires semantic chart variants and grid toggles through the rendered markup", () => {
     const html = [
       renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "success" })),
-      renderChart(() => RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "danger" })),
-      renderChart(() => Timeline({ label: "Release timeline", data: [{ label: "Alpha", status: "info" }] })),
-      renderChart(() => LineChart({ label: "Trend", data: [{ label: "Mon", value: 12 }], showGrid: true })),
-      renderChart(() => AreaChart({ label: "Orders", data: [{ label: "Mon", value: 12 }], showGrid: true })),
+      renderChart(() =>
+        RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "danger" }),
+      ),
+      renderChart(() =>
+        Timeline({ label: "Release timeline", data: [{ label: "Alpha", status: "info" }] }),
+      ),
+      renderChart(() =>
+        LineChart({ label: "Trend", data: [{ label: "Mon", value: 12 }], showGrid: true }),
+      ),
+      renderChart(() =>
+        AreaChart({ label: "Orders", data: [{ label: "Mon", value: 12 }], showGrid: true }),
+      ),
     ].join("");
 
     expect(html).toContain('data-ak-variant="success"');
     expect(html).toContain('data-ak-variant="danger"');
     expect(html).toContain('data-ak-status="info"');
     expect(html).toContain('data-ak-show-grid="true"');
-    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-success)');
-    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-danger)');
-    expect(html).toContain('--ak-chart-item-color:var(--ak-chart-color-info)');
+    expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-success)");
+    expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-danger)");
+    expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-info)");
   });
 
   it("keeps the phase 3 visual polish hooks in the default chart styles", () => {
@@ -332,7 +356,10 @@ describe("chart components", () => {
       join(__dirname, "..", "src", "charts", "default", "styles", "display", "legend.css"),
       "utf8",
     );
-    const tokensCss = readFileSync(join(__dirname, "..", "src", "charts", "default", "tokens.css"), "utf8");
+    const tokensCss = readFileSync(
+      join(__dirname, "..", "src", "charts", "default", "tokens.css"),
+      "utf8",
+    );
 
     expect(tokensCss).toContain("--ak-chart-font-family-heading");
     expect(tokensCss).toContain("--ak-chart-font-weight-semibold");
@@ -342,6 +369,28 @@ describe("chart components", () => {
     expect(legendCss).toContain("font-weight: 600");
     expect(legendCss).toContain("font-variant-numeric: tabular-nums");
     expect(legendCss).toContain("color: var(--ak-chart-color-text)");
+  });
+
+  it("keeps display styles self-sufficient on chart-owned tokens", () => {
+    const root = join(__dirname, "..");
+    const styleFiles = [
+      ...listCssFiles(join(root, "src", "charts", "default", "styles")),
+      ...listCssFiles(join(root, "templates", "chart", "styles")),
+      join(root, "src", "css", "animations.css"),
+    ];
+    const forbiddenThemeToken = /--ak-(?:color|radius|duration|ease|z)-/;
+
+    for (const file of styleFiles) {
+      const css = readFileSync(file, "utf8");
+      expect(css, `${file} should use --ak-chart-* tokens in display styles`).not.toMatch(
+        forbiddenThemeToken,
+      );
+    }
+
+    const tokensCss = readFileSync(join(root, "src", "charts", "default", "tokens.css"), "utf8");
+    expect(tokensCss).toContain("var(--ak-color-accent, #2563eb)");
+    expect(tokensCss).toContain("--ak-chart-focus-ring");
+    expect(tokensCss).toContain("--ak-chart-tooltip-border");
   });
 
   it("renders zero values truthfully without forcing non-zero sizes", () => {

@@ -1,5 +1,4 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import {
   buildDonutStops,
   getChartSeriesColor,
@@ -11,6 +10,7 @@ import {
   chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -70,7 +70,7 @@ export function DonutChart({
   const summaryId = createChartId("donut-chart-summary", id ?? label);
   const tableId = createChartId("donut-chart-table", id ?? label);
   const donutStops = buildDonutStops(normalized.data);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
   let cursor = 0;
   const donutSegments = normalized.data
     .map((datum, index) => {

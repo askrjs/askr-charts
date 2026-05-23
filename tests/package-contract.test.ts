@@ -35,4 +35,15 @@ describe("package contract", () => {
 
     expect(pkg.exports["./templates/*"]).toBe("./templates/*");
   });
+
+  it("documents themes as optional rather than required", () => {
+    const root = join(__dirname, "..");
+    const readme = readFileSync(join(root, "README.md"), "utf8");
+    const usage = readFileSync(join(root, "docs", "usage.md"), "utf8");
+
+    expect(readme).toContain("npm install @askrjs/charts");
+    expect(readme).not.toContain("npm install @askrjs/charts @askrjs/themes");
+    expect(readme).toContain("`@askrjs/themes` is optional");
+    expect(usage).toContain("It does not depend on `@askrjs/themes`");
+  });
 });

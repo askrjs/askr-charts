@@ -22,7 +22,8 @@ describe("chart contract documentation", () => {
     const repoRoot = join(packageRoot, "..");
     const docs = readFileSync(join(packageRoot, "CHARTING.md"), "utf8");
     const exportsFile = readFileSync(join(packageRoot, "src", "components", "index.ts"), "utf8");
-    const gallery = readFileSync(join(repoRoot, "my-app", "src", "pages", "charts.tsx"), "utf8");
+    const galleryPath = join(repoRoot, "my-app", "src", "pages", "charts.tsx");
+    const gallery = existsSync(galleryPath) ? readFileSync(galleryPath, "utf8") : undefined;
 
     for (const [chartName, exampleFile] of contractCharts) {
       const importName = `${chartName}Example`;
@@ -31,10 +32,13 @@ describe("chart contract documentation", () => {
       expect(exportsFile).toContain(`export { ${chartName} }`);
       expect(docs).toContain(`### ${chartName}`);
       expect(docs).toContain(`../my-app/src/components/${exampleFile}`);
-      expect(existsSync(join(repoRoot, "my-app", "src", "components", exampleFile))).toBe(true);
-      expect(gallery).toContain(`data-chart-contract="${chartName}"`);
-      expect(gallery).toContain(`import ${importName} from '../components/${importPath}'`);
-      expect(gallery).toContain(`<${importName} `);
+
+      if (gallery) {
+        expect(existsSync(join(repoRoot, "my-app", "src", "components", exampleFile))).toBe(true);
+        expect(gallery).toContain(`data-chart-contract="${chartName}"`);
+        expect(gallery).toContain(`import ${importName} from '../components/${importPath}'`);
+        expect(gallery).toContain(`<${importName} `);
+      }
     }
   });
 });

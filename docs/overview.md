@@ -1,8 +1,8 @@
 ﻿# Askr Charts Overview
 
 `@askrjs/charts` provides chart-facing presentation primitives for Askr apps.
-It is a sibling package to `@askrjs/themes`, not a replacement for the app
-shell theme system or a full charting engine.
+It is independent from `@askrjs/themes`, while keeping compatible visual
+defaults for apps that also use the theme package.
 
 Current package layers:
 
@@ -13,6 +13,8 @@ Current package layers:
 
 The package is intentionally presentation-first. Runtime chart adapters can layer on
 top of these primitives without coupling the package to one chart engine.
+The default CSS is self-sufficient: importing `@askrjs/charts/default` is enough
+to render polished charts.
 
 Current visual chart set includes area charts, bar charts, donut charts, flame
 graphs, heatmaps, line charts, progress meters, radial gauges, sparklines,

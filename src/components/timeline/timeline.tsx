@@ -1,10 +1,10 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { getChartStatusColor } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
 } from "../_internal/chart-helpers";
@@ -28,7 +28,7 @@ export function Timeline({
   const items = [...data];
   const summaryId = createChartId("timeline-summary", id ?? label);
   const tableId = createChartId("timeline-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
   const defaultSummary =
     items.length === 0
       ? `${label}. No timeline entries available.`

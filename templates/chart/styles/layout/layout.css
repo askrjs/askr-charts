@@ -2,7 +2,12 @@
   display: grid;
   gap: var(--ak-chart-gap);
   padding: var(--ak-chart-padding);
-  background: var(--ak-chart-color-surface);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-color-surface) 96%, white 4%),
+      var(--ak-chart-color-surface)
+    );
   border: 1px solid var(--ak-chart-color-border);
   border-radius: var(--ak-chart-radius);
   box-shadow: var(--ak-chart-shadow);
@@ -25,12 +30,31 @@
   display: grid;
   gap: 0.875rem;
   padding: 1rem;
-  background: var(--ak-chart-surface-elevated);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ak-chart-surface-elevated) 92%, var(--ak-chart-color-surface) 8%),
+      var(--ak-chart-surface-elevated)
+    );
   border: 1px solid var(--ak-chart-color-border);
-  border-radius: calc(var(--ak-chart-radius) - 0.25rem);
+  border-radius: var(--ak-chart-radius);
+  box-shadow: var(--ak-chart-shadow-soft);
 }
 
-:where(.ak-chart, [data-slot="bar-chart"], [data-slot="donut-chart"], [data-slot="heatmap"]) {
+:where(
+  .ak-chart,
+  [data-slot="area-chart"],
+  [data-slot="bar-chart"],
+  [data-slot="donut-chart"],
+  [data-slot="flame-graph"],
+  [data-slot="heatmap"],
+  [data-slot="line-chart"],
+  [data-slot="progress-meter"],
+  [data-slot="radial-gauge"],
+  [data-slot="sparkline"],
+  [data-slot="stacked-bar-chart"],
+  [data-slot="timeline"]
+) {
   display: grid;
   gap: 0.875rem;
 }

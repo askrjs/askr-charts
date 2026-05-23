@@ -1,9 +1,9 @@
-import { mergeProps } from "@askrjs/askr/foundations";
 import { clampChartValue, formatChartValue, getChartSeriesColor } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -150,7 +150,7 @@ export function FlameGraph({
     flattened.length === 0
       ? `${label}. No flame graph frames available.`
       : `${label}. ${flattened.length} frames across ${rows.length} levels. Widest frame is ${dominantFrame?.path ?? ""} at ${formatChartValue(dominantFrame?.spanValue ?? 0, formatter)}. Total span is ${formatChartValue(total, formatter)}.`;
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
@@ -177,9 +177,10 @@ export function FlameGraph({
       >
         <div data-slot="flame-graph-stack" className="ak-flame-graph-stack">
           {rows.map((row) => (
-            <ol data-slot="flame-graph-row" className="ak-flame-graph-row">
+            <ol key={row.depth} data-slot="flame-graph-row" className="ak-flame-graph-row">
               {row.frames.map((frame) => (
                 <li
+                  key={`${frame.path}-${frame.itemIndex}`}
                   data-ak-chart-item="true"
                   data-ak-chart-tooltip-trigger="true"
                   data-slot="flame-graph-cell"
@@ -229,7 +230,7 @@ export function FlameGraph({
         </thead>
         <tbody>
           {flattened.map((frame) => (
-            <tr>
+            <tr key={`${frame.path}-${frame.itemIndex}`}>
               <th scope="row">{frame.path}</th>
               <td>{frame.depth + 1}</td>
               <td>{frame.formattedValue}</td>

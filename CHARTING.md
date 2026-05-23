@@ -1,9 +1,9 @@
 # Charting
 
-`@askrjs/charts` is the CSS-first chart companion to `@askrjs/themes`.
-It provides product UI dashboard charts: recognizable visual summaries that
-are composable, responsive, themeable, and useful without introducing a full
-analytics plotting engine.
+`@askrjs/charts` is the CSS-first chart package for Askr product UI. It
+provides dashboard charts: recognizable visual summaries that are composable,
+responsive, themeable, and useful without introducing a full analytics plotting
+engine or depending on `@askrjs/themes`.
 
 Import the default chart surface styles:
 
@@ -105,6 +105,10 @@ Core CSS variables:
 - `--ak-chart-gap`
 - `--ak-chart-radius`
 - `--ak-chart-font-size`
+
+Chart CSS must remain self-sufficient. Broader Askr theme tokens may feed chart
+tokens as fallbacks, but display styles should use chart-owned `--ak-chart-*`
+variables as their contract.
 
 Responsive rules:
 

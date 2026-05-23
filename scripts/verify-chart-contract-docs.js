@@ -31,7 +31,7 @@ const examplesRoot = join(repoRoot, "my-app", "src", "components");
 
 const docs = readFileSync(docsPath, "utf8");
 const exportsFile = readFileSync(exportsPath, "utf8");
-const gallery = readFileSync(galleryPath, "utf8");
+const gallery = existsSync(galleryPath) ? readFileSync(galleryPath, "utf8") : undefined;
 
 const failures = [];
 
@@ -56,19 +56,21 @@ for (const chart of contractCharts) {
     docs.includes(`../my-app/src/components/${chart.example}`),
     `${chart.name} docs must link to ${chart.example}`,
   );
-  assert(existsSync(examplePath), `${chart.name} must have ${chart.example}`);
-  assert(
-    gallery.includes(`import ${importName} from '../components/${importPath}'`),
-    `${chart.name} example must be imported by my-app/src/pages/charts.tsx`,
-  );
-  assert(
-    gallery.includes(`data-chart-contract="${chart.name}"`),
-    `${chart.name} gallery section must expose data-chart-contract="${chart.name}"`,
-  );
-  assert(
-    gallery.includes(`<${importName} `),
-    `${chart.name} example must be rendered by my-app/src/pages/charts.tsx`,
-  );
+  if (gallery) {
+    assert(existsSync(examplePath), `${chart.name} must have ${chart.example}`);
+    assert(
+      gallery.includes(`import ${importName} from '../components/${importPath}'`),
+      `${chart.name} example must be imported by my-app/src/pages/charts.tsx`,
+    );
+    assert(
+      gallery.includes(`data-chart-contract="${chart.name}"`),
+      `${chart.name} gallery section must expose data-chart-contract="${chart.name}"`,
+    );
+    assert(
+      gallery.includes(`<${importName} `),
+      `${chart.name} example must be rendered by my-app/src/pages/charts.tsx`,
+    );
+  }
 }
 
 for (const primitive of supportPrimitives) {

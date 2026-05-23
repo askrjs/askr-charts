@@ -1,4 +1,3 @@
-import { mergeProps } from "@askrjs/askr/foundations";
 import {
   clampChartValue,
   formatChartValue,
@@ -9,6 +8,7 @@ import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -55,7 +55,7 @@ export function StackedBarChart({
     rows.length === 0
       ? `${label}. No stacked bar rows available.`
       : `${label}. ${rows.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${rows[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
@@ -77,13 +77,18 @@ export function StackedBarChart({
           {rows.map((datum, rowIndex) => {
             const total = totals[rowIndex] ?? 0;
             return (
-              <li data-slot="stacked-bar-chart-item" className="ak-stacked-bar-chart-item">
+              <li
+                key={`${datum.label}-${rowIndex}`}
+                data-slot="stacked-bar-chart-item"
+                className="ak-stacked-bar-chart-item"
+              >
                 <span data-slot="stacked-bar-chart-label" className="ak-stacked-bar-chart-label">
                   {datum.label}
                 </span>
                 <span data-slot="stacked-bar-chart-track" className="ak-stacked-bar-chart-track">
                   {datum.segments.map((segment, segmentIndex) => (
                     <span
+                      key={`${datum.label}-${segment.label}-${segmentIndex}`}
                       data-ak-chart-item="true"
                       data-ak-chart-tooltip-trigger="true"
                       data-slot="stacked-bar-chart-segment"
@@ -136,8 +141,8 @@ export function StackedBarChart({
         </thead>
         <tbody>
           {rows.map((datum) =>
-            datum.segments.map((segment) => (
-              <tr>
+            datum.segments.map((segment, segmentIndex) => (
+              <tr key={`${datum.label}-${segment.label}-${segmentIndex}`}>
                 <th scope="row">{datum.label}</th>
                 <td>{segment.label}</td>
                 <td>{formatChartValue(segment.value, formatter)}</td>

@@ -1,11 +1,11 @@
 import { For } from "@askrjs/askr";
-import { mergeProps } from "@askrjs/askr/foundations";
 import { normalizeValueChartData } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
   createChartId,
   getValueChartSummary,
+  mergeChartProps,
   mergeChartStyles,
   resolveChartAnimation,
   resolveValueFormatter,
@@ -48,7 +48,7 @@ export function AreaChart({
       : "polygon(0% 100%, 100% 100%)";
   const summaryId = createChartId("area-chart-summary", id ?? label);
   const tableId = createChartId("area-chart-table", id ?? label);
-  const sectionProps = mergeProps(rest, chartTooltipTriggerProps);
+  const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
     <section
