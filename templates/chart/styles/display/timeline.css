@@ -36,8 +36,10 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%
   );
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent),
-    0 2px 6px color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent);
+    0 0 0 2px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent),
+    0 2px 6px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent);
 }
 
 :where(.ak-timeline-item, [data-slot="timeline-item"]):not(:last-child)

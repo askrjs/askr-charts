@@ -9,6 +9,8 @@ const TEMPLATE_CHART_DIR = join(__dirname, "..", "templates", "chart");
 const TEMPLATE_STYLES_DIR = join(TEMPLATE_CHART_DIR, "styles");
 const DEFAULT_TOKENS = join(DEFAULT_CHART_DIR, "tokens.css");
 const TEMPLATE_TOKENS = join(TEMPLATE_CHART_DIR, "tokens.css");
+const DEFAULT_ANIMATIONS = join(DEFAULT_CHART_DIR, "styles", "base", "animations.css");
+const TEMPLATE_ANIMATIONS = join(TEMPLATE_CHART_DIR, "styles", "base", "animations.css");
 
 function listCssFiles(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -69,6 +71,17 @@ describe("template parity", () => {
     const templateTokens = extractTokenNames(readFileSync(TEMPLATE_TOKENS, "utf-8"));
 
     expect(templateTokens).toEqual(defaultTokens);
+  });
+
+  it("template ships the same standalone animation baseline as the default chart package", () => {
+    const defaultIndex = readFileSync(join(DEFAULT_CHART_DIR, "index.css"), "utf-8");
+    const templateIndex = readFileSync(join(TEMPLATE_CHART_DIR, "index.css"), "utf-8");
+
+    expect(defaultIndex).toContain('@import "./styles/base/animations.css";');
+    expect(templateIndex).toContain('@import "./styles/base/animations.css";');
+    expect(readFileSync(TEMPLATE_ANIMATIONS, "utf-8")).toBe(
+      readFileSync(DEFAULT_ANIMATIONS, "utf-8"),
+    );
   });
 
   it("official chart entrypoints use the same canonical layout imports", () => {

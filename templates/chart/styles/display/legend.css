@@ -20,12 +20,11 @@
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--ak-chart-color-border);
   border-radius: 999px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-surface) 94%, white 6%),
-      var(--ak-chart-color-surface)
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-surface) 94%, white 6%),
+    var(--ak-chart-color-surface)
+  );
   box-shadow: var(--ak-chart-shadow-soft);
   line-height: 1.2;
 }

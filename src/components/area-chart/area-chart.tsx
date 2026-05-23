@@ -31,10 +31,11 @@ export function AreaChart({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "grow",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
     min,
     max,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const areaPoints = normalized.data.map((datum, index, all) => {
     const x = all.length <= 1 ? 50 : (index / (all.length - 1)) * 100;
@@ -131,7 +132,7 @@ export function AreaChart({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {summary ?? getValueChartSummary(label, normalized.data, normalized.max, summary)}
+        {getValueChartSummary(label, normalized.data, normalized.max, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

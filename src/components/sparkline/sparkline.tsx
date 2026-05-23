@@ -30,10 +30,11 @@ export function Sparkline({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "fade",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
     min,
     max,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const sparklineLineColor = normalized.data.find((datum) => datum.color)?.color;
   const sparklineLinePoints = normalized.data.map((datum, index, all) => {
@@ -129,7 +130,7 @@ export function Sparkline({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {getValueChartSummary(label, normalized.data, normalized.max, summary)}
+        {getValueChartSummary(label, normalized.data, normalized.max, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

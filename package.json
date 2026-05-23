@@ -74,7 +74,7 @@
     "new:chart": "node ./scripts/new-chart.js",
     "verify:chart-contract-docs": "node ./scripts/verify-chart-contract-docs.js",
     "verify:token-contract": "node ./scripts/verify-token-contract.js",
-    "verify:responsive": "node ./scripts/verify-responsive-chart.js",
+    "verify:responsive": "vp test run -c vitest.node.config.ts tests/responsive-contract.test.ts",
     "verify:slots": "node ./scripts/verify-slot-coverage.js",
     "test": "npm run test:unit && npm run test:jsdom && npm run test:browser",
     "test:unit": "vp test run -c vitest.node.config.ts",

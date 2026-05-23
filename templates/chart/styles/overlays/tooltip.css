@@ -1,7 +1,7 @@
 :where([data-ak-chart-tooltip-trigger="true"]) {
   outline: none;
-  --ak-chart-tooltip-x: 0px;
-  --ak-chart-tooltip-y: 0px;
+  --ak-chart-tooltip-anchor-x: 50%;
+  --ak-chart-tooltip-anchor-y: 0px;
 }
 
 :where(
@@ -20,8 +20,8 @@
 }
 
 :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
-  inset-inline-start: 50%;
-  inset-block-end: calc(100% + 0.5rem);
+  inset-inline-start: var(--ak-chart-tooltip-anchor-x, 50%);
+  inset-block-start: var(--ak-chart-tooltip-anchor-y, 0px);
   z-index: var(--ak-chart-z-tooltip, 20);
   pointer-events: none;
   display: grid;
@@ -31,19 +31,18 @@
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--ak-chart-tooltip-border);
   border-radius: var(--ak-chart-radius);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-tooltip-bg) 92%, white 8%),
-      var(--ak-chart-tooltip-bg)
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-tooltip-bg) 92%, white 8%),
+    var(--ak-chart-tooltip-bg)
+  );
   color: var(--ak-chart-tooltip-fg);
   font-size: var(--ak-chart-font-size-sm);
   line-height: 1.35;
   box-shadow: var(--ak-chart-tooltip-shadow, var(--ak-chart-shadow));
   opacity: 0;
   visibility: hidden;
-  transform: translate(-50%, 0.25rem) scale(0.98);
+  transform: translate(-50%, calc(-100% - 0.25rem)) scale(0.98);
   transform-origin: 50% 100%;
   will-change: transform, opacity;
   transition:
@@ -65,7 +64,7 @@
   :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, 0) scale(1);
+  transform: translate(-50%, calc(-100% - 0.5rem)) scale(1);
   animation: ak-tooltip-in var(--ak-chart-duration-fast, 120ms)
     var(--ak-chart-ease-standard, ease-out);
 }
@@ -93,11 +92,11 @@
 @keyframes ak-tooltip-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 0.375rem) scale(0.98);
+    transform: translate(-50%, calc(-100% - 0.25rem)) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, calc(-100% - 0.5rem)) scale(1);
   }
 }

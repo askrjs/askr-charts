@@ -4,48 +4,45 @@
   --ak-chart-font-size-lg: var(--ak-font-size-lg, 1rem);
   --ak-chart-font-size-heading: clamp(1rem, 0.96rem + 0.4vw, 1.25rem);
   --ak-chart-font-size: var(--ak-chart-font-size-md);
-  --ak-chart-font-family-body:
-    var(
-      --ak-font-family-body,
-      "Aptos",
-      "Segoe UI Variable Text",
-      "Segoe UI",
-      "SF Pro Text",
-      Inter,
-      ui-sans-serif,
-      system-ui,
-      sans-serif,
-      "Apple Color Emoji",
-      "Segoe UI Emoji"
-    );
-  --ak-chart-font-family-heading:
-    var(
-      --ak-font-family-heading,
-      "Aptos Display",
-      "Aptos",
-      "Segoe UI Variable Display",
-      "Segoe UI Variable Text",
-      "Segoe UI",
-      "SF Pro Display",
-      Inter,
-      ui-sans-serif,
-      system-ui,
-      sans-serif,
-      "Apple Color Emoji",
-      "Segoe UI Emoji"
-    );
-  --ak-chart-font-family-mono:
-    var(
-      --ak-font-family-mono,
-      "IBM Plex Mono",
-      "SFMono-Regular",
-      "Menlo",
-      "Consolas",
-      ui-monospace,
-      monospace,
-      "Apple Color Emoji",
-      "Segoe UI Emoji"
-    );
+  --ak-chart-font-family-body: var(
+    --ak-font-family-body,
+    "Aptos",
+    "Segoe UI Variable Text",
+    "Segoe UI",
+    "SF Pro Text",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji"
+  );
+  --ak-chart-font-family-heading: var(
+    --ak-font-family-heading,
+    "Aptos Display",
+    "Aptos",
+    "Segoe UI Variable Display",
+    "Segoe UI Variable Text",
+    "Segoe UI",
+    "SF Pro Display",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji"
+  );
+  --ak-chart-font-family-mono: var(
+    --ak-font-family-mono,
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    "Menlo",
+    "Consolas",
+    ui-monospace,
+    monospace,
+    "Apple Color Emoji",
+    "Segoe UI Emoji"
+  );
   --ak-chart-font-family: var(--ak-chart-font-family-body);
   --ak-chart-font-weight-medium: var(--ak-font-weight-medium, 500);
   --ak-chart-font-weight-semibold: var(--ak-font-weight-semibold, 600);
@@ -99,18 +96,16 @@
   --ak-chart-text-muted: var(--ak-color-text-muted, #475569);
   --ak-chart-grid: color-mix(in srgb, var(--ak-chart-color-text-muted) 18%, transparent);
   --ak-chart-axis: color-mix(in srgb, var(--ak-chart-color-text-muted) 44%, transparent);
-  --ak-chart-plot-bg:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-surface) 96%, var(--ak-chart-color-primary) 4%),
-      var(--ak-chart-color-surface)
-    );
-  --ak-chart-track-bg:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-muted) 78%, white 22%),
-      color-mix(in srgb, var(--ak-chart-color-muted) 92%, var(--ak-chart-color-text) 8%)
-    );
+  --ak-chart-plot-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-surface) 96%, var(--ak-chart-color-primary) 4%),
+    var(--ak-chart-color-surface)
+  );
+  --ak-chart-track-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-muted) 78%, white 22%),
+    color-mix(in srgb, var(--ak-chart-color-muted) 92%, var(--ak-chart-color-text) 8%)
+  );
   --ak-chart-track-border: color-mix(in srgb, var(--ak-chart-color-border) 70%, transparent);
   --ak-chart-tooltip-bg: var(--ak-chart-color-tooltip-bg);
   --ak-chart-tooltip-fg: var(--ak-chart-color-tooltip-fg);
@@ -118,10 +113,8 @@
   --ak-chart-focus-ring: var(--ak-color-focus-ring, #2563eb);
   --ak-chart-hover-overlay: rgba(255, 255, 255, 0.45);
   --ak-chart-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --ak-chart-shadow:
-    0 18px 42px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
-  --ak-chart-tooltip-shadow:
-    0 18px 42px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.16);
+  --ak-chart-shadow: 0 18px 42px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --ak-chart-tooltip-shadow: 0 18px 42px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.16);
 }
 
 [data-theme="dark"] {
@@ -146,18 +139,16 @@
   --ak-chart-text-muted: var(--ak-color-text-muted, #94a3b8);
   --ak-chart-grid: color-mix(in srgb, var(--ak-chart-color-text-muted) 20%, transparent);
   --ak-chart-axis: color-mix(in srgb, var(--ak-chart-color-text-muted) 42%, transparent);
-  --ak-chart-plot-bg:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-surface) 88%, var(--ak-chart-color-primary) 12%),
-      var(--ak-chart-color-surface)
-    );
-  --ak-chart-track-bg:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-muted) 88%, white 8%),
-      color-mix(in srgb, var(--ak-chart-color-muted) 92%, black 8%)
-    );
+  --ak-chart-plot-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-surface) 88%, var(--ak-chart-color-primary) 12%),
+    var(--ak-chart-color-surface)
+  );
+  --ak-chart-track-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-muted) 88%, white 8%),
+    color-mix(in srgb, var(--ak-chart-color-muted) 92%, black 8%)
+  );
   --ak-chart-track-border: color-mix(in srgb, var(--ak-chart-color-border) 80%, transparent);
   --ak-chart-tooltip-bg: var(--ak-chart-color-tooltip-bg);
   --ak-chart-tooltip-fg: var(--ak-chart-color-tooltip-fg);
@@ -165,8 +156,6 @@
   --ak-chart-focus-ring: var(--ak-color-focus-ring, #60a5fa);
   --ak-chart-hover-overlay: rgba(255, 255, 255, 0.08);
   --ak-chart-shadow-soft: 0 1px 2px rgba(2, 6, 23, 0.24);
-  --ak-chart-shadow:
-    0 18px 42px rgba(2, 6, 23, 0.38), 0 1px 2px rgba(15, 23, 42, 0.28);
-  --ak-chart-tooltip-shadow:
-    0 20px 48px rgba(2, 6, 23, 0.54), 0 2px 8px rgba(2, 6, 23, 0.38);
+  --ak-chart-shadow: 0 18px 42px rgba(2, 6, 23, 0.38), 0 1px 2px rgba(15, 23, 42, 0.28);
+  --ak-chart-tooltip-shadow: 0 20px 48px rgba(2, 6, 23, 0.54), 0 2px 8px rgba(2, 6, 23, 0.38);
 }

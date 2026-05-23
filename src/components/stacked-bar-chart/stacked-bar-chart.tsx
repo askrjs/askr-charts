@@ -45,6 +45,12 @@ export function StackedBarChart({
           totals.map((value, index) => ({ label: rows[index]?.label ?? String(index), value })),
         )
       : getValueChartMax([], max);
+  const scaledRows = rows.map((datum, rowIndex) => {
+    const total = totals[rowIndex] ?? 0;
+    const rowFraction = scaleMax > 0 ? Math.min(total / scaleMax, 1) : 0;
+
+    return { datum, rowFraction, total };
+  });
   const summaryId = createChartId("stacked-bar-chart-summary", id ?? label);
   const tableId = createChartId("stacked-bar-chart-table", id ?? label);
   const peakIndex = totals.reduce(
@@ -74,8 +80,7 @@ export function StackedBarChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="stacked-bar-chart-list" className="ak-stacked-bar-chart-list">
-          {rows.map((datum, rowIndex) => {
-            const total = totals[rowIndex] ?? 0;
+          {scaledRows.map(({ datum, rowFraction, total }, rowIndex) => {
             return (
               <li
                 key={`${datum.label}-${rowIndex}`}
@@ -86,35 +91,52 @@ export function StackedBarChart({
                   {datum.label}
                 </span>
                 <span data-slot="stacked-bar-chart-track" className="ak-stacked-bar-chart-track">
-                  {datum.segments.map((segment, segmentIndex) => (
-                    <span
-                      key={`${datum.label}-${segment.label}-${segmentIndex}`}
-                      data-ak-chart-item="true"
-                      data-ak-chart-tooltip-trigger="true"
-                      data-slot="stacked-bar-chart-segment"
-                      className="ak-stacked-bar-chart-segment"
-                      aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
-                      tabIndex={0}
-                      style={mergeChartStyles({
-                        "--ak-chart-item-color": getChartSeriesColor(segmentIndex, segment.color),
-                        "--ak-chart-item-index": segmentIndex,
-                        "--ak-chart-item-min-size": segment.value > 0 ? "0.25rem" : 0,
-                        "--ak-chart-item-value": `${total > 0 ? (clampChartValue(segment.value) / total) * 100 : 0}%`,
-                      })}
-                    >
-                      <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                        <span className="chart-tooltip-title">
-                          {datum.label}: {segment.label}
+                  <span
+                    data-slot="stacked-bar-chart-stack"
+                    className="ak-stacked-bar-chart-stack"
+                    style={mergeChartStyles({ "--ak-chart-row-value": `${rowFraction * 100}%` })}
+                  >
+                    {datum.segments.map((segment, segmentIndex) => {
+                      const segmentValue = clampChartValue(segment.value);
+
+                      return (
+                        <span
+                          key={`${datum.label}-${segment.label}-${segmentIndex}`}
+                          data-ak-chart-item="true"
+                          data-ak-chart-tooltip-trigger="true"
+                          data-slot="stacked-bar-chart-segment"
+                          className="ak-stacked-bar-chart-segment"
+                          aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
+                          tabIndex={0}
+                          style={mergeChartStyles({
+                            "--ak-chart-item-color": getChartSeriesColor(
+                              segmentIndex,
+                              segment.color,
+                            ),
+                            "--ak-chart-item-index": segmentIndex,
+                            "--ak-chart-item-min-size": segmentValue > 0 ? "0.25rem" : 0,
+                            "--ak-chart-item-value": `${total > 0 ? (segmentValue / total) * 100 : 0}%`,
+                          })}
+                        >
+                          <span
+                            data-slot="tooltip-content"
+                            className="chart-tooltip"
+                            role="tooltip"
+                          >
+                            <span className="chart-tooltip-title">
+                              {datum.label}: {segment.label}
+                            </span>
+                            <span className="chart-tooltip-value">
+                              {formatChartValue(segment.value, formatter)}
+                            </span>
+                            {(segment.description ?? datum.description) ? (
+                              <span>{segment.description ?? datum.description}</span>
+                            ) : null}
+                          </span>
                         </span>
-                        <span className="chart-tooltip-value">
-                          {formatChartValue(segment.value, formatter)}
-                        </span>
-                        {(segment.description ?? datum.description) ? (
-                          <span>{segment.description ?? datum.description}</span>
-                        ) : null}
-                      </span>
-                    </span>
-                  ))}
+                      );
+                    })}
+                  </span>
                 </span>
                 <span data-slot="stacked-bar-chart-value" className="ak-stacked-bar-chart-value">
                   {formatChartValue(total, formatter)}

@@ -43,7 +43,10 @@
     transparent 270deg 360deg
   );
   mask: radial-gradient(circle, transparent 0 57%, black 58% 100%);
-  filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent));
+  filter: drop-shadow(
+    0 6px 16px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent)
+  );
 }
 
 :where(.ak-radial-gauge-ring, [data-slot="radial-gauge-ring"])::after {

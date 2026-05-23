@@ -203,13 +203,14 @@ export function buildValueChartSummary(
   label: string,
   data: readonly NormalizedValueChartDatum[],
   max: number,
+  valueFormatter?: ChartValueFormatter,
 ): string {
   if (data.length === 0) {
     return `${label}. No data available.`;
   }
 
   const peak = data.reduce((best, datum) => (datum.value > best.value ? datum : best), data[0]!);
-  return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(max)}.`;
+  return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
 }
 
 export function getChartSeriesColor(index: number, color?: string): string {
@@ -352,13 +353,14 @@ export function buildHeatmapSummary(
   label: string,
   cells: readonly NormalizedHeatmapDatum[],
   max: number,
+  valueFormatter?: ChartValueFormatter,
 ): string {
   if (cells.length === 0) {
     return `${label}. No heatmap cells available.`;
   }
 
   const peak = cells.reduce((best, cell) => (cell.value > best.value ? cell : best), cells[0]!);
-  return `${label}. ${cells.length} cells. Peak value is ${peak.formattedValue} at ${peak.y}, ${peak.x}. Scale max is ${formatChartValue(max)}.`;
+  return `${label}. ${cells.length} cells. Peak value is ${peak.formattedValue} at ${peak.y}, ${peak.x}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
 }
 
 export function createHeatmapLegendItems(

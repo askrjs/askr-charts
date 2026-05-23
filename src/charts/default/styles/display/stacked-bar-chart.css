@@ -28,7 +28,7 @@
 }
 
 :where(.ak-stacked-bar-chart-track, [data-slot="stacked-bar-chart-track"]) {
-  display: flex;
+  display: block;
   min-height: var(--ak-chart-track-thickness, 0.6875rem);
   overflow: hidden;
   border: 1px solid var(--ak-chart-track-border);
@@ -39,12 +39,20 @@
     inset 0 -1px 0 color-mix(in srgb, white 28%, transparent);
 }
 
+:where(.ak-stacked-bar-chart-stack, [data-slot="stacked-bar-chart-stack"]) {
+  display: flex;
+  inline-size: var(--ak-chart-row-value, 0%);
+  min-block-size: calc(var(--ak-chart-track-thickness, 0.6875rem) - 2px);
+  border-radius: inherit;
+}
+
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]) {
   position: relative;
   display: block;
+  flex: 0 1 var(--ak-chart-item-value, 0%);
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
-  min-block-size: calc(var(--ak-chart-track-thickness, 0.6875rem) - 2px);
+  min-block-size: 100%;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, white 10%) 0%,

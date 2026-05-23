@@ -2,12 +2,11 @@
   display: grid;
   gap: var(--ak-chart-gap);
   padding: var(--ak-chart-padding);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-surface) 96%, white 4%),
-      var(--ak-chart-color-surface)
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-color-surface) 96%, white 4%),
+    var(--ak-chart-color-surface)
+  );
   border: 1px solid var(--ak-chart-color-border);
   border-radius: var(--ak-chart-radius);
   box-shadow: var(--ak-chart-shadow);
@@ -30,12 +29,11 @@
   display: grid;
   gap: 0.875rem;
   padding: 1rem;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-surface-elevated) 92%, var(--ak-chart-color-surface) 8%),
-      var(--ak-chart-surface-elevated)
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-surface-elevated) 92%, var(--ak-chart-color-surface) 8%),
+    var(--ak-chart-surface-elevated)
+  );
   border: 1px solid var(--ak-chart-color-border);
   border-radius: var(--ak-chart-radius);
   box-shadow: var(--ak-chart-shadow-soft);
