@@ -29,10 +29,11 @@ export function Heatmap({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "fade",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeHeatmapData(data, {
     min,
     max,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const summaryId = createChartId("heatmap-summary", id ?? label);
   const tableId = createChartId("heatmap-table", id ?? label);
@@ -115,7 +116,7 @@ export function Heatmap({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {getHeatmapSummary(label, normalized.cells, normalized.max, summary)}
+        {getHeatmapSummary(label, normalized.cells, normalized.max, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

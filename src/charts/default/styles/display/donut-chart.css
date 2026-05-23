@@ -50,7 +50,12 @@
   inset: 0;
   border-radius: inherit;
   background:
-    radial-gradient(circle at 50% 50%, transparent 0 57%, rgba(255, 255, 255, 0.22) 58% 60%, transparent 61%),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 0 57%,
+      rgba(255, 255, 255, 0.22) 58% 60%,
+      transparent 61%
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 48%);
   pointer-events: none;
 }
@@ -75,23 +80,6 @@
 .ak-donut-chart-ring-wrap > .ak-donut-chart-segment,
 [data-slot="donut-chart-ring-wrap"] > [data-slot="donut-chart-segment"] {
   position: absolute;
-}
-
-:where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"])
-  :where(.chart-tooltip, [data-slot="tooltip-content"]) {
-  inset-block-end: calc(100% + 0.5rem);
-  inset-inline-start: var(--ak-chart-tooltip-x, 50%);
-  transform: translate(-50%, 0.25rem) scale(0.98);
-}
-
-:where(
-    .ak-donut-chart-segment:hover,
-    .ak-donut-chart-segment:focus-within,
-    [data-slot="donut-chart-segment"]:hover,
-    [data-slot="donut-chart-segment"]:focus-within
-  )
-  :where(.chart-tooltip, [data-slot="tooltip-content"]) {
-  transform: translate(-50%, 0) scale(1);
 }
 
 :where(.ak-donut-chart-segment:focus-visible, [data-slot="donut-chart-segment"]:focus-visible) {

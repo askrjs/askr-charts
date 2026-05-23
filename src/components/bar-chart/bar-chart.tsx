@@ -30,10 +30,11 @@ export function BarChart({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "grow",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
     min,
     max,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const summaryId = createChartId("bar-chart-summary", id ?? label);
   const tableId = createChartId("bar-chart-table", id ?? label);
@@ -102,7 +103,7 @@ export function BarChart({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {getValueChartSummary(label, normalized.data, normalized.max, summary)}
+        {getValueChartSummary(label, normalized.data, normalized.max, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

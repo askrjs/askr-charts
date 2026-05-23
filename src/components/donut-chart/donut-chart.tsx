@@ -1,6 +1,7 @@
 import { For } from "@askrjs/askr";
 import {
   buildDonutStops,
+  formatChartValue,
   getChartSeriesColor,
   getValueChartTotal,
   normalizeValueChartData,
@@ -62,11 +63,13 @@ export function DonutChart({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "sweep",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
     max: getValueChartTotal(data) || 1,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const total = getValueChartTotal(data);
+  const formattedTotal = formatChartValue(total, formatter);
   const summaryId = createChartId("donut-chart-summary", id ?? label);
   const tableId = createChartId("donut-chart-table", id ?? label);
   const donutStops = buildDonutStops(normalized.data);
@@ -151,12 +154,7 @@ export function DonutChart({
               {totalLabel}
             </span>
             <strong data-slot="donut-chart-total-value" className="ak-donut-chart-total-value">
-              {normalized.data[0]
-                ? normalized.data[0].formattedValue.replace(
-                    /.+/,
-                    new Intl.NumberFormat("en-US").format(total),
-                  )
-                : "0"}
+              {formattedTotal}
             </strong>
           </div>
         </div>
@@ -198,7 +196,7 @@ export function DonutChart({
       </ol>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {getValueChartSummary(label, normalized.data, total || 1, summary)}
+        {getValueChartSummary(label, normalized.data, total || 1, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

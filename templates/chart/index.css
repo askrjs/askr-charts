@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./styles/base/animations.css";
 @import "./styles/base/typography.css";
 @import "./styles/base/utilities.css";
 @import "./styles/layout/layout.css";

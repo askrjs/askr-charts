@@ -112,8 +112,12 @@ describe("browser chart rendering", () => {
     Object.defineProperty(event, "clientY", { value: 40 });
     item.dispatchEvent(event);
 
-    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-x:150px");
-    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-y:26px");
+    expect(normalizeStyle(item.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-x:50px",
+    );
+    expect(normalizeStyle(item.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-y:20px",
+    );
   });
 
   it("should render line, area, and radial charts into the browser DOM", async () => {
@@ -294,9 +298,11 @@ describe("browser chart rendering", () => {
     await flushUpdates();
 
     const track = container.querySelector('[data-slot="stacked-bar-chart-track"]') as HTMLElement;
+    const stack = container.querySelector('[data-slot="stacked-bar-chart-stack"]') as HTMLElement;
     const segments = [...container.querySelectorAll('[data-slot="stacked-bar-chart-segment"]')];
 
     expect(segments).toHaveLength(2);
+    expect(normalizeStyle(stack.getAttribute("style"))).toContain("--ak-chart-row-value:100%");
     expect(parseFloat(getComputedStyle(track).minHeight)).toBeLessThanOrEqual(12);
   });
 

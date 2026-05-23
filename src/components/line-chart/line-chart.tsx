@@ -31,10 +31,11 @@ export function LineChart({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "fade",
   });
+  const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
     min,
     max,
-    valueFormatter: resolveValueFormatter(valueFormatter),
+    valueFormatter: formatter,
   });
   const points = normalized.data;
   const linePoints = points.map((datum, index, all) => {
@@ -136,7 +137,7 @@ export function LineChart({
       </div>
 
       <p id={summaryId} data-slot="chart-summary" className="ak-chart-summary">
-        {summary ?? getValueChartSummary(label, normalized.data, normalized.max, summary)}
+        {getValueChartSummary(label, normalized.data, normalized.max, summary, formatter)}
       </p>
 
       <table id={tableId} data-slot="chart-table" className="ak-chart-table ak-chart-sr-only">

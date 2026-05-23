@@ -24,7 +24,10 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary))
   );
   clip-path: var(--ak-sparkline-polygon);
-  filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 20%, transparent));
+  filter: drop-shadow(
+    0 2px 5px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 20%, transparent)
+  );
   pointer-events: none;
 }
 
@@ -83,7 +86,8 @@
   border: 1px solid var(--ak-chart-color-surface);
   border-radius: 999px;
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
-  box-shadow: 0 0 0 0.1rem color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
+  box-shadow: 0 0 0 0.1rem
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
 }
 
 :where(.ak-sparkline, [data-slot="sparkline"])[data-ak-variant="line"]

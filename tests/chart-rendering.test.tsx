@@ -100,7 +100,11 @@ describe("chart rendering in jsdom", () => {
     Object.defineProperty(event, "clientY", { value: 40 });
     item.dispatchEvent(event);
 
-    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-x:150px");
-    expect(normalizeStyle(item.getAttribute("style"))).toContain("--ak-chart-tooltip-y:26px");
+    expect(normalizeStyle(item.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-x:50px",
+    );
+    expect(normalizeStyle(item.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-y:20px",
+    );
   });
 });

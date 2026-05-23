@@ -88,21 +88,28 @@ describe("core data contract", () => {
   });
 
   it("should build summaries that stay readable in plain text", () => {
-    const valueData = normalizeValueChartData([
-      { label: "Jan", value: 20 },
-      { label: "Feb", value: 40 },
-    ]);
-    const heatmapData = normalizeHeatmapData([
-      { x: "Mon", y: "Week 1", value: 8 },
-      { x: "Tue", y: "Week 1", value: 4 },
-    ]);
+    const formatter = (value: number) => `$${value}k`;
+    const valueData = normalizeValueChartData(
+      [
+        { label: "Jan", value: 20 },
+        { label: "Feb", value: 40 },
+      ],
+      { valueFormatter: formatter },
+    );
+    const heatmapData = normalizeHeatmapData(
+      [
+        { x: "Mon", y: "Week 1", value: 8 },
+        { x: "Tue", y: "Week 1", value: 4 },
+      ],
+      { valueFormatter: formatter },
+    );
 
-    expect(buildValueChartSummary("Revenue", valueData.data, valueData.max)).toContain(
-      "Highest value",
+    expect(buildValueChartSummary("Revenue", valueData.data, valueData.max, formatter)).toContain(
+      "Scale max is $40k",
     );
-    expect(buildHeatmapSummary("Activity", heatmapData.cells, heatmapData.max)).toContain(
-      "Peak value",
-    );
+    expect(
+      buildHeatmapSummary("Activity", heatmapData.cells, heatmapData.max, formatter),
+    ).toContain("Scale max is $8k");
   });
 
   it("should keep scale helpers predictable", () => {

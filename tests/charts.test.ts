@@ -229,12 +229,15 @@ describe("chart components", () => {
           { label: "Direct", value: 50 },
           { label: "Referral", value: 50 },
         ],
+        valueFormatter: (value) => `${value}%`,
       }),
     );
 
     expect(html).toContain('data-slot="donut-chart"');
     expect(html).toContain("--ak-chart-donut-stops:");
     expect(html).toContain("deg");
+    expect(html).toContain('class="ak-donut-chart-total-value">100%</strong>');
+    expect(html).toContain("Scale max is 100%");
   });
 
   it("renders a flame graph with positioned frame spans", () => {
@@ -336,17 +339,24 @@ describe("chart components", () => {
     const areaCss = readFileSync(join(displayRoot, "area-chart.css"), "utf8");
     const lineCss = readFileSync(join(displayRoot, "line-chart.css"), "utf8");
     const heatmapCss = readFileSync(join(displayRoot, "heatmap.css"), "utf8");
+    const tooltipCss = readFileSync(
+      join(__dirname, "..", "src", "charts", "default", "styles", "overlays", "tooltip.css"),
+      "utf8",
+    );
 
     expect(barCss).toContain("linear-gradient(");
     expect(barCss).toContain("brightness(1.08)");
     expect(stackedBarCss).toContain("linear-gradient(");
     expect(stackedBarCss).toContain("brightness(1.1)");
+    expect(stackedBarCss).toContain("--ak-chart-row-value");
     expect(progressCss).toContain("linear-gradient(");
     expect(areaCss).toContain("52%, transparent");
     expect(areaCss).toContain("repeating-linear-gradient");
     expect(lineCss).toContain('data-ak-show-grid="true"');
     expect(heatmapCss).toContain("saturate(1.1)");
     expect(heatmapCss).toContain("outline: 2px solid");
+    expect(tooltipCss).toContain("--ak-chart-tooltip-anchor-x");
+    expect(tooltipCss).toContain("inset-inline-start: var(--ak-chart-tooltip-anchor-x");
   });
 
   it("keeps the phase 9 typography polish hooks in the shared styles", () => {
@@ -376,7 +386,6 @@ describe("chart components", () => {
     const styleFiles = [
       ...listCssFiles(join(root, "src", "charts", "default", "styles")),
       ...listCssFiles(join(root, "templates", "chart", "styles")),
-      join(root, "src", "css", "animations.css"),
     ];
     const forbiddenThemeToken = /--ak-(?:color|radius|duration|ease|z)-/;
 
@@ -479,6 +488,59 @@ describe("chart components", () => {
     );
 
     expect(html).toContain('data-slot="stacked-bar-chart"');
+    expect(html).toContain('data-slot="stacked-bar-chart-stack"');
+  });
+
+  it("scales stacked bar rows against the shared scale while preserving composition", () => {
+    const html = renderChart(() =>
+      StackedBarChart({
+        label: "Pipeline mix",
+        data: [
+          {
+            label: "Q1",
+            segments: [
+              { label: "Open", value: 12 },
+              { label: "Won", value: 8 },
+            ],
+          },
+          {
+            label: "Q2",
+            segments: [
+              { label: "Open", value: 3 },
+              { label: "Won", value: 2 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("--ak-chart-row-value:100%");
+    expect(html).toContain("--ak-chart-row-value:25%");
+    expect(html).toContain("--ak-chart-item-value:60%");
+    expect(html).toContain("--ak-chart-item-value:40%");
+  });
+
+  it("clamps stacked bar row width when explicit max is smaller than the total", () => {
+    const html = renderChart(() =>
+      StackedBarChart({
+        label: "Pipeline mix",
+        max: 10,
+        data: [
+          {
+            label: "Q1",
+            segments: [
+              { label: "Open", value: 15 },
+              { label: "Won", value: 5 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("--ak-chart-row-value:100%");
+    expect(html).toContain("--ak-chart-item-value:75%");
+    expect(html).toContain("--ak-chart-item-value:25%");
+    expect(html).not.toContain("--ak-chart-row-value:200%");
   });
 
   it("renders a timeline with semantic item hooks", () => {

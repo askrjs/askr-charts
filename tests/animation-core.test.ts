@@ -144,7 +144,10 @@ describe("chart animation core", () => {
   });
 
   it("includes reduced-motion animation guards in the shared stylesheet", () => {
-    const css = readFileSync(join(__dirname, "..", "src", "css", "animations.css"), "utf-8");
+    const css = readFileSync(
+      join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
+      "utf-8",
+    );
 
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("animation: none !important");
@@ -153,7 +156,7 @@ describe("chart animation core", () => {
 
   it("keeps the phase 1 chart animation hooks in sync with the CSS files", () => {
     const animationsCss = readFileSync(
-      join(__dirname, "..", "src", "css", "animations.css"),
+      join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
       "utf-8",
     );
     const tooltipCss = readFileSync(
