@@ -1,5 +1,5 @@
 import { For } from "@askrjs/askr";
-import { normalizeHeatmapData } from "../../core";
+import { normalizeHeatmapData, type NormalizedHeatmapDatum } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -35,6 +35,32 @@ export function Heatmap({
     max,
     valueFormatter: formatter,
   });
+  const rowIndexByName: Record<string, number> = Object.create(null);
+  const columnIndexByName: Record<string, number> = Object.create(null);
+
+  for (let index = 0; index < normalized.rows.length; index += 1) {
+    rowIndexByName[normalized.rows[index]!] = index;
+  }
+
+  for (let index = 0; index < normalized.columns.length; index += 1) {
+    columnIndexByName[normalized.columns[index]!] = index;
+  }
+
+  const cellsByCoordinate = normalized.rows.map(
+    () => new Array<NormalizedHeatmapDatum | undefined>(normalized.columns.length),
+  );
+
+  for (const cell of normalized.cells) {
+    const rowIndex = rowIndexByName[cell.y];
+    const columnIndex = columnIndexByName[cell.x];
+
+    if (rowIndex === undefined || columnIndex === undefined) {
+      continue;
+    }
+
+    cellsByCoordinate[rowIndex]![columnIndex] = cell;
+  }
+
   const summaryId = createChartId("heatmap-summary", id ?? label);
   const tableId = createChartId("heatmap-table", id ?? label);
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
@@ -68,49 +94,55 @@ export function Heatmap({
             )}
           </For>
           <For each={normalized.rows} by={(row) => row}>
-            {(row, rowIndex) => (
-              <span data-slot="heatmap-row" style={{ display: "contents" }}>
-                <span data-slot="heatmap-row-label" className="ak-heatmap-row-label">
-                  {row}
-                </span>
-                <For each={normalized.columns} by={(column) => `${row}-${column}`}>
-                  {(column, columnIndex) => {
-                    const cell = normalized.cells.find(
-                      (entry) => entry.x === column && entry.y === row,
-                    );
-                    const cellLabel = `${row}, ${column}`;
-                    return (
-                      <span
-                        data-ak-chart-item="true"
-                        data-ak-chart-tooltip-trigger="true"
-                        data-slot="heatmap-cell"
-                        className="ak-heatmap-cell"
-                        aria-label={
-                          cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`
-                        }
-                        tabIndex={0}
-                        style={mergeChartStyles({
-                          "--ak-chart-cell-bg": cell?.background ?? "var(--ak-chart-color-muted)",
-                          "--ak-chart-item-index":
-                            rowIndex() * normalized.columns.length + columnIndex(),
-                        })}
-                      >
-                        <span className="ak-chart-sr-only">
-                          {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
-                        </span>
-                        <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                          <span className="chart-tooltip-title">{cellLabel}</span>
-                          <span className="chart-tooltip-value">
-                            {cell ? cell.formattedValue : "0"}
+            {(row, rowIndex) => {
+              const rowCells = cellsByCoordinate[rowIndex()];
+
+              return (
+                <span data-slot="heatmap-row" style={{ display: "contents" }}>
+                  <span data-slot="heatmap-row-label" className="ak-heatmap-row-label">
+                    {row}
+                  </span>
+                  <For each={normalized.columns} by={(column) => `${row}-${column}`}>
+                    {(column, columnIndex) => {
+                      const cell = rowCells?.[columnIndex()];
+                      const cellLabel = `${row}, ${column}`;
+                      return (
+                        <span
+                          data-ak-chart-item="true"
+                          data-ak-chart-tooltip-trigger="true"
+                          data-slot="heatmap-cell"
+                          className="ak-heatmap-cell"
+                          aria-label={
+                            cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`
+                          }
+                          tabIndex={0}
+                          style={mergeChartStyles({
+                            "--ak-chart-cell-bg": cell?.background ?? "var(--ak-chart-color-muted)",
+                            "--ak-chart-item-index":
+                              rowIndex() * normalized.columns.length + columnIndex(),
+                          })}
+                        >
+                          <span className="ak-chart-sr-only">
+                            {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
                           </span>
-                          {cell?.description ? <span>{cell.description}</span> : null}
+                          <span
+                            data-slot="tooltip-content"
+                            className="chart-tooltip"
+                            role="tooltip"
+                          >
+                            <span className="chart-tooltip-title">{cellLabel}</span>
+                            <span className="chart-tooltip-value">
+                              {cell ? cell.formattedValue : "0"}
+                            </span>
+                            {cell?.description ? <span>{cell.description}</span> : null}
+                          </span>
                         </span>
-                      </span>
-                    );
-                  }}
-                </For>
-              </span>
-            )}
+                      );
+                    }}
+                  </For>
+                </span>
+              );
+            }}
           </For>
         </div>
       </div>

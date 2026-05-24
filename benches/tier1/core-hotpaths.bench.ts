@@ -18,6 +18,13 @@ import { consume } from "../_shared/sink";
 const WORK = 128;
 const valueData = buildValueData(48);
 const heatmapData = buildHeatmapData(12, 8);
+const tupleValueData = valueData.map(
+  (datum) => [datum.label, datum.value, datum.color, datum.description] as const,
+);
+const tupleHeatmapData = heatmapData.map(
+  (datum) => [datum.x, datum.y, datum.value, datum.color, datum.description] as const,
+);
+const donutStopsData = normalizeValueChartData(valueData.slice(0, 12)).data;
 
 describe("tier1 chart hotpath benches", () => {
   bench("normalize value chart data", () => {
@@ -86,6 +93,40 @@ describe("tier1 chart hotpath benches", () => {
 
     for (let index = 0; index < WORK; index += 1) {
       result = createChartId("chart-bench", `Revenue panel ${index}`);
+    }
+
+    consume(result);
+  });
+
+  bench("normalize value chart tuple data", () => {
+    let result: unknown;
+
+    for (let index = 0; index < WORK; index += 1) {
+      result = normalizeValueChartData(tupleValueData, {
+        max: 120,
+      });
+    }
+
+    consume(result);
+  });
+
+  bench("normalize heatmap tuple data", () => {
+    let result: unknown;
+
+    for (let index = 0; index < WORK; index += 1) {
+      result = normalizeHeatmapData(tupleHeatmapData, {
+        max: 120,
+      });
+    }
+
+    consume(result);
+  });
+
+  bench("build donut stops from normalized data", () => {
+    let result: string | undefined;
+
+    for (let index = 0; index < WORK; index += 1) {
+      result = buildDonutStops(donutStopsData);
     }
 
     consume(result);

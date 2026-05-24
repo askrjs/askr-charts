@@ -1,6 +1,5 @@
 import { For } from "@askrjs/askr";
 import {
-  buildDonutStops,
   formatChartValue,
   getChartSeriesColor,
   getValueChartTotal,
@@ -64,36 +63,55 @@ export function DonutChart({
     type: "sweep",
   });
   const formatter = resolveValueFormatter(valueFormatter);
+  const total = getValueChartTotal(data);
   const normalized = normalizeValueChartData(data, {
-    max: getValueChartTotal(data) || 1,
+    max: total || 1,
     valueFormatter: formatter,
   });
-  const total = getValueChartTotal(data);
   const formattedTotal = formatChartValue(total, formatter);
   const summaryId = createChartId("donut-chart-summary", id ?? label);
   const tableId = createChartId("donut-chart-table", id ?? label);
-  const donutStops = buildDonutStops(normalized.data);
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
+  const donutStops: string[] = [];
+  const donutSegments: Array<{
+    clipPath: string | null;
+    color: string;
+    datum: (typeof normalized.data)[number];
+    index: number;
+  }> = [];
+  const lastIndex = normalized.data.length - 1;
   let cursor = 0;
-  const donutSegments = normalized.data
-    .map((datum, index) => {
-      if (datum.value <= 0) {
-        return null;
-      }
 
-      const slice = datum.fraction * 360;
-      const start = cursor;
-      const end = index === normalized.data.length - 1 ? 360 : cursor + slice;
-      cursor = end;
+  for (let index = 0; index < normalized.data.length; index += 1) {
+    const datum = normalized.data[index]!;
+    const slice = datum.fraction * 360;
+    const start = cursor;
+    const end = index === lastIndex ? 360 : cursor + slice;
+    const gap = index === lastIndex ? 0 : Math.min(2, Math.max(0, end - start));
+    const segmentEnd = Math.max(start, end - gap);
+    const color = getChartSeriesColor(index, datum.color);
 
-      return {
+    if (segmentEnd > start) {
+      donutStops.push(`${color} ${start}deg ${segmentEnd}deg`);
+    }
+
+    if (gap > 0) {
+      donutStops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
+    }
+
+    if (datum.value > 0) {
+      donutSegments.push({
         clipPath: buildDonutSegmentClipPath(start, end),
-        color: getChartSeriesColor(index, datum.color),
+        color,
         datum,
         index,
-      };
-    })
-    .filter((segment): segment is NonNullable<typeof segment> => segment !== null);
+      });
+    }
+
+    cursor = end;
+  }
+
+  const donutStopsValue = donutStops.length > 0 ? donutStops.join(", ") : "var(--ak-chart-color-muted) 0deg 360deg";
 
   return (
     <section
@@ -103,7 +121,7 @@ export function DonutChart({
       data-ak-label-density={labelDensity}
       data-slot="donut-chart"
       className={cx("ak-chart", "ak-donut-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-donut-stops": donutStops, ...animationStyle }, style)}
+      style={mergeChartStyles({ "--ak-chart-donut-stops": donutStopsValue, ...animationStyle }, style)}
     >
       <div
         data-slot="chart-graphic"

@@ -9,6 +9,10 @@ import {
   runMountedBench,
 } from "../_shared/dom";
 
+const barChartData = buildValueData(18);
+const donutData = buildValueData(6);
+const heatmapData = buildHeatmapData(7, 5);
+
 describe("tier4 browser integration benches", () => {
   bench("dashboard integration mount and style read", async () => {
     await runMountedBench(<DashboardBench />, async (container) => {
@@ -29,7 +33,7 @@ describe("tier4 browser integration benches", () => {
 
   bench("bar chart tooltip pointer flow", async () => {
     await runMountedBench(
-      <BarChart label="Revenue" animate data={buildValueData(18)} />,
+      <BarChart label="Revenue" animate data={barChartData} />,
       async (container) => {
         const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
 
@@ -54,7 +58,7 @@ describe("tier4 browser integration benches", () => {
 
   bench("donut segment interaction and style scan", async () => {
     await runMountedBench(
-      <DonutChart label="Mix" animate data={buildValueData(6)} />,
+      <DonutChart label="Mix" animate data={donutData} />,
       async (container) => {
         const segment = container.querySelector(
           '[data-slot="donut-chart-segment"]',
@@ -73,7 +77,7 @@ describe("tier4 browser integration benches", () => {
 
   bench("heatmap browser cell scan", async () => {
     await runMountedBench(
-      <Heatmap label="Capacity" animate data={buildHeatmapData(7, 5)} />,
+      <Heatmap label="Capacity" animate data={heatmapData} />,
       async (container) => {
         const firstCell = container.querySelector(
           '[data-slot="heatmap-cell"]',

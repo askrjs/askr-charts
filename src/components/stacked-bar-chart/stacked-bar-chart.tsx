@@ -2,7 +2,6 @@ import {
   clampChartValue,
   formatChartValue,
   getChartSeriesColor,
-  getValueChartMax,
 } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
@@ -31,36 +30,47 @@ export function StackedBarChart({
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
     type: "grow",
   });
-  const rows = data.map((datum) => ({
-    ...datum,
-    segments: [...datum.segments],
-  }));
   const formatter = resolveValueFormatter(valueFormatter);
-  const totals = rows.map((datum) =>
-    datum.segments.reduce((sum, segment) => sum + clampChartValue(segment.value), 0),
-  );
-  const scaleMax =
-    max == null
-      ? getValueChartMax(
-          totals.map((value, index) => ({ label: rows[index]?.label ?? String(index), value })),
-        )
-      : getValueChartMax([], max);
-  const scaledRows = rows.map((datum, rowIndex) => {
-    const total = totals[rowIndex] ?? 0;
-    const rowFraction = scaleMax > 0 ? Math.min(total / scaleMax, 1) : 0;
+  const totals = new Array<number>(data.length);
+  const normalizedExplicitMax = max == null ? undefined : clampChartValue(max);
+  let detectedScaleMax = 0;
+  let peakIndex = 0;
+  let peakTotal = 0;
 
-    return { datum, rowFraction, total };
-  });
+  for (let rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
+    const datum = data[rowIndex]!;
+    const segments = datum.segments;
+    let total = 0;
+
+    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+      total += clampChartValue(segments[segmentIndex]!.value);
+    }
+
+    totals[rowIndex] = total;
+    if (total > detectedScaleMax) {
+      detectedScaleMax = total;
+    }
+
+    if (rowIndex === 0 || total > peakTotal) {
+      peakTotal = total;
+      peakIndex = rowIndex;
+    }
+  }
+
+  const scaleMax =
+    normalizedExplicitMax == null
+      ? detectedScaleMax > 0
+        ? detectedScaleMax
+        : 1
+      : normalizedExplicitMax > 0
+        ? normalizedExplicitMax
+        : 1;
   const summaryId = createChartId("stacked-bar-chart-summary", id ?? label);
   const tableId = createChartId("stacked-bar-chart-table", id ?? label);
-  const peakIndex = totals.reduce(
-    (bestIndex, value, index, all) => (value > (all[bestIndex] ?? 0) ? index : bestIndex),
-    0,
-  );
   const defaultSummary =
-    rows.length === 0
+    data.length === 0
       ? `${label}. No stacked bar rows available.`
-      : `${label}. ${rows.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${rows[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
+      : `${label}. ${data.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${data[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
 
   return (
@@ -80,7 +90,10 @@ export function StackedBarChart({
         aria-describedby={`${summaryId} ${tableId}`}
       >
         <ol data-slot="stacked-bar-chart-list" className="ak-stacked-bar-chart-list">
-          {scaledRows.map(({ datum, rowFraction, total }, rowIndex) => {
+          {data.map((datum, rowIndex) => {
+            const total = totals[rowIndex] ?? 0;
+            const rowFraction = scaleMax > 0 ? Math.min(total / scaleMax, 1) : 0;
+
             return (
               <li
                 key={`${datum.label}-${rowIndex}`}
@@ -162,7 +175,7 @@ export function StackedBarChart({
           </tr>
         </thead>
         <tbody>
-          {rows.map((datum) =>
+          {data.map((datum) =>
             datum.segments.map((segment, segmentIndex) => (
               <tr key={`${datum.label}-${segment.label}-${segmentIndex}`}>
                 <th scope="row">{datum.label}</th>

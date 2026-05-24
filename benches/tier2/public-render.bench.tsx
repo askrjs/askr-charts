@@ -1,13 +1,18 @@
 import { bench, describe } from "vite-plus/test";
 
+import { AreaChart } from "../../src/components/area-chart";
 import { BarChart } from "../../src/components/bar-chart";
+import { ChartEmptyState } from "../../src/components/chart-empty-state";
 import { ChartLegend } from "../../src/components/chart-legend";
 import { ChartPanel } from "../../src/components/chart-panel";
 import { ChartShell } from "../../src/components/chart-shell";
 import { DonutChart } from "../../src/components/donut-chart";
 import { FlameGraph } from "../../src/components/flame-graph";
 import { Heatmap } from "../../src/components/heatmap";
+import { LineChart } from "../../src/components/line-chart";
 import { ProgressMeter } from "../../src/components/progress-meter";
+import { RadialGauge } from "../../src/components/radial-gauge";
+import { Sparkline } from "../../src/components/sparkline";
 import { StackedBarChart } from "../../src/components/stacked-bar-chart";
 import { Timeline } from "../../src/components/timeline";
 import {
@@ -27,6 +32,8 @@ const timelineData = buildTimelineData(8);
 const stackedRows = buildStackedBarRows(6, 4);
 const flameGraphData = buildFlameGraphData();
 const legendItems = buildLegendItems();
+const trendData = buildValueData(12);
+const sparklineData = buildValueData(10);
 
 describe("tier2 public chart render benches", () => {
   bench("value chart family mount", async () => {
@@ -70,6 +77,26 @@ describe("tier2 public chart render benches", () => {
     );
   });
 
+  bench("trend and compact chart family mount", async () => {
+    await runMountedBench(
+      <>
+        <AreaChart label="Orders" animate data={trendData} />
+        <LineChart label="Signups" animate data={trendData} />
+        <RadialGauge label="Fill rate" animate value={68} max={100} />
+        <Sparkline label="Trend" animate variant="line" data={sparklineData} />
+      </>,
+      (container) => {
+        const charts = container.querySelectorAll(
+          '[data-slot="area-chart"], [data-slot="line-chart"], [data-slot="radial-gauge"], [data-slot="sparkline"]',
+        );
+
+        if (charts.length !== 4) {
+          throw new Error("trend chart family bench failed to mount the expected public charts");
+        }
+      },
+    );
+  });
+
   bench("shell and legend composition mount", async () => {
     await runMountedBench(
       <ChartShell title="Bench shell" description="Public chart composition benchmark">
@@ -77,12 +104,14 @@ describe("tier2 public chart render benches", () => {
           <BarChart label="Revenue" animate data={valueData} />
         </ChartPanel>
         <ChartLegend title="Legend" items={legendItems} />
+        <ChartEmptyState title="No alerts" description="Everything is healthy" />
       </ChartShell>,
       (container) => {
         const shell = container.querySelector('[data-slot="chart-shell"]');
         const legendItems = container.querySelectorAll('[data-slot="chart-legend-item"]');
+        const emptyState = container.querySelector('[data-slot="chart-empty-state"]');
 
-        if (!shell || legendItems.length === 0) {
+        if (!shell || legendItems.length === 0 || !emptyState) {
           throw new Error(
             "shell composition bench failed to mount the expected chart shell structure",
           );
