@@ -46,9 +46,13 @@ export function Heatmap({
     columnIndexByName[normalized.columns[index]!] = index;
   }
 
-  const cellsByCoordinate = normalized.rows.map(
-    () => new Array<NormalizedHeatmapDatum | undefined>(normalized.columns.length),
-  );
+  const cellsByCoordinate: Array<Array<NormalizedHeatmapDatum | undefined>> = [];
+
+  for (let rowIndex = 0; rowIndex < normalized.rows.length; rowIndex += 1) {
+    const rowCells: Array<NormalizedHeatmapDatum | undefined> = [];
+    rowCells.length = normalized.columns.length;
+    cellsByCoordinate[rowIndex] = rowCells;
+  }
 
   for (const cell of normalized.cells) {
     const rowIndex = rowIndexByName[cell.y];

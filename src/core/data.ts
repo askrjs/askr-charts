@@ -53,6 +53,29 @@ export type ChartValueFormatter = (value: number) => string;
 
 const defaultFormatter = new Intl.NumberFormat("en-US");
 
+function isValueChartDatumTuple(
+  input: ValueChartDatumInput,
+): input is readonly [
+  label: string,
+  value: number | null | undefined,
+  color?: string,
+  description?: string,
+] {
+  return Array.isArray(input);
+}
+
+function isHeatmapDatumTuple(
+  input: HeatmapDatumInput,
+): input is readonly [
+  x: string,
+  y: string,
+  value: number | null | undefined,
+  color?: string,
+  description?: string,
+] {
+  return Array.isArray(input);
+}
+
 export function clampChartValue(value: number | null | undefined): number {
   if (!Number.isFinite(value ?? Number.NaN)) return 0;
   return Math.max(0, value ?? 0);
@@ -79,7 +102,7 @@ export function getValueChartMin(
   let min = Number.POSITIVE_INFINITY;
 
   for (const datum of data) {
-    const value = clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+    const value = clampChartValue(isValueChartDatumTuple(datum) ? datum[1] : datum.value);
     if (value < min) {
       min = value;
     }
@@ -100,7 +123,7 @@ export function getValueChartMax(
   let detectedMax = 0;
 
   for (const datum of data) {
-    const value = clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+    const value = clampChartValue(isValueChartDatumTuple(datum) ? datum[1] : datum.value);
     if (value > detectedMax) {
       detectedMax = value;
     }
@@ -113,7 +136,7 @@ export function getValueChartTotal(data: readonly ValueChartDatumInput[]): numbe
   let total = 0;
 
   for (const datum of data) {
-    total += clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+    total += clampChartValue(isValueChartDatumTuple(datum) ? datum[1] : datum.value);
   }
 
   return total > 0 ? total : 0;
@@ -131,7 +154,8 @@ export function normalizeValueChartData(
     valueFormatter?: ChartValueFormatter;
   } = {},
 ): { data: NormalizedValueChartDatum[]; max: number; min: number } {
-  const normalizedData = new Array<NormalizedValueChartDatum>(data.length);
+  const normalizedData: NormalizedValueChartDatum[] = [];
+  normalizedData.length = data.length;
   const formatter = options.valueFormatter;
   const min = options.min == null ? 0 : clampChartValue(options.min);
   const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
@@ -144,7 +168,7 @@ export function normalizeValueChartData(
     let color: string | undefined;
     let description: string | undefined;
 
-    if (Array.isArray(input)) {
+    if (isValueChartDatumTuple(input)) {
       label = input[0];
       value = clampChartValue(input[1]);
       color = input[2];
@@ -170,7 +194,12 @@ export function normalizeValueChartData(
     };
   }
 
-  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
+  const max =
+    normalizedExplicitMax && normalizedExplicitMax > 0
+      ? normalizedExplicitMax
+      : detectedMax > 0
+        ? detectedMax
+        : 1;
 
   for (let index = 0; index < normalizedData.length; index += 1) {
     const datum = normalizedData[index]!;
@@ -276,7 +305,8 @@ export function createValueChartLegendItems(
     valueFormatter?: ChartValueFormatter;
   } = {},
 ): ChartLegendDatum[] {
-  const items = new Array<ChartLegendDatum>(data.length);
+  const items: ChartLegendDatum[] = [];
+  items.length = data.length;
   const formatter = options.valueFormatter;
 
   for (let index = 0; index < data.length; index += 1) {
@@ -285,7 +315,7 @@ export function createValueChartLegendItems(
     let value: number;
     let color: string | undefined;
 
-    if (Array.isArray(input)) {
+    if (isValueChartDatumTuple(input)) {
       label = input[0];
       value = clampChartValue(input[1]);
       color = input[2];
@@ -332,7 +362,8 @@ export function normalizeHeatmapData(
   min: number;
   max: number;
 } {
-  const cells = new Array<NormalizedHeatmapDatum>(data.length);
+  const cells: NormalizedHeatmapDatum[] = [];
+  cells.length = data.length;
   const formatter = options.valueFormatter;
   const min = options.min == null ? 0 : clampChartValue(options.min);
   const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
@@ -350,7 +381,7 @@ export function normalizeHeatmapData(
     let color: string | undefined;
     let description: string | undefined;
 
-    if (Array.isArray(input)) {
+    if (isHeatmapDatumTuple(input)) {
       x = input[0];
       y = input[1];
       value = clampChartValue(input[2]);
@@ -390,7 +421,12 @@ export function normalizeHeatmapData(
     };
   }
 
-  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
+  const max =
+    normalizedExplicitMax && normalizedExplicitMax > 0
+      ? normalizedExplicitMax
+      : detectedMax > 0
+        ? detectedMax
+        : 1;
 
   for (let index = 0; index < cells.length; index += 1) {
     const cell = cells[index]!;
@@ -450,14 +486,19 @@ export function createHeatmapLegendItems(
   if (!(normalizedExplicitMax && normalizedExplicitMax > 0)) {
     for (let index = 0; index < data.length; index += 1) {
       const input = data[index]!;
-      const value = clampChartValue(Array.isArray(input) ? input[2] : input.value);
+      const value = clampChartValue(isHeatmapDatumTuple(input) ? input[2] : input.value);
       if (value > detectedMax) {
         detectedMax = value;
       }
     }
   }
 
-  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
+  const max =
+    normalizedExplicitMax && normalizedExplicitMax > 0
+      ? normalizedExplicitMax
+      : detectedMax > 0
+        ? detectedMax
+        : 1;
   const stepCount = Math.max(1, Math.min(6, Math.floor(options.steps ?? 4)));
   const items: ChartLegendDatum[] = [];
   const stepSize = (max - min) / stepCount;
