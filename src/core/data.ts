@@ -53,69 +53,6 @@ export type ChartValueFormatter = (value: number) => string;
 
 const defaultFormatter = new Intl.NumberFormat("en-US");
 
-function isValueChartDatumTuple(
-  input: ValueChartDatumInput,
-): input is readonly [
-  label: string,
-  value: number | null | undefined,
-  color?: string,
-  description?: string,
-] {
-  return Array.isArray(input);
-}
-
-function isHeatmapDatumTuple(
-  input: HeatmapDatumInput,
-): input is readonly [
-  x: string,
-  y: string,
-  value: number | null | undefined,
-  color?: string,
-  description?: string,
-] {
-  return Array.isArray(input);
-}
-
-function toValueChartDatum(input: ValueChartDatumInput): ValueChartDatum {
-  if (isValueChartDatumTuple(input)) {
-    const [label, value, color, description] = input;
-    return {
-      label,
-      value: clampChartValue(value),
-      color,
-      description,
-    };
-  }
-
-  return {
-    label: input.label,
-    value: clampChartValue(input.value),
-    color: input.color,
-    description: input.description,
-  };
-}
-
-function toHeatmapDatum(input: HeatmapDatumInput): HeatmapDatum {
-  if (isHeatmapDatumTuple(input)) {
-    const [x, y, value, color, description] = input;
-    return {
-      x,
-      y,
-      value: clampChartValue(value),
-      color,
-      description,
-    };
-  }
-
-  return {
-    x: input.x,
-    y: input.y,
-    value: clampChartValue(input.value),
-    color: input.color,
-    description: input.description,
-  };
-}
-
 export function clampChartValue(value: number | null | undefined): number {
   if (!Number.isFinite(value ?? Number.NaN)) return 0;
   return Math.max(0, value ?? 0);
@@ -123,6 +60,11 @@ export function clampChartValue(value: number | null | undefined): number {
 
 export function formatChartValue(value: number, formatter?: ChartValueFormatter): string {
   return formatter ? formatter(value) : defaultFormatter.format(value);
+}
+
+function calculateChartFraction(value: number, max: number, min = 0): number {
+  if (!Number.isFinite(max) || max <= min) return 0;
+  return Math.min(1, Math.max(0, (value - min) / (max - min)));
 }
 
 export function getValueChartMin(
@@ -134,43 +76,51 @@ export function getValueChartMin(
     return normalizedExplicitMin;
   }
 
-  const normalizedData = data.map(toValueChartDatum);
-  if (normalizedData.length === 0) {
-    return 0;
+  let min = Number.POSITIVE_INFINITY;
+
+  for (const datum of data) {
+    const value = clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+    if (value < min) {
+      min = value;
+    }
   }
 
-  return normalizedData.reduce(
-    (min, datum) => (datum.value < min ? datum.value : min),
-    normalizedData[0]?.value ?? 0,
-  );
+  return Number.isFinite(min) ? min : 0;
 }
 
 export function getValueChartMax(
   data: readonly ValueChartDatumInput[],
   explicitMax?: number,
 ): number {
-  const normalizedData = data.map(toValueChartDatum);
   const normalizedExplicitMax = explicitMax == null ? undefined : clampChartValue(explicitMax);
   if (normalizedExplicitMax && normalizedExplicitMax > 0) {
     return normalizedExplicitMax;
   }
 
-  const detectedMax = normalizedData.reduce((max, datum) => {
-    const nextValue = datum.value;
-    return nextValue > max ? nextValue : max;
-  }, 0);
+  let detectedMax = 0;
+
+  for (const datum of data) {
+    const value = clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+    if (value > detectedMax) {
+      detectedMax = value;
+    }
+  }
 
   return detectedMax > 0 ? detectedMax : 1;
 }
 
 export function getValueChartTotal(data: readonly ValueChartDatumInput[]): number {
-  const total = data.map(toValueChartDatum).reduce((sum, datum) => sum + datum.value, 0);
+  let total = 0;
+
+  for (const datum of data) {
+    total += clampChartValue(Array.isArray(datum) ? datum[1] : datum.value);
+  }
+
   return total > 0 ? total : 0;
 }
 
 export function toChartFraction(value: number, max: number, min = 0): number {
-  if (!Number.isFinite(max) || max <= min) return 0;
-  return Math.min(1, Math.max(0, (clampChartValue(value) - min) / (max - min)));
+  return calculateChartFraction(clampChartValue(value), max, min);
 }
 
 export function normalizeValueChartData(
@@ -181,21 +131,57 @@ export function normalizeValueChartData(
     valueFormatter?: ChartValueFormatter;
   } = {},
 ): { data: NormalizedValueChartDatum[]; max: number; min: number } {
-  const normalizedData = data.map(toValueChartDatum);
-  const min = options.min == null ? 0 : getValueChartMin(normalizedData, options.min);
-  const max = getValueChartMax(normalizedData, options.max);
+  const normalizedData = new Array<NormalizedValueChartDatum>(data.length);
+  const formatter = options.valueFormatter;
+  const min = options.min == null ? 0 : clampChartValue(options.min);
+  const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
+  let detectedMax = 0;
+
+  for (let index = 0; index < data.length; index += 1) {
+    const input = data[index]!;
+    let label: string;
+    let value: number;
+    let color: string | undefined;
+    let description: string | undefined;
+
+    if (Array.isArray(input)) {
+      label = input[0];
+      value = clampChartValue(input[1]);
+      color = input[2];
+      description = input[3];
+    } else {
+      label = input.label;
+      value = clampChartValue(input.value);
+      color = input.color;
+      description = input.description;
+    }
+
+    if (value > detectedMax) {
+      detectedMax = value;
+    }
+
+    normalizedData[index] = {
+      label,
+      value,
+      color,
+      description,
+      fraction: 0,
+      formattedValue: "",
+    };
+  }
+
+  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
+
+  for (let index = 0; index < normalizedData.length; index += 1) {
+    const datum = normalizedData[index]!;
+    datum.fraction = calculateChartFraction(datum.value, max, min);
+    datum.formattedValue = formatChartValue(datum.value, formatter);
+  }
+
   return {
     min,
     max,
-    data: normalizedData.map((datum) => {
-      const value = datum.value;
-      return {
-        ...datum,
-        value,
-        fraction: toChartFraction(value, max, min),
-        formattedValue: formatChartValue(value, options.valueFormatter),
-      };
-    }),
+    data: normalizedData,
   };
 }
 
@@ -209,7 +195,15 @@ export function buildValueChartSummary(
     return `${label}. No data available.`;
   }
 
-  const peak = data.reduce((best, datum) => (datum.value > best.value ? datum : best), data[0]!);
+  let peak = data[0]!;
+
+  for (let index = 1; index < data.length; index += 1) {
+    const datum = data[index]!;
+    if (datum.value > peak.value) {
+      peak = datum;
+    }
+  }
+
   return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
 }
 
@@ -242,7 +236,12 @@ export function getChartStatusColor(
 }
 
 export function buildDonutStops(data: readonly NormalizedValueChartDatum[]): string {
-  const total = data.reduce((sum, datum) => sum + datum.value, 0);
+  let total = 0;
+
+  for (let index = 0; index < data.length; index += 1) {
+    total += data[index]!.value;
+  }
+
   if (total <= 0) {
     return "var(--ak-chart-color-muted) 0deg 360deg";
   }
@@ -277,13 +276,33 @@ export function createValueChartLegendItems(
     valueFormatter?: ChartValueFormatter;
   } = {},
 ): ChartLegendDatum[] {
-  const normalized = normalizeValueChartData(data, options);
+  const items = new Array<ChartLegendDatum>(data.length);
+  const formatter = options.valueFormatter;
 
-  return normalized.data.map((datum, index) => ({
-    label: datum.label,
-    value: datum.formattedValue,
-    color: getChartSeriesColor(index, datum.color),
-  }));
+  for (let index = 0; index < data.length; index += 1) {
+    const input = data[index]!;
+    let label: string;
+    let value: number;
+    let color: string | undefined;
+
+    if (Array.isArray(input)) {
+      label = input[0];
+      value = clampChartValue(input[1]);
+      color = input[2];
+    } else {
+      label = input.label;
+      value = clampChartValue(input.value);
+      color = input.color;
+    }
+
+    items[index] = {
+      label,
+      value: formatChartValue(value, formatter),
+      color: getChartSeriesColor(index, color),
+    };
+  }
+
+  return items;
 }
 
 export function uniqueLabels(values: readonly string[]): string[] {
@@ -313,39 +332,83 @@ export function normalizeHeatmapData(
   min: number;
   max: number;
 } {
-  const normalizedData = data.map(toHeatmapDatum);
-  const min =
-    options.min == null
-      ? 0
-      : getValueChartMin(
-          normalizedData.map((datum) => ({ label: `${datum.x}:${datum.y}`, value: datum.value })),
-          options.min,
-        );
-  const max = getValueChartMax(
-    normalizedData.map((datum) => ({ label: `${datum.x}:${datum.y}`, value: datum.value })),
-    options.max,
-  );
-  const columns = uniqueLabels(normalizedData.map((datum) => datum.x));
-  const rows = uniqueLabels(normalizedData.map((datum) => datum.y));
+  const cells = new Array<NormalizedHeatmapDatum>(data.length);
+  const formatter = options.valueFormatter;
+  const min = options.min == null ? 0 : clampChartValue(options.min);
+  const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
+  const columns: string[] = [];
+  const rows: string[] = [];
+  const seenColumns = new Set<string>();
+  const seenRows = new Set<string>();
+  let detectedMax = 0;
+
+  for (let index = 0; index < data.length; index += 1) {
+    const input = data[index]!;
+    let x: string;
+    let y: string;
+    let value: number;
+    let color: string | undefined;
+    let description: string | undefined;
+
+    if (Array.isArray(input)) {
+      x = input[0];
+      y = input[1];
+      value = clampChartValue(input[2]);
+      color = input[3];
+      description = input[4];
+    } else {
+      x = input.x;
+      y = input.y;
+      value = clampChartValue(input.value);
+      color = input.color;
+      description = input.description;
+    }
+
+    if (!seenColumns.has(x)) {
+      seenColumns.add(x);
+      columns.push(x);
+    }
+
+    if (!seenRows.has(y)) {
+      seenRows.add(y);
+      rows.push(y);
+    }
+
+    if (value > detectedMax) {
+      detectedMax = value;
+    }
+
+    cells[index] = {
+      x,
+      y,
+      value,
+      color,
+      description,
+      fraction: 0,
+      formattedValue: "",
+      background: "",
+    };
+  }
+
+  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
+
+  for (let index = 0; index < cells.length; index += 1) {
+    const cell = cells[index]!;
+    const fraction = calculateChartFraction(cell.value, max, min);
+    const emphasis = Math.max(14, Math.round(fraction * 100));
+    const colorSource = cell.color ?? "var(--ak-chart-color-primary)";
+
+    cell.fraction = fraction;
+    cell.formattedValue = formatChartValue(cell.value, formatter);
+    cell.background = `color-mix(in srgb, ${colorSource} ${emphasis}%, var(--ak-chart-color-muted))`;
+  }
 
   return {
     columns,
     rows,
     min,
     max,
-    cells: normalizedData.map((datum) => {
-      const value = datum.value;
-      const fraction = toChartFraction(value, max, min);
-      const emphasis = Math.max(14, Math.round(fraction * 100));
-      const colorSource = datum.color ?? "var(--ak-chart-color-primary)";
-      return {
-        ...datum,
-        value,
-        fraction,
-        formattedValue: formatChartValue(value, options.valueFormatter),
-        background: `color-mix(in srgb, ${colorSource} ${emphasis}%, var(--ak-chart-color-muted))`,
-      };
-    }),
+    cells,
   };
 }
 
@@ -359,7 +422,15 @@ export function buildHeatmapSummary(
     return `${label}. No heatmap cells available.`;
   }
 
-  const peak = cells.reduce((best, cell) => (cell.value > best.value ? cell : best), cells[0]!);
+  let peak = cells[0]!;
+
+  for (let index = 1; index < cells.length; index += 1) {
+    const cell = cells[index]!;
+    if (cell.value > peak.value) {
+      peak = cell;
+    }
+  }
+
   return `${label}. ${cells.length} cells. Peak value is ${peak.formattedValue} at ${peak.y}, ${peak.x}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
 }
 
@@ -372,13 +443,28 @@ export function createHeatmapLegendItems(
     valueFormatter?: ChartValueFormatter;
   } = {},
 ): ChartLegendDatum[] {
-  const normalized = normalizeHeatmapData(data, options);
+  const min = options.min == null ? 0 : clampChartValue(options.min);
+  const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
+  let detectedMax = 0;
+
+  if (!(normalizedExplicitMax && normalizedExplicitMax > 0)) {
+    for (let index = 0; index < data.length; index += 1) {
+      const input = data[index]!;
+      const value = clampChartValue(Array.isArray(input) ? input[2] : input.value);
+      if (value > detectedMax) {
+        detectedMax = value;
+      }
+    }
+  }
+
+  const max = normalizedExplicitMax && normalizedExplicitMax > 0 ? normalizedExplicitMax : detectedMax > 0 ? detectedMax : 1;
   const stepCount = Math.max(1, Math.min(6, Math.floor(options.steps ?? 4)));
   const items: ChartLegendDatum[] = [];
+  const stepSize = (max - min) / stepCount;
 
   for (let index = 0; index < stepCount; index += 1) {
-    const start = normalized.min + ((normalized.max - normalized.min) / stepCount) * index;
-    const end = normalized.min + ((normalized.max - normalized.min) / stepCount) * (index + 1);
+    const start = min + stepSize * index;
+    const end = min + stepSize * (index + 1);
     const emphasis = Math.max(14, Math.round(((index + 1) / stepCount) * 100));
     items.push({
       label: `${formatChartValue(start, options.valueFormatter)}-${formatChartValue(end, options.valueFormatter)}`,

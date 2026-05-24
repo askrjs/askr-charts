@@ -19,6 +19,13 @@ import {
 const SERIES_COLORS = ["#0f766e", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#059669"] as const;
 
 const TIMELINE_STATUSES = ["success", "info", "warning", "default"] as const;
+const dashboardBarData = buildValueData(18);
+const dashboardDonutData = buildValueData(6);
+const dashboardHeatmapData = buildHeatmapData(6, 4);
+const dashboardTimelineData = buildTimelineData(8);
+const dashboardStackedRows = buildStackedBarRows(6, 4);
+const dashboardFlameGraphData = buildFlameGraphData();
+const dashboardLegendItems = buildLegendItems();
 
 export function buildValueData(count = 24): ValueChartDatumInput[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -113,25 +120,20 @@ export function buildLegendItems() {
 }
 
 export function DashboardBench(): JSX.Element {
-  const barData = buildValueData(18);
-  const donutData = buildValueData(6);
-  const heatmapData = buildHeatmapData(6, 4);
-  const stackedRows = buildStackedBarRows(6, 4);
-
   return (
     <ChartShell title="Operations dashboard" description="Tiered chart benchmark surface.">
       <ChartPanel title="Revenue by segment" description="Primary hot path chart rendering.">
-        <BarChart label="Revenue by segment" animate data={barData} />
+        <BarChart label="Revenue by segment" animate data={dashboardBarData} />
       </ChartPanel>
 
       <ChartPanel title="Mix and milestones" description="Composition coverage.">
-        <DonutChart label="Channel mix" animate data={donutData} />
-        <Timeline label="Launch plan" animate data={buildTimelineData(8)} />
+        <DonutChart label="Channel mix" animate data={dashboardDonutData} />
+        <Timeline label="Launch plan" animate data={dashboardTimelineData} />
       </ChartPanel>
 
       <ChartPanel title="Capacity map" description="Grid and stacked composition coverage.">
-        <Heatmap label="Capacity map" animate data={heatmapData} />
-        <StackedBarChart label="Delivery mix" animate data={stackedRows} />
+        <Heatmap label="Capacity map" animate data={dashboardHeatmapData} />
+        <StackedBarChart label="Delivery mix" animate data={dashboardStackedRows} />
       </ChartPanel>
 
       <ChartPanel title="Performance summary" description="Status and deep hierarchy coverage.">
@@ -142,10 +144,10 @@ export function DashboardBench(): JSX.Element {
           max={100}
           value={78}
         />
-        <FlameGraph label="Request flame graph" animate data={buildFlameGraphData()} />
+        <FlameGraph label="Request flame graph" animate data={dashboardFlameGraphData} />
       </ChartPanel>
 
-      <ChartLegend title="Bench legend" items={buildLegendItems()} />
+      <ChartLegend title="Bench legend" items={dashboardLegendItems} />
     </ChartShell>
   );
 }

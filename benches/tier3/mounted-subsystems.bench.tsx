@@ -9,6 +9,10 @@ import {
 } from "../_shared/fixtures";
 import { dispatchPointerMove, normalizeStyle, runMountedBench } from "../_shared/dom";
 
+const barChartData = buildValueData(16);
+const heatmapData = buildHeatmapData(6, 5);
+const timelineData = buildTimelineData(12);
+
 describe("tier3 mounted subsystem benches", () => {
   bench("dashboard mount cycle", async () => {
     await runMountedBench(<DashboardBench />, (container) => {
@@ -23,7 +27,7 @@ describe("tier3 mounted subsystem benches", () => {
 
   bench("bar chart tooltip update cycle", async () => {
     await runMountedBench(
-      <BarChart label="Revenue" animate data={buildValueData(16)} />,
+      <BarChart label="Revenue" animate data={barChartData} />,
       (container) => {
         const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
 
@@ -47,7 +51,7 @@ describe("tier3 mounted subsystem benches", () => {
 
   bench("heatmap mount and scan", async () => {
     await runMountedBench(
-      <Heatmap label="Capacity" animate data={buildHeatmapData(6, 5)} />,
+      <Heatmap label="Capacity" animate data={heatmapData} />,
       (container) => {
         const cells = container.querySelectorAll('[data-slot="heatmap-cell"]');
 
@@ -60,7 +64,7 @@ describe("tier3 mounted subsystem benches", () => {
 
   bench("timeline subsystem mount", async () => {
     await runMountedBench(
-      <Timeline label="Delivery plan" animate data={buildTimelineData(12)} />,
+      <Timeline label="Delivery plan" animate data={timelineData} />,
       (container) => {
         const items = container.querySelectorAll('[data-slot="timeline-item"]');
 
