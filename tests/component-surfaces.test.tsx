@@ -83,9 +83,9 @@ describe("component surfaces", () => {
     expect(container.querySelector('[data-slot="chart-empty-state-title"]')?.textContent).toBe(
       "No alerts",
     );
-    expect(container.querySelector('[data-slot="chart-empty-state-content"] button')?.textContent).toBe(
-      "Review systems",
-    );
+    expect(
+      container.querySelector('[data-slot="chart-empty-state-content"] button')?.textContent,
+    ).toBe("Review systems");
   });
 
   it("renders trend and compact charts with their specialized slots and values", async () => {
@@ -128,9 +128,9 @@ describe("component surfaces", () => {
     expect(container.querySelector('[data-slot="radial-gauge-description"]')?.textContent).toBe(
       "Quarter target",
     );
-    expect(normalizeStyle(container.querySelector('[data-slot="radial-gauge"]')?.getAttribute("style"))).toContain(
-      "--ak-chart-gauge-angle:244.8deg",
-    );
+    expect(
+      normalizeStyle(container.querySelector('[data-slot="radial-gauge"]')?.getAttribute("style")),
+    ).toContain("--ak-chart-gauge-angle:244.8deg");
     expect(container.querySelector('[data-slot="sparkline-stroke"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="sparkline-stem"]')).toBeNull();
     expect(container.querySelectorAll('[data-slot="sparkline-item"]')).toHaveLength(3);

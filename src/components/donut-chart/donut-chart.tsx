@@ -111,7 +111,8 @@ export function DonutChart({
     cursor = end;
   }
 
-  const donutStopsValue = donutStops.length > 0 ? donutStops.join(", ") : "var(--ak-chart-color-muted) 0deg 360deg";
+  const donutStopsValue =
+    donutStops.length > 0 ? donutStops.join(", ") : "var(--ak-chart-color-muted) 0deg 360deg";
 
   return (
     <section
@@ -121,7 +122,10 @@ export function DonutChart({
       data-ak-label-density={labelDensity}
       data-slot="donut-chart"
       className={cx("ak-chart", "ak-donut-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-donut-stops": donutStopsValue, ...animationStyle }, style)}
+      style={mergeChartStyles(
+        { "--ak-chart-donut-stops": donutStopsValue, ...animationStyle },
+        style,
+      )}
     >
       <div
         data-slot="chart-graphic"

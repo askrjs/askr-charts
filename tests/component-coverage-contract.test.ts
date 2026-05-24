@@ -39,11 +39,29 @@ const benchmarkCoverage = {
   Timeline: ["benches/tier2/public-render.bench.tsx", "benches/tier3/mounted-subsystems.bench.tsx"],
 } as const;
 
+function readExportedComponents(relativePath: string): string[] {
+  const source = read(relativePath);
+  return [...source.matchAll(/^export \{\s*([A-Za-z0-9_]+)\s*\} from "\.\/[^"]+";$/gm)].map(
+    (match) => match[1]!,
+  );
+}
+
+function sortedKeys(value: Record<string, unknown>): string[] {
+  return Object.keys(value).sort();
+}
+
 function read(relativePath: string): string {
   return readFileSync(join(__dirname, "..", relativePath), "utf8");
 }
 
 describe("component coverage contract", () => {
+  it("keeps the coverage maps aligned with exported components", () => {
+    const exportedComponents = readExportedComponents("src/components/index.ts").sort();
+
+    expect(sortedKeys(correctnessCoverage)).toEqual(exportedComponents);
+    expect(sortedKeys(benchmarkCoverage)).toEqual(exportedComponents);
+  });
+
   it("keeps direct correctness coverage for every exported component", () => {
     for (const [componentName, files] of Object.entries(correctnessCoverage)) {
       for (const file of files) {

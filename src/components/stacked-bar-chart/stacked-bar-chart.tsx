@@ -1,8 +1,4 @@
-import {
-  clampChartValue,
-  formatChartValue,
-  getChartSeriesColor,
-} from "../../core";
+import { clampChartValue, formatChartValue, getChartSeriesColor } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -31,7 +27,8 @@ export function StackedBarChart({
     type: "grow",
   });
   const formatter = resolveValueFormatter(valueFormatter);
-  const totals = new Array<number>(data.length);
+  const totals: number[] = [];
+  totals.length = data.length;
   const normalizedExplicitMax = max == null ? undefined : clampChartValue(max);
   let detectedScaleMax = 0;
   let peakIndex = 0;

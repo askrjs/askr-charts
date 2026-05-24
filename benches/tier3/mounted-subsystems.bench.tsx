@@ -26,40 +26,34 @@ describe("tier3 mounted subsystem benches", () => {
   });
 
   bench("bar chart tooltip update cycle", async () => {
-    await runMountedBench(
-      <BarChart label="Revenue" animate data={barChartData} />,
-      (container) => {
-        const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
+    await runMountedBench(<BarChart label="Revenue" animate data={barChartData} />, (container) => {
+      const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
 
-        if (!item) {
-          throw new Error("bar chart bench failed to mount an interactive item");
-        }
+      if (!item) {
+        throw new Error("bar chart bench failed to mount an interactive item");
+      }
 
-        dispatchPointerMove(
-          item,
-          { left: 100, top: 24, width: 200, height: 40 },
-          { clientX: 152, clientY: 46 },
-        );
-        const style = normalizeStyle(item.getAttribute("style"));
+      dispatchPointerMove(
+        item,
+        { left: 100, top: 24, width: 200, height: 40 },
+        { clientX: 152, clientY: 46 },
+      );
+      const style = normalizeStyle(item.getAttribute("style"));
 
-        if (!style.includes("--ak-chart-tooltip-anchor-x:52px")) {
-          throw new Error("bar chart bench failed to update tooltip anchor x");
-        }
-      },
-    );
+      if (!style.includes("--ak-chart-tooltip-anchor-x:52px")) {
+        throw new Error("bar chart bench failed to update tooltip anchor x");
+      }
+    });
   });
 
   bench("heatmap mount and scan", async () => {
-    await runMountedBench(
-      <Heatmap label="Capacity" animate data={heatmapData} />,
-      (container) => {
-        const cells = container.querySelectorAll('[data-slot="heatmap-cell"]');
+    await runMountedBench(<Heatmap label="Capacity" animate data={heatmapData} />, (container) => {
+      const cells = container.querySelectorAll('[data-slot="heatmap-cell"]');
 
-        if (cells.length !== 30) {
-          throw new Error("heatmap bench failed to mount the expected number of cells");
-        }
-      },
-    );
+      if (cells.length !== 30) {
+        throw new Error("heatmap bench failed to mount the expected number of cells");
+      }
+    });
   });
 
   bench("timeline subsystem mount", async () => {
