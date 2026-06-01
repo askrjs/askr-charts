@@ -26,7 +26,7 @@ function read(relativePath: string) {
 }
 
 describe("responsive chart contract", () => {
-  it("keeps responsive layout assets, imports, and docs aligned", () => {
+  it("should keeps responsive layout assets, imports, and docs aligned", () => {
     const defaultResponsive = read("src/charts/default/styles/layout/responsive-layout.css");
     const defaultLayout = read("src/charts/default/styles/layout/layout.css");
     const templateResponsive = read("templates/chart/styles/layout/responsive-layout.css");

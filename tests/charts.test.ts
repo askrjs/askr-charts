@@ -39,7 +39,7 @@ function listCssFiles(dir: string): string[] {
 }
 
 describe("chart components", () => {
-  it("renders a bar chart with semantic root hooks and fallback content", () => {
+  it("should renders a bar chart with semantic root hooks and fallback content", () => {
     const html = renderChart(() =>
       BarChart({
         label: "Monthly revenue",
@@ -59,7 +59,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-item-index:0");
   });
 
-  it("renders line and area charts with point series hooks", () => {
+  it("should renders line and area charts with point series hooks", () => {
     const line = renderChart(() =>
       LineChart({
         label: "Weekly signups",
@@ -90,7 +90,7 @@ describe("chart components", () => {
     expect(area).toContain("--ak-chart-item-index:0");
   });
 
-  it("renders reveal animation wrappers for line and area charts", () => {
+  it("should renders reveal animation wrappers for line and area charts", () => {
     const line = renderChart(() =>
       LineChart({
         label: "Weekly signups",
@@ -122,7 +122,7 @@ describe("chart components", () => {
     expect(area).toContain('data-slot="area-chart-surface"');
   });
 
-  it("accepts tuple chart data and explicit minimum scales", () => {
+  it("should accepts tuple chart data and explicit minimum scales", () => {
     const bar = renderChart(() =>
       BarChart({
         label: "Monthly revenue",
@@ -152,7 +152,7 @@ describe("chart components", () => {
     expect(heatmap).toContain("Tue");
   });
 
-  it("uses chart-specific default animation types when animate is enabled", () => {
+  it("should uses chart-specific default animation types when animate is enabled", () => {
     const donut = renderChart(() =>
       DonutChart({ label: "Traffic split", data: [{ label: "Direct", value: 50 }], animate: true }),
     );
@@ -192,7 +192,7 @@ describe("chart components", () => {
     expect(timeline).toContain('data-ak-animation="slide"');
   });
 
-  it("lets structured animation override defaults and disable animation", () => {
+  it("should lets structured animation override defaults and disable animation", () => {
     const chart = renderChart(() =>
       Heatmap({
         label: "Activity heatmap",
@@ -221,7 +221,7 @@ describe("chart components", () => {
     expect(disabled).toContain('data-ak-animation="none"');
   });
 
-  it("renders a donut chart with CSS-variable gradient stops", () => {
+  it("should renders a donut chart with CSS-variable gradient stops", () => {
     const html = renderChart(() =>
       DonutChart({
         label: "Traffic split",
@@ -240,7 +240,7 @@ describe("chart components", () => {
     expect(html).toContain("Scale max is 100%");
   });
 
-  it("renders a flame graph with positioned frame spans", () => {
+  it("should renders a flame graph with positioned frame spans", () => {
     const html = renderChart(() =>
       FlameGraph({
         label: "Call stack",
@@ -265,7 +265,7 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="flame-graph-cell"');
   });
 
-  it("renders a heatmap with CSS variable grid sizing", () => {
+  it("should renders a heatmap with CSS variable grid sizing", () => {
     const html = renderChart(() =>
       Heatmap({
         label: "Activity heatmap",
@@ -280,7 +280,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-heatmap-columns:2");
   });
 
-  it("renders a progress meter with semantic meter attributes", () => {
+  it("should renders a progress meter with semantic meter attributes", () => {
     const chart = ProgressMeter({
       label: "Quota progress",
       value: 48,
@@ -291,7 +291,7 @@ describe("chart components", () => {
     expect(String(chart.props.style)).toContain("--ak-chart-item-value:60%");
   });
 
-  it("renders a radial gauge with a conic progress dial", () => {
+  it("should renders a radial gauge with a conic progress dial", () => {
     const html = renderChart(() =>
       RadialGauge({
         label: "Fill rate",
@@ -305,7 +305,7 @@ describe("chart components", () => {
     expect(html).toContain("Fill rate");
   });
 
-  it("wires semantic chart variants and grid toggles through the rendered markup", () => {
+  it("should wires semantic chart variants and grid toggles through the rendered markup", () => {
     const html = [
       renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "success" })),
       renderChart(() =>
@@ -331,7 +331,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-info)");
   });
 
-  it("keeps the phase 3 visual polish hooks in the default chart styles", () => {
+  it("should keeps the phase 3 visual polish hooks in the default chart styles", () => {
     const displayRoot = join(__dirname, "..", "src", "charts", "default", "styles", "display");
     const barCss = readFileSync(join(displayRoot, "bar-chart.css"), "utf8");
     const stackedBarCss = readFileSync(join(displayRoot, "stacked-bar-chart.css"), "utf8");
@@ -359,7 +359,7 @@ describe("chart components", () => {
     expect(tooltipCss).toContain("inset-inline-start: var(--ak-chart-tooltip-anchor-x");
   });
 
-  it("keeps the phase 9 typography polish hooks in the shared styles", () => {
+  it("should keeps the phase 9 typography polish hooks in the shared styles", () => {
     const baseRoot = join(__dirname, "..", "src", "charts", "default", "styles", "base");
     const typographyCss = readFileSync(join(baseRoot, "typography.css"), "utf8");
     const legendCss = readFileSync(
@@ -381,7 +381,7 @@ describe("chart components", () => {
     expect(legendCss).toContain("color: var(--ak-chart-color-text)");
   });
 
-  it("keeps display styles self-sufficient on chart-owned tokens", () => {
+  it("should keeps display styles self-sufficient on chart-owned tokens", () => {
     const root = join(__dirname, "..");
     const styleFiles = [
       ...listCssFiles(join(root, "src", "charts", "default", "styles")),
@@ -402,7 +402,7 @@ describe("chart components", () => {
     expect(tokensCss).toContain("--ak-chart-tooltip-border");
   });
 
-  it("renders zero values truthfully without forcing non-zero sizes", () => {
+  it("should renders zero values truthfully without forcing non-zero sizes", () => {
     const bar = renderChart(() =>
       BarChart({
         label: "Zero revenue",
@@ -437,7 +437,7 @@ describe("chart components", () => {
     expect(String(progress.props.style)).toContain("--ak-chart-item-min-size:0");
   });
 
-  it("renders a sparkline with column layout points", () => {
+  it("should renders a sparkline with column layout points", () => {
     const html = renderChart(() =>
       Sparkline({
         label: "Response time trend",
@@ -451,7 +451,7 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="sparkline"');
   });
 
-  it("renders a sparkline line variant with stroke overlay and floating dots", () => {
+  it("should renders a sparkline line variant with stroke overlay and floating dots", () => {
     const html = renderChart(() =>
       Sparkline({
         label: "Response time trend",
@@ -471,7 +471,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-sparkline-polygon:");
   });
 
-  it("renders a stacked bar chart with stacked segments", () => {
+  it("should renders a stacked bar chart with stacked segments", () => {
     const html = renderChart(() =>
       StackedBarChart({
         label: "Pipeline mix",
@@ -491,7 +491,7 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="stacked-bar-chart-stack"');
   });
 
-  it("scales stacked bar rows against the shared scale while preserving composition", () => {
+  it("should scales stacked bar rows against the shared scale while preserving composition", () => {
     const html = renderChart(() =>
       StackedBarChart({
         label: "Pipeline mix",
@@ -520,7 +520,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-item-value:40%");
   });
 
-  it("clamps stacked bar row width when explicit max is smaller than the total", () => {
+  it("should clamps stacked bar row width when explicit max is smaller than the total", () => {
     const html = renderChart(() =>
       StackedBarChart({
         label: "Pipeline mix",
@@ -543,7 +543,7 @@ describe("chart components", () => {
     expect(html).not.toContain("--ak-chart-row-value:200%");
   });
 
-  it("renders a timeline with semantic item hooks", () => {
+  it("should renders a timeline with semantic item hooks", () => {
     const html = renderChart(() =>
       Timeline({
         label: "Release timeline",
@@ -557,7 +557,7 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="timeline"');
   });
 
-  it("emits label density controls on visible-label charts", () => {
+  it("should emits label density controls on visible-label charts", () => {
     const bar = renderChart(() =>
       BarChart({
         label: "Monthly revenue",

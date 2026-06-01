@@ -17,7 +17,7 @@ const contractCharts = [
 ] as const;
 
 describe("chart contract documentation", () => {
-  it("keeps package docs, exports, and the app gallery aligned", () => {
+  it("should keeps package docs, exports, and the app gallery aligned", () => {
     const packageRoot = join(__dirname, "..");
     const repoRoot = join(packageRoot, "..");
     const docs = readFileSync(join(packageRoot, "CHARTING.md"), "utf8");
