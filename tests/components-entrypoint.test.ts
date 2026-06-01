@@ -20,7 +20,7 @@ import {
 } from "../src/components";
 
 describe("components entrypoint", () => {
-  it("exposes chart layout primitives from one barrel", () => {
+  it("should exposes chart layout primitives from one barrel", () => {
     expect(typeof ChartShell).toBe("function");
     expect(typeof AreaChart).toBe("function");
     expect(typeof BarChart).toBe("function");

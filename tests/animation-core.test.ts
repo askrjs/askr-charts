@@ -12,7 +12,7 @@ import {
 } from "../src/core";
 
 describe("chart animation core", () => {
-  it("normalizes boolean animation values against defaults", () => {
+  it("should normalizes boolean animation values against defaults", () => {
     expect(normalizeAnimation(true, { type: "grow" })).toEqual({
       enabled: true,
       type: "grow",
@@ -32,7 +32,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("normalizes object animation values and preserves explicit overrides", () => {
+  it("should normalizes object animation values and preserves explicit overrides", () => {
     expect(
       normalizeAnimation(
         {
@@ -54,7 +54,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("disables animation for false, none, and type none", () => {
+  it("should disables animation for false, none, and type none", () => {
     expect(normalizeAnimation(false, { type: "grow" }).enabled).toBe(false);
     expect(normalizeAnimation("none", { type: "grow" })).toMatchObject({
       enabled: false,
@@ -66,7 +66,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("generates CSS variable styles in milliseconds", () => {
+  it("should generates CSS variable styles in milliseconds", () => {
     expect(
       getAnimationStyle({
         enabled: true,
@@ -84,7 +84,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("resolves spring easing presets and reveal animation types", () => {
+  it("should resolves spring easing presets and reveal animation types", () => {
     expect(CHART_EASING_SPRING).toBe("cubic-bezier(0.34, 1.56, 0.64, 1)");
     expect(CHART_EASING_SPRING_SUBTLE).toBe("cubic-bezier(0.22, 1.00, 0.36, 1)");
     expect(
@@ -113,7 +113,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("generates root animation data attributes", () => {
+  it("should generates root animation data attributes", () => {
     expect(
       getAnimationDataAttrs({
         enabled: true,
@@ -143,7 +143,7 @@ describe("chart animation core", () => {
     });
   });
 
-  it("includes reduced-motion animation guards in the shared stylesheet", () => {
+  it("should includes reduced-motion animation guards in the shared stylesheet", () => {
     const css = readFileSync(
       join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
       "utf-8",
@@ -154,7 +154,7 @@ describe("chart animation core", () => {
     expect(css).toContain("transition: none !important");
   });
 
-  it("keeps the phase 1 chart animation hooks in sync with the CSS files", () => {
+  it("should keeps the phase 1 chart animation hooks in sync with the CSS files", () => {
     const animationsCss = readFileSync(
       join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
       "utf-8",

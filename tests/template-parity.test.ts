@@ -50,7 +50,7 @@ describe("template parity", () => {
     expect(templateFiles.length).toBeGreaterThan(0);
   });
 
-  it("template covers every style file in the default chart package", () => {
+  it("should template covers every style file in the default chart package", () => {
     const missingInTemplate = defaultFiles.filter((file) => !templateFiles.includes(file));
     expect(
       missingInTemplate,
@@ -58,7 +58,7 @@ describe("template parity", () => {
     ).toEqual([]);
   });
 
-  it("template has no extra style files not in the default chart package", () => {
+  it("should template has no extra style files not in the default chart package", () => {
     const extraInTemplate = templateFiles.filter((file) => !defaultFiles.includes(file));
     expect(
       extraInTemplate,
@@ -66,14 +66,14 @@ describe("template parity", () => {
     ).toEqual([]);
   });
 
-  it("template tokens expose the same canonical token names as the default chart package", () => {
+  it("should template tokens expose the same canonical token names as the default chart package", () => {
     const defaultTokens = extractTokenNames(readFileSync(DEFAULT_TOKENS, "utf-8"));
     const templateTokens = extractTokenNames(readFileSync(TEMPLATE_TOKENS, "utf-8"));
 
     expect(templateTokens).toEqual(defaultTokens);
   });
 
-  it("template ships the same standalone animation baseline as the default chart package", () => {
+  it("should template ships the same standalone animation baseline as the default chart package", () => {
     const defaultIndex = readFileSync(join(DEFAULT_CHART_DIR, "index.css"), "utf-8");
     const templateIndex = readFileSync(join(TEMPLATE_CHART_DIR, "index.css"), "utf-8");
 
@@ -84,7 +84,7 @@ describe("template parity", () => {
     );
   });
 
-  it("official chart entrypoints use the same canonical layout imports", () => {
+  it("should official chart entrypoints use the same canonical layout imports", () => {
     const chartNames = readdirSync(CHARTS_DIR).filter((entry) =>
       existsSync(join(CHARTS_DIR, entry, "index.css")),
     );
@@ -105,7 +105,7 @@ describe("template parity", () => {
     }
   });
 
-  it("official chart token files keep the same canonical token names as default", () => {
+  it("should official chart token files keep the same canonical token names as default", () => {
     const chartNames = readdirSync(CHARTS_DIR).filter((entry) =>
       existsSync(join(CHARTS_DIR, entry, "tokens.css")),
     );
@@ -122,7 +122,7 @@ describe("template parity", () => {
     }
   });
 
-  it("official chart style directories keep the same canonical files as default", () => {
+  it("should official chart style directories keep the same canonical files as default", () => {
     const chartNames = readdirSync(CHARTS_DIR).filter((entry) =>
       existsSync(join(CHARTS_DIR, entry, "styles")),
     );

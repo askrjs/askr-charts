@@ -50,7 +50,7 @@ describe("component surfaces", () => {
     container = undefined;
   });
 
-  it("renders chart support primitives with semantic slots and provided content", async () => {
+  it("should renders chart support primitives with semantic slots and provided content", async () => {
     container = mount(
       <ChartShell title="Operations" description="Weekly summary">
         <ChartPanel title="Revenue panel" description="Primary panel">
@@ -88,7 +88,7 @@ describe("component surfaces", () => {
     ).toBe("Review systems");
   });
 
-  it("renders trend and compact charts with their specialized slots and values", async () => {
+  it("should renders trend and compact charts with their specialized slots and values", async () => {
     container = mount(
       <div>
         <AreaChart

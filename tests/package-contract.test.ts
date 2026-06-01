@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("package contract", () => {
-  it("exposes the root stylesheet entry and components barrel", () => {
+  it("should exposes the root stylesheet entry and components barrel", () => {
     const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
@@ -28,7 +28,7 @@ describe("package contract", () => {
     });
   });
 
-  it("keeps the template export map available", () => {
+  it("should keeps the template export map available", () => {
     const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
@@ -36,7 +36,7 @@ describe("package contract", () => {
     expect(pkg.exports["./templates/*"]).toBe("./templates/*");
   });
 
-  it("documents themes as optional rather than required", () => {
+  it("should documents themes as optional rather than required", () => {
     const root = join(__dirname, "..");
     const readme = readFileSync(join(root, "README.md"), "utf8");
     const usage = readFileSync(join(root, "docs", "usage.md"), "utf8");

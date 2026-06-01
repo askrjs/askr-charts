@@ -81,7 +81,7 @@
     "bench:tier2": "vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
     "bench:tier3": "vp test bench --run --reporter=default --config vitest.bench.tier3.config.ts",
     "bench:tier4": "vp test bench --run --reporter=default --config vitest.bench.tier4.config.ts",
-    "test": "npm run test:unit && npm run test:jsdom && npm run test:browser",
+    "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser",
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
     "test:browser": "vp test run -c vitest.test.browser.config.ts",
@@ -89,10 +89,11 @@
     "lint": "vp lint .",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
     "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots && npm run verify:chart-contract-docs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": "^0.0.39",
+    "@askrjs/askr": "^0.0.40",
     "@askrjs/vite": "^0.0.2",
     "@tsdown/css": "0.22.0",
     "@types/node": "^25.9.1",

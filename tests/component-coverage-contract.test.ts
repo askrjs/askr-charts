@@ -55,14 +55,14 @@ function read(relativePath: string): string {
 }
 
 describe("component coverage contract", () => {
-  it("keeps the coverage maps aligned with exported components", () => {
+  it("should keeps the coverage maps aligned with exported components", () => {
     const exportedComponents = readExportedComponents("src/components/index.ts").sort();
 
     expect(sortedKeys(correctnessCoverage)).toEqual(exportedComponents);
     expect(sortedKeys(benchmarkCoverage)).toEqual(exportedComponents);
   });
 
-  it("keeps direct correctness coverage for every exported component", () => {
+  it("should keeps direct correctness coverage for every exported component", () => {
     for (const [componentName, files] of Object.entries(correctnessCoverage)) {
       for (const file of files) {
         expect(read(file), `${componentName} must appear in ${file}`).toContain(componentName);
@@ -70,7 +70,7 @@ describe("component coverage contract", () => {
     }
   });
 
-  it("keeps direct benchmark coverage for every exported component", () => {
+  it("should keeps direct benchmark coverage for every exported component", () => {
     for (const [componentName, files] of Object.entries(benchmarkCoverage)) {
       for (const file of files) {
         expect(read(file), `${componentName} must appear in ${file}`).toContain(componentName);

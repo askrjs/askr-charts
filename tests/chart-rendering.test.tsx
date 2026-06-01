@@ -41,7 +41,7 @@ describe("chart rendering in jsdom", () => {
     container = undefined;
   });
 
-  it("renders bar charts into the jsdom DOM with labelled graphics and item widths", async () => {
+  it("should renders bar charts into the jsdom DOM with labelled graphics and item widths", async () => {
     container = mount(
       <BarChart
         label="Monthly revenue"
@@ -74,7 +74,7 @@ describe("chart rendering in jsdom", () => {
     );
   });
 
-  it("aligns chart tooltips to the pointer inside the hovered trigger", async () => {
+  it("should aligns chart tooltips to the pointer inside the hovered trigger", async () => {
     container = mount(<BarChart label="Monthly revenue" data={[{ label: "Jan", value: 40 }]} />);
     await flushUpdates();
 
