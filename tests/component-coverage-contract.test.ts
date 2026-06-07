@@ -10,15 +10,15 @@ const correctnessCoverage = {
   ChartLegend: ["tests/component-surfaces.test.tsx"],
   ChartPanel: ["tests/component-surfaces.test.tsx"],
   ChartShell: ["tests/component-surfaces.test.tsx"],
-  DonutChart: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
-  FlameGraph: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
-  Heatmap: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
+  DonutChart: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
+  FlameGraph: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
+  Heatmap: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
   LineChart: ["tests/charts.test.ts", "tests/component-surfaces.test.tsx"],
-  ProgressMeter: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
-  RadialGauge: ["tests/component-surfaces.test.tsx", "tests/chart-rendering.browser.test.tsx"],
-  Sparkline: ["tests/component-surfaces.test.tsx", "tests/chart-rendering.browser.test.tsx"],
-  StackedBarChart: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
-  Timeline: ["tests/charts.test.ts", "tests/chart-rendering.browser.test.tsx"],
+  ProgressMeter: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
+  RadialGauge: ["tests/component-surfaces.test.tsx", "tests/browser/chart-rendering.test.tsx"],
+  Sparkline: ["tests/component-surfaces.test.tsx", "tests/browser/chart-rendering.test.tsx"],
+  StackedBarChart: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
+  Timeline: ["tests/charts.test.ts", "tests/browser/chart-rendering.test.tsx"],
 } as const;
 
 const benchmarkCoverage = {

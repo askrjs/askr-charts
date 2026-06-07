@@ -7,6 +7,6 @@ export default defineConfig({
     ...sharedVitestConfig.test,
     environment: "jsdom",
     include: ["tests/**/*.test.tsx"],
-    exclude: ["tests/**/*.browser.test.tsx"],
+    exclude: ["tests/**/*.browser.test.tsx", "tests/browser/**/*.test.tsx"],
   },
 });
