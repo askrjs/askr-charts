@@ -1,6 +1,6 @@
 {
   "name": "@askrjs/charts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CSS-first chart primitives that pair with askr themes.",
   "keywords": [
     "askr",
@@ -93,8 +93,8 @@
     "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": "^0.0.40",
-    "@askrjs/vite": "^0.0.2",
+    "@askrjs/askr": "^0.0.41",
+    "@askrjs/vite": "^0.0.3",
     "@tsdown/css": "0.22.2",
     "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",
