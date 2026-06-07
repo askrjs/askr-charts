@@ -95,12 +95,12 @@
   "devDependencies": {
     "@askrjs/askr": "^0.0.40",
     "@askrjs/vite": "^0.0.2",
-    "@tsdown/css": "0.22.0",
-    "@types/node": "^25.9.1",
+    "@tsdown/css": "0.22.2",
+    "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
     "typescript": "^6.0.3",
-    "vite-plus": "^0.1.22"
+    "vite-plus": "^0.1.24"
   },
   "peerDependencies": {
     "@askrjs/askr": ">=0.0.30 <0.1.0"

@@ -14,7 +14,7 @@ import {
   StackedBarChart,
   Sparkline,
   Timeline,
-} from "../src/components";
+} from "../../src/components";
 
 function mount(element: JSX.Element): HTMLElement {
   const container = document.createElement("div");

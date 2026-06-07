@@ -22,6 +22,6 @@ export default defineConfig({
         port: 0,
       },
     },
-    include: ["tests/**/*.browser.test.tsx"],
+    include: ["tests/browser/**/*.test.tsx"],
   },
 });
