@@ -93,8 +93,8 @@
     "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": "^0.0.41",
-    "@askrjs/vite": "^0.0.3",
+    "@askrjs/askr": ">=0.0.30 <0.1.0",
+    "@askrjs/vite": ">=0.0.2 <0.1.0",
     "@tsdown/css": "0.22.2",
     "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",
