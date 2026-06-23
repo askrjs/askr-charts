@@ -29,7 +29,7 @@ export function ChartLegend({ className, items, style, title, ...rest }: ChartLe
               <span data-slot="chart-legend-label" className="chart-legend-label">
                 {item.label}
               </span>
-              {item.value ? (
+              {item.value != null ? (
                 <span data-slot="chart-legend-value" className="chart-legend-value">
                   {item.value}
                 </span>

@@ -144,6 +144,16 @@ describe("component surfaces", () => {
     expect(items[1]?.textContent).toContain("Delayed");
   });
 
+  it("should preserves explicit empty legend values", async () => {
+    container = mount(<ChartLegend items={[{ label: "No assigned owner", value: "" }]} />);
+    await flushUpdates();
+
+    const value = container.querySelector('[data-slot="chart-legend-value"]');
+
+    expect(value).toBeTruthy();
+    expect(value?.textContent).toBe("");
+  });
+
   it("should renders trend and compact charts with their specialized slots and values", async () => {
     container = mount(
       <div>
