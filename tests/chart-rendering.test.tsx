@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { cleanupApp, createIsland } from "@askrjs/askr/boot";
 
-import { BarChart } from "../src/components";
+import { BarChart, StackedBarChart } from "../src/components";
 
 function mount(element: JSX.Element): HTMLElement {
   const container = document.createElement("div");
@@ -72,6 +72,28 @@ describe("chart rendering in jsdom", () => {
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Monthly revenue",
     );
+  });
+
+  it("should renders stacked bar fallback table rows without nested child scopes", async () => {
+    container = mount(
+      <StackedBarChart
+        label="Messages"
+        data={[
+          {
+            label: "Messages",
+            segments: [{ label: "Ready", value: 7 }],
+          },
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const fallbackRows = container.querySelectorAll('[data-slot="chart-table"] tbody tr');
+
+    expect(fallbackRows).toHaveLength(1);
+    expect(fallbackRows[0]?.textContent).toContain("Messages");
+    expect(fallbackRows[0]?.textContent).toContain("Ready");
+    expect(fallbackRows[0]?.textContent).toContain("7");
   });
 
   it("should aligns chart tooltips to the pointer inside the hovered trigger", async () => {

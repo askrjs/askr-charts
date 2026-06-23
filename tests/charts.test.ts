@@ -381,6 +381,23 @@ describe("chart components", () => {
     expect(legendCss).toContain("color: var(--ak-chart-color-text)");
   });
 
+  it("should keeps screen-reader fallback tables clipped in shared styles and templates", () => {
+    const root = join(__dirname, "..");
+    const utilityFiles = [
+      join(root, "src", "charts", "default", "styles", "base", "utilities.css"),
+      join(root, "templates", "chart", "styles", "base", "utilities.css"),
+    ];
+
+    for (const file of utilityFiles) {
+      const css = readFileSync(file, "utf8");
+
+      expect(css).toContain("inline-size: 1px");
+      expect(css).toContain("block-size: 1px");
+      expect(css).toContain(".ak-chart-table:not(.ak-chart-sr-only)");
+      expect(css).toContain('[data-slot="chart-table"]:not(.ak-chart-sr-only)');
+    }
+  });
+
   it("should keeps display styles self-sufficient on chart-owned tokens", () => {
     const root = join(__dirname, "..");
     const styleFiles = [
