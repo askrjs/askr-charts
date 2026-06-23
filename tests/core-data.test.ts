@@ -136,6 +136,7 @@ describe("core data contract", () => {
     expect(toChartFraction(25, 100)).toBe(0.25);
     expect(toChartFraction(25, 100, 20)).toBe(0.0625);
     expect(toChartFraction(25, 0)).toBe(0);
+    expect(toChartFraction(25, 100, Number.NaN)).toBe(0.25);
   });
 
   it("should keep generated series colors inside the defined token range", () => {
