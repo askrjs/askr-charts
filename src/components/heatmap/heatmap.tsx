@@ -1,5 +1,5 @@
 import { For } from "@askrjs/askr";
-import { normalizeHeatmapData, type NormalizedHeatmapDatum } from "../../core";
+import { formatChartValue, normalizeHeatmapData, type NormalizedHeatmapDatum } from "../../core";
 import { cx } from "../_internal/classnames";
 import {
   chartTooltipTriggerProps,
@@ -11,6 +11,14 @@ import {
   resolveValueFormatter,
 } from "../_internal/chart-helpers";
 import type { HeatmapProps } from "./heatmap.types";
+
+interface HeatmapTableRow {
+  column: string;
+  description: string;
+  key: string;
+  row: string;
+  value: string;
+}
 
 export function Heatmap({
   animate,
@@ -65,6 +73,27 @@ export function Heatmap({
     cellsByCoordinate[rowIndex]![columnIndex] = cell;
   }
 
+  const formattedZeroValue = formatChartValue(0, formatter);
+  const tableRows: HeatmapTableRow[] = [];
+
+  for (let rowIndex = 0; rowIndex < normalized.rows.length; rowIndex += 1) {
+    const row = normalized.rows[rowIndex]!;
+    const rowCells = cellsByCoordinate[rowIndex];
+
+    for (let columnIndex = 0; columnIndex < normalized.columns.length; columnIndex += 1) {
+      const column = normalized.columns[columnIndex]!;
+      const cell = rowCells?.[columnIndex];
+
+      tableRows.push({
+        column,
+        description: cell?.description ?? "",
+        key: `${row}-${column}-${rowIndex}-${columnIndex}`,
+        row,
+        value: cell?.formattedValue ?? formattedZeroValue,
+      });
+    }
+  }
+
   const summaryId = createChartId("heatmap-summary", id ?? label);
   const tableId = createChartId("heatmap-table", id ?? label);
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
@@ -110,15 +139,14 @@ export function Heatmap({
                     {(column, columnIndex) => {
                       const cell = rowCells?.[columnIndex()];
                       const cellLabel = `${row}, ${column}`;
+                      const formattedValue = cell?.formattedValue ?? formattedZeroValue;
                       return (
                         <span
                           data-ak-chart-item="true"
                           data-ak-chart-tooltip-trigger="true"
                           data-slot="heatmap-cell"
                           className="ak-heatmap-cell"
-                          aria-label={
-                            cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`
-                          }
+                          aria-label={`${cellLabel}: ${formattedValue}`}
                           tabIndex={0}
                           style={mergeChartStyles({
                             "--ak-chart-cell-bg": cell?.background ?? "var(--ak-chart-color-muted)",
@@ -127,7 +155,7 @@ export function Heatmap({
                           })}
                         >
                           <span className="ak-chart-sr-only">
-                            {cell ? `${cellLabel}: ${cell.formattedValue}` : `${cellLabel}: 0`}
+                            {cellLabel}: {formattedValue}
                           </span>
                           <span
                             data-slot="tooltip-content"
@@ -135,9 +163,7 @@ export function Heatmap({
                             role="tooltip"
                           >
                             <span className="chart-tooltip-title">{cellLabel}</span>
-                            <span className="chart-tooltip-value">
-                              {cell ? cell.formattedValue : "0"}
-                            </span>
+                            <span className="chart-tooltip-value">{formattedValue}</span>
                             {cell?.description ? <span>{cell.description}</span> : null}
                           </span>
                         </span>
@@ -166,13 +192,13 @@ export function Heatmap({
           </tr>
         </thead>
         <tbody>
-          <For each={normalized.cells} by={(cell, index) => `${cell.y}-${cell.x}-${index}`}>
-            {(cell) => (
+          <For each={tableRows} by={(row) => row.key}>
+            {(row) => (
               <tr>
-                <th scope="row">{cell.y}</th>
-                <td>{cell.x}</td>
-                <td>{cell.formattedValue}</td>
-                <td>{cell.description ?? ""}</td>
+                <th scope="row">{row.row}</th>
+                <td>{row.column}</td>
+                <td>{row.value}</td>
+                <td>{row.description}</td>
               </tr>
             )}
           </For>
