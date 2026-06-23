@@ -97,6 +97,7 @@ export function Heatmap({
   const summaryId = createChartId("heatmap-summary", id ?? label);
   const tableId = createChartId("heatmap-table", id ?? label);
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
+  const gridColumnCount = Math.max(1, normalized.columns.length);
 
   return (
     <section
@@ -106,7 +107,7 @@ export function Heatmap({
       data-slot="heatmap"
       className={cx("ak-chart", "ak-heatmap", className)}
       style={mergeChartStyles(
-        { "--ak-heatmap-columns": normalized.columns.length, ...animationStyle },
+        { "--ak-heatmap-columns": gridColumnCount, ...animationStyle },
         style,
       )}
     >
