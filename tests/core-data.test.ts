@@ -139,6 +139,28 @@ describe("core data contract", () => {
     ).toContain("Scale max is $8k");
   });
 
+  it("should keep summary scale maximums finite", () => {
+    const valueData = normalizeValueChartData([
+      { label: "Jan", value: 20 },
+      { label: "Feb", value: 40 },
+    ]);
+    const heatmapData = normalizeHeatmapData([
+      { x: "Mon", y: "Week 1", value: 8 },
+      { x: "Tue", y: "Week 1", value: 4 },
+    ]);
+    const valueSummary = buildValueChartSummary("Revenue", valueData.data, Number.NaN);
+    const heatmapSummary = buildHeatmapSummary(
+      "Activity",
+      heatmapData.cells,
+      Number.POSITIVE_INFINITY,
+    );
+
+    expect(valueSummary).toContain("Scale max is 40");
+    expect(valueSummary).not.toContain("NaN");
+    expect(heatmapSummary).toContain("Scale max is 8");
+    expect(heatmapSummary).not.toContain("Infinity");
+  });
+
   it("should keep scale helpers predictable", () => {
     expect(getValueChartMin([{ label: "A", value: 5 }], 2)).toBe(2);
     expect(getValueChartMax([{ label: "A", value: 5 }], 12)).toBe(12);
