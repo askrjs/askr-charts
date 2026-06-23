@@ -280,6 +280,13 @@ describe("chart components", () => {
     expect(html).toContain("--ak-heatmap-columns:2");
   });
 
+  it("should keeps empty heatmap grids on a valid column count", () => {
+    const html = renderChart(() => Heatmap({ label: "Empty activity", data: [] }));
+
+    expect(html).toContain("--ak-heatmap-columns:1");
+    expect(html).toContain("Empty activity. No heatmap cells available.");
+  });
+
   it("should renders a progress meter with semantic meter attributes", () => {
     const chart = ProgressMeter({
       label: "Quota progress",
