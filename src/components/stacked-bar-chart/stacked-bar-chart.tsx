@@ -10,6 +10,14 @@ import {
 } from "../_internal/chart-helpers";
 import type { StackedBarChartProps } from "./stacked-bar-chart.types";
 
+interface StackedBarTableRow {
+  description: string;
+  key: string;
+  rowLabel: string;
+  segmentLabel: string;
+  value: number;
+}
+
 export function StackedBarChart({
   animate,
   animation,
@@ -69,6 +77,23 @@ export function StackedBarChart({
       ? `${label}. No stacked bar rows available.`
       : `${label}. ${data.length} rows. Largest total is ${formatChartValue(totals[peakIndex] ?? 0, formatter)} for ${data[peakIndex]?.label ?? ""}. Scale max is ${formatChartValue(scaleMax, formatter)}.`;
   const sectionProps = mergeChartProps(rest, chartTooltipTriggerProps);
+  const tableRows: StackedBarTableRow[] = [];
+
+  for (let rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
+    const datum = data[rowIndex]!;
+
+    for (let segmentIndex = 0; segmentIndex < datum.segments.length; segmentIndex += 1) {
+      const segment = datum.segments[segmentIndex]!;
+
+      tableRows.push({
+        description: segment.description ?? datum.description ?? "",
+        key: `${datum.label}-${segment.label}-${rowIndex}-${segmentIndex}`,
+        rowLabel: datum.label,
+        segmentLabel: segment.label,
+        value: segment.value,
+      });
+    }
+  }
 
   return (
     <section
@@ -172,16 +197,14 @@ export function StackedBarChart({
           </tr>
         </thead>
         <tbody>
-          {data.map((datum) =>
-            datum.segments.map((segment, segmentIndex) => (
-              <tr key={`${datum.label}-${segment.label}-${segmentIndex}`}>
-                <th scope="row">{datum.label}</th>
-                <td>{segment.label}</td>
-                <td>{formatChartValue(segment.value, formatter)}</td>
-                <td>{segment.description ?? datum.description ?? ""}</td>
-              </tr>
-            )),
-          )}
+          {tableRows.map((row) => (
+            <tr key={row.key}>
+              <th scope="row">{row.rowLabel}</th>
+              <td>{row.segmentLabel}</td>
+              <td>{formatChartValue(row.value, formatter)}</td>
+              <td>{row.description}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </section>

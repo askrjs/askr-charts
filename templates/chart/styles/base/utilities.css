@@ -21,6 +21,8 @@
 
 :where(.ak-chart-sr-only) {
   position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -31,7 +33,7 @@
   border: 0;
 }
 
-:where(.ak-chart-table, [data-slot="chart-table"]) {
+:where(.ak-chart-table:not(.ak-chart-sr-only), [data-slot="chart-table"]:not(.ak-chart-sr-only)) {
   inline-size: 100%;
   font-variant-numeric: tabular-nums;
 }
