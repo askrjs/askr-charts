@@ -24,7 +24,7 @@ export function ChartEmptyState({
           {description}
         </p>
       ) : null}
-      {children ? (
+      {children != null ? (
         <div data-slot="chart-empty-state-content" className="chart-empty-state-content">
           {children}
         </div>
