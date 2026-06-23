@@ -144,7 +144,7 @@ export function StackedBarChart({
                           data-ak-chart-tooltip-trigger="true"
                           data-slot="stacked-bar-chart-segment"
                           className="ak-stacked-bar-chart-segment"
-                          aria-label={`${segment.label}: ${formattedSegmentValue}`}
+                          aria-label={`${datum.label}: ${segment.label}: ${formattedSegmentValue}`}
                           tabIndex={0}
                           style={mergeChartStyles({
                             "--ak-chart-item-color": getChartSeriesColor(

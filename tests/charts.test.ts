@@ -558,8 +558,8 @@ describe("chart components", () => {
       }),
     );
 
-    expect(html).toContain('aria-label="Loss: 0"');
-    expect(html).toContain('aria-label="Unknown: 0"');
+    expect(html).toContain('aria-label="Q1: Loss: 0"');
+    expect(html).toContain('aria-label="Q1: Unknown: 0"');
     expect(html).not.toContain("-5");
     expect(html).not.toContain("NaN");
   });
