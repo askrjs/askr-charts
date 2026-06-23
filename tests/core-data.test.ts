@@ -171,4 +171,18 @@ describe("core data contract", () => {
     expect(items[0]?.label).toBe("0-2.667");
     expect(items[2]?.color).toContain("color-mix");
   });
+
+  it("should fall back to default heatmap legend steps for invalid step counts", () => {
+    const items = createHeatmapLegendItems(
+      [
+        { x: "Mon", y: "Week 1", value: 2 },
+        { x: "Tue", y: "Week 1", value: 8 },
+      ],
+      { steps: Number.NaN },
+    );
+
+    expect(items).toHaveLength(4);
+    expect(items[0]?.label).toBe("0-2");
+    expect(items[3]?.label).toBe("6-8");
+  });
 });
