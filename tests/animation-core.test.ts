@@ -54,6 +54,28 @@ describe("chart animation core", () => {
     });
   });
 
+  it("should normalizes invalid default animation timings", () => {
+    const animation = normalizeAnimation(true, {
+      type: "grow",
+      duration: Number.NaN,
+      delay: Number.POSITIVE_INFINITY,
+      stagger: -12,
+    });
+
+    expect(animation).toMatchObject({
+      enabled: true,
+      type: "grow",
+      duration: 300,
+      delay: 0,
+      stagger: 0,
+    });
+    expect(getAnimationStyle(animation)).toMatchObject({
+      "--ak-chart-animation-duration": "300ms",
+      "--ak-chart-animation-delay": "0ms",
+      "--ak-chart-animation-stagger": "0ms",
+    });
+  });
+
   it("should disables animation for false, none, and type none", () => {
     expect(normalizeAnimation(false, { type: "grow" }).enabled).toBe(false);
     expect(normalizeAnimation("none", { type: "grow" })).toMatchObject({

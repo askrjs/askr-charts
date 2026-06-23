@@ -65,9 +65,16 @@ export function normalizeAnimation(
   animation: ChartAnimation | undefined,
   defaults: Partial<ChartAnimationDefaults> = {},
 ): NormalizedChartAnimation {
-  const resolvedDefaults: ChartAnimationDefaults = {
+  const rawDefaults = {
     ...BASE_DEFAULTS,
     ...defaults,
+  };
+  const resolvedDefaults: ChartAnimationDefaults = {
+    type: rawDefaults.type ?? BASE_DEFAULTS.type,
+    duration: normalizeMs(rawDefaults.duration, BASE_DEFAULTS.duration),
+    delay: normalizeMs(rawDefaults.delay, BASE_DEFAULTS.delay),
+    stagger: normalizeMs(rawDefaults.stagger, BASE_DEFAULTS.stagger),
+    easing: rawDefaults.easing ?? BASE_DEFAULTS.easing,
   };
 
   if (animation === false || animation === "none") {
