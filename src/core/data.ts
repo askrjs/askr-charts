@@ -77,11 +77,21 @@ function isHeatmapDatumTuple(
 }
 
 export function clampChartValue(value: number | null | undefined): number {
-  if (!Number.isFinite(value ?? Number.NaN)) return 0;
-  return Math.max(0, value ?? 0);
+  if (value == null || value <= 0 || !Number.isFinite(value)) return 0;
+  return value;
 }
 
 export function formatChartValue(value: number, formatter?: ChartValueFormatter): string {
+  if (
+    !formatter &&
+    value >= 0 &&
+    value < 1000 &&
+    Number.isInteger(value) &&
+    !Object.is(value, -0)
+  ) {
+    return String(value);
+  }
+
   return formatter ? formatter(value) : defaultFormatter.format(value);
 }
 
@@ -171,6 +181,10 @@ export function normalizeValueChartData(
   const formatter = options.valueFormatter;
   const min = options.min == null ? 0 : clampChartValue(options.min);
   const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
+  const explicitScaleMax =
+    normalizedExplicitMax != null && normalizedExplicitMax > 0
+      ? Math.max(normalizedExplicitMax, min)
+      : undefined;
   let detectedMax = 0;
 
   for (let index = 0; index < data.length; index += 1) {
@@ -192,7 +206,7 @@ export function normalizeValueChartData(
       description = input.description;
     }
 
-    if (value > detectedMax) {
+    if (explicitScaleMax == null && value > detectedMax) {
       detectedMax = value;
     }
 
@@ -201,17 +215,19 @@ export function normalizeValueChartData(
       value,
       color,
       description,
-      fraction: 0,
-      formattedValue: "",
+      fraction:
+        explicitScaleMax == null ? 0 : calculateChartFraction(value, explicitScaleMax, min),
+      formattedValue: formatChartValue(value, formatter),
     };
   }
 
-  const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
+  const max = explicitScaleMax ?? resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
 
-  for (let index = 0; index < normalizedData.length; index += 1) {
-    const datum = normalizedData[index]!;
-    datum.fraction = calculateChartFraction(datum.value, max, min);
-    datum.formattedValue = formatChartValue(datum.value, formatter);
+  if (explicitScaleMax == null) {
+    for (let index = 0; index < normalizedData.length; index += 1) {
+      const datum = normalizedData[index]!;
+      datum.fraction = calculateChartFraction(datum.value, max, min);
+    }
   }
 
   return {
@@ -297,7 +313,8 @@ export function buildDonutStops(data: readonly NormalizedValueChartDatum[]): str
   let cursor = 0;
   const stops: string[] = [];
 
-  for (const [index, datum] of data.entries()) {
+  for (let index = 0; index < data.length; index += 1) {
+    const datum = data[index]!;
     const slice = (datum.value / total) * 360;
     const start = cursor;
     const end = index === lastPositiveIndex ? 360 : cursor + slice;
@@ -387,6 +404,10 @@ export function normalizeHeatmapData(
   const formatter = options.valueFormatter;
   const min = options.min == null ? 0 : clampChartValue(options.min);
   const normalizedExplicitMax = options.max == null ? undefined : clampChartValue(options.max);
+  const explicitScaleMax =
+    normalizedExplicitMax != null && normalizedExplicitMax > 0
+      ? Math.max(normalizedExplicitMax, min)
+      : undefined;
   const columns: string[] = [];
   const rows: string[] = [];
   const seenColumns = new Set<string>();
@@ -425,9 +446,14 @@ export function normalizeHeatmapData(
       rows.push(y);
     }
 
-    if (value > detectedMax) {
+    if (explicitScaleMax == null && value > detectedMax) {
       detectedMax = value;
     }
+
+    const fraction =
+      explicitScaleMax == null ? 0 : calculateChartFraction(value, explicitScaleMax, min);
+    const emphasis = explicitScaleMax == null ? 14 : Math.max(14, Math.round(fraction * 100));
+    const colorSource = color ?? "var(--ak-chart-color-primary)";
 
     cells[index] = {
       x,
@@ -435,23 +461,27 @@ export function normalizeHeatmapData(
       value,
       color,
       description,
-      fraction: 0,
-      formattedValue: "",
-      background: "",
+      fraction,
+      formattedValue: formatChartValue(value, formatter),
+      background:
+        explicitScaleMax == null
+          ? ""
+          : `color-mix(in srgb, ${colorSource} ${emphasis}%, var(--ak-chart-color-muted))`,
     };
   }
 
-  const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
+  const max = explicitScaleMax ?? resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
 
-  for (let index = 0; index < cells.length; index += 1) {
-    const cell = cells[index]!;
-    const fraction = calculateChartFraction(cell.value, max, min);
-    const emphasis = Math.max(14, Math.round(fraction * 100));
-    const colorSource = cell.color ?? "var(--ak-chart-color-primary)";
+  if (explicitScaleMax == null) {
+    for (let index = 0; index < cells.length; index += 1) {
+      const cell = cells[index]!;
+      const fraction = calculateChartFraction(cell.value, max, min);
+      const emphasis = Math.max(14, Math.round(fraction * 100));
+      const colorSource = cell.color ?? "var(--ak-chart-color-primary)";
 
-    cell.fraction = fraction;
-    cell.formattedValue = formatChartValue(cell.value, formatter);
-    cell.background = `color-mix(in srgb, ${colorSource} ${emphasis}%, var(--ak-chart-color-muted))`;
+      cell.fraction = fraction;
+      cell.background = `color-mix(in srgb, ${colorSource} ${emphasis}%, var(--ak-chart-color-muted))`;
+    }
   }
 
   return {
