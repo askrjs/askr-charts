@@ -43,6 +43,32 @@ export function normalizeStyle(style: string | null | undefined): string {
   return (style ?? "").replace(/\s*:\s*/g, ":").replace(/;\s*/g, ";");
 }
 
+export function expectBenchElement<T extends Element>(
+  container: ParentNode,
+  selector: string,
+  label: string,
+): T {
+  const element = container.querySelector<T>(selector);
+
+  if (!element) {
+    throw new Error(`${label} bench failed to mount ${selector}`);
+  }
+
+  return element;
+}
+
+export function expectBenchCount(container: ParentNode, selector: string, count: number): NodeList {
+  const elements = container.querySelectorAll(selector);
+
+  if (elements.length !== count) {
+    throw new Error(
+      `bench expected ${count} elements for ${selector}, mounted ${elements.length}`,
+    );
+  }
+
+  return elements;
+}
+
 export function dispatchPointerMove(
   target: HTMLElement,
   rect: { left: number; top: number; width: number; height: number },

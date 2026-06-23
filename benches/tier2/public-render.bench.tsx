@@ -16,6 +16,15 @@ import { Sparkline } from "../../src/components/sparkline";
 import { StackedBarChart } from "../../src/components/stacked-bar-chart";
 import { Timeline } from "../../src/components/timeline";
 import {
+  benchDonutData,
+  benchFlameGraphData,
+  benchHeatmapData,
+  benchLegendItems,
+  benchSparklineData,
+  benchStackedRows,
+  benchTimelineData,
+  benchTrendData,
+  benchValueData,
   buildFlameGraphData,
   buildHeatmapData,
   buildLegendItems,
@@ -23,7 +32,7 @@ import {
   buildTimelineData,
   buildValueData,
 } from "../_shared/fixtures";
-import { runMountedBench } from "../_shared/dom";
+import { expectBenchCount, expectBenchElement, runMountedBench } from "../_shared/dom";
 
 const valueData = buildValueData(18);
 const donutData = buildValueData(6);
@@ -35,7 +44,91 @@ const legendItems = buildLegendItems();
 const trendData = buildValueData(12);
 const sparklineData = buildValueData(10);
 
+function benchMount(
+  name: string,
+  element: () => JSX.Element,
+  selector: string,
+  expectedCount = 1,
+) {
+  bench(name, async () => {
+    await runMountedBench(element(), (container) => {
+      expectBenchCount(container, selector, expectedCount);
+    });
+  });
+}
+
 describe("tier2 public chart render benches", () => {
+  benchMount("area chart isolated mount", () => (
+    <AreaChart label="Orders" animate data={benchTrendData} />
+  ), '[data-slot="area-chart"]');
+
+  benchMount("bar chart isolated mount", () => (
+    <BarChart label="Revenue" animate data={benchValueData} />
+  ), '[data-slot="bar-chart"]');
+
+  benchMount("donut chart isolated mount", () => (
+    <DonutChart label="Mix" animate data={benchDonutData} />
+  ), '[data-slot="donut-chart"]');
+
+  benchMount("flame graph isolated mount", () => (
+    <FlameGraph label="Request flame graph" animate data={benchFlameGraphData} />
+  ), '[data-slot="flame-graph"]');
+
+  benchMount("heatmap isolated mount", () => (
+    <Heatmap label="Capacity" animate data={benchHeatmapData} />
+  ), '[data-slot="heatmap"]');
+
+  benchMount("line chart isolated mount", () => (
+    <LineChart label="Signups" animate data={benchTrendData} />
+  ), '[data-slot="line-chart"]');
+
+  benchMount("progress meter isolated mount", () => (
+    <ProgressMeter label="SLO" animate max={100} value={81} />
+  ), '[data-slot="progress-meter"]');
+
+  benchMount("radial gauge isolated mount", () => (
+    <RadialGauge label="Fill rate" animate value={68} max={100} />
+  ), '[data-slot="radial-gauge"]');
+
+  benchMount("sparkline bar isolated mount", () => (
+    <Sparkline label="Trend" animate data={benchSparklineData} />
+  ), '[data-slot="sparkline"]');
+
+  benchMount("sparkline line isolated mount", () => (
+    <Sparkline label="Trend" animate variant="line" data={benchSparklineData} />
+  ), '[data-slot="sparkline"]');
+
+  benchMount("stacked bar chart isolated mount", () => (
+    <StackedBarChart label="Delivery mix" animate data={benchStackedRows} />
+  ), '[data-slot="stacked-bar-chart"]');
+
+  benchMount("timeline isolated mount", () => (
+    <Timeline label="Delivery plan" animate data={benchTimelineData} />
+  ), '[data-slot="timeline"]');
+
+  benchMount("chart shell isolated mount", () => (
+    <ChartShell title="Bench shell" description="Public chart composition benchmark">
+      <span data-slot="bench-shell-child" />
+    </ChartShell>
+  ), '[data-slot="chart-shell"]');
+
+  benchMount("chart panel isolated mount", () => (
+    <ChartPanel title="Bench panel" description="Panel benchmark">
+      <span data-slot="bench-panel-child" />
+    </ChartPanel>
+  ), '[data-slot="chart-panel"]');
+
+  bench("chart legend isolated mount", async () => {
+    await runMountedBench(<ChartLegend title="Legend" items={benchLegendItems} />, (container) => {
+      expectBenchElement(container, '[data-slot="chart-legend"]', "chart legend");
+      expectBenchCount(container, '[data-slot="chart-legend-item"]', benchLegendItems.length);
+    });
+  });
+
+  benchMount("chart empty state isolated mount", () => (
+    <ChartEmptyState title="No alerts" description="Everything is healthy" />
+  ), '[data-slot="chart-empty-state"]');
+
   bench("value chart family mount", async () => {
     await runMountedBench(
       <>

@@ -27,6 +27,16 @@ const dashboardStackedRows = buildStackedBarRows(6, 4);
 const dashboardFlameGraphData = buildFlameGraphData();
 const dashboardLegendItems = buildLegendItems();
 
+export const benchValueData = buildValueData(18);
+export const benchTrendData = buildValueData(12);
+export const benchSparklineData = buildValueData(10);
+export const benchDonutData = buildValueData(6);
+export const benchHeatmapData = buildHeatmapData(6, 4);
+export const benchTimelineData = buildTimelineData(8);
+export const benchStackedRows = buildStackedBarRows(6, 4);
+export const benchFlameGraphData = buildFlameGraphData();
+export const benchLegendItems = buildLegendItems();
+
 export function buildValueData(count = 24): ValueChartDatum[] {
   return Array.from({ length: count }, (_, index) => ({
     label: `Point ${index + 1}`,
