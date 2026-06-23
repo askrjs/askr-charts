@@ -24,10 +24,23 @@ function serializeChartStyle(style: ChartStyleInput): string {
   }
 
   if (style && typeof style === "object") {
-    return Object.entries(style)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => `${key}:${String(value)}`)
-      .join(";");
+    let css = "";
+
+    for (const key in style) {
+      if (!Object.prototype.hasOwnProperty.call(style, key)) {
+        continue;
+      }
+
+      const value = style[key];
+      if (value === undefined) {
+        continue;
+      }
+
+      const declaration = `${key}:${String(value)}`;
+      css = css ? `${css};${declaration}` : declaration;
+    }
+
+    return css;
   }
 
   return "";
@@ -35,6 +48,11 @@ function serializeChartStyle(style: ChartStyleInput): string {
 
 export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyleInput): string {
   const baseCss = serializeChartStyle(base);
+
+  if (incoming === undefined) {
+    return baseCss;
+  }
+
   const incomingCss = serializeChartStyle(incoming);
 
   if (!incomingCss) {
