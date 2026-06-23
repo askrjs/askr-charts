@@ -7,6 +7,7 @@ import {
   clampChartValue,
   createHeatmapLegendItems,
   createValueChartLegendItems,
+  formatChartValue,
   getChartSeriesColor,
   getValueChartMin,
   getValueChartMax,
@@ -20,6 +21,13 @@ describe("core data contract", () => {
     expect(clampChartValue(-4)).toBe(0);
     expect(clampChartValue(Number.NaN)).toBe(0);
     expect(clampChartValue(12)).toBe(12);
+  });
+
+  it("should format chart values with default number formatting", () => {
+    expect(formatChartValue(42)).toBe("42");
+    expect(formatChartValue(1_000)).toBe("1,000");
+    expect(formatChartValue(1.2345)).toBe("1.235");
+    expect(formatChartValue(-0)).toBe("-0");
   });
 
   it("should normalize value chart data against the detected max", () => {
