@@ -278,9 +278,14 @@ export function getChartStatusColor(
 
 export function buildDonutStops(data: readonly NormalizedValueChartDatum[]): string {
   let total = 0;
+  let lastPositiveIndex = -1;
 
   for (let index = 0; index < data.length; index += 1) {
-    total += data[index]!.value;
+    const value = data[index]!.value;
+    total += value;
+    if (value > 0) {
+      lastPositiveIndex = index;
+    }
   }
 
   if (total <= 0) {
@@ -290,16 +295,18 @@ export function buildDonutStops(data: readonly NormalizedValueChartDatum[]): str
   const GAP_DEG = 2;
   let cursor = 0;
   const stops: string[] = [];
-  const lastIndex = data.length - 1;
 
   for (const [index, datum] of data.entries()) {
     const slice = (datum.value / total) * 360;
     const start = cursor;
-    const end = index === lastIndex ? 360 : cursor + slice;
-    const gap = index === lastIndex ? 0 : Math.min(GAP_DEG, Math.max(0, end - start));
+    const end = index === lastPositiveIndex ? 360 : cursor + slice;
+    const gap =
+      datum.value > 0 && index < lastPositiveIndex
+        ? Math.min(GAP_DEG, Math.max(0, end - start))
+        : 0;
     const segmentEnd = Math.max(start, end - gap);
     const color = getChartSeriesColor(index, datum.color);
-    if (segmentEnd > start) {
+    if (datum.value > 0 && segmentEnd > start) {
       stops.push(`${color} ${start}deg ${segmentEnd}deg`);
     }
     if (gap > 0) {

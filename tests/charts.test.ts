@@ -240,6 +240,21 @@ describe("chart components", () => {
     expect(html).toContain("Scale max is 100%");
   });
 
+  it("should renders complete donut rings when trailing segments are zero", () => {
+    const html = renderChart(() =>
+      DonutChart({
+        label: "Traffic split",
+        data: [
+          { label: "Direct", value: 100 },
+          { label: "Referral", value: 0 },
+        ],
+      }),
+    );
+
+    expect(html).toContain("--ak-chart-donut-stops:var(--ak-chart-series-1) 0deg 360deg");
+    expect(html).not.toContain("var(--ak-chart-color-muted) 358deg 360deg");
+  });
+
   it("should renders a flame graph with positioned frame spans", () => {
     const html = renderChart(() =>
       FlameGraph({
