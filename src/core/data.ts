@@ -240,7 +240,8 @@ export function buildValueChartSummary(
     }
   }
 
-  return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
+  const summaryMax = Number.isFinite(max) ? max : peak.value;
+  return `${label}. ${data.length} values. Highest value is ${peak.formattedValue} for ${peak.label}. Scale max is ${formatChartValue(summaryMax, valueFormatter)}.`;
 }
 
 export function getChartSeriesColor(index: number, color?: string): string {
@@ -481,7 +482,8 @@ export function buildHeatmapSummary(
     }
   }
 
-  return `${label}. ${cells.length} cells. Peak value is ${peak.formattedValue} at ${peak.y}, ${peak.x}. Scale max is ${formatChartValue(max, valueFormatter)}.`;
+  const summaryMax = Number.isFinite(max) ? max : peak.value;
+  return `${label}. ${cells.length} cells. Peak value is ${peak.formattedValue} at ${peak.y}, ${peak.x}. Scale max is ${formatChartValue(summaryMax, valueFormatter)}.`;
 }
 
 export function createHeatmapLegendItems(
