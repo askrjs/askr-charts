@@ -79,20 +79,27 @@ export function DonutChart({
     datum: (typeof normalized.data)[number];
     index: number;
   }> = [];
-  const lastIndex = normalized.data.length - 1;
+  let lastPositiveIndex = -1;
   let cursor = 0;
+
+  for (let index = 0; index < normalized.data.length; index += 1) {
+    if (normalized.data[index]!.value > 0) {
+      lastPositiveIndex = index;
+    }
+  }
 
   if (total > 0) {
     for (let index = 0; index < normalized.data.length; index += 1) {
       const datum = normalized.data[index]!;
       const slice = datum.fraction * 360;
       const start = cursor;
-      const end = index === lastIndex ? 360 : cursor + slice;
-      const gap = index === lastIndex ? 0 : Math.min(2, Math.max(0, end - start));
+      const end = index === lastPositiveIndex ? 360 : cursor + slice;
+      const gap =
+        datum.value > 0 && index < lastPositiveIndex ? Math.min(2, Math.max(0, end - start)) : 0;
       const segmentEnd = Math.max(start, end - gap);
       const color = getChartSeriesColor(index, datum.color);
 
-      if (segmentEnd > start) {
+      if (datum.value > 0 && segmentEnd > start) {
         donutStops.push(`${color} ${start}deg ${segmentEnd}deg`);
       }
 

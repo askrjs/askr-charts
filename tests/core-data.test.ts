@@ -61,6 +61,15 @@ describe("core data contract", () => {
     expect(stops).toContain("var(--ak-chart-color-muted)");
   });
 
+  it("should not reserve donut gaps for zero-value trailing segments", () => {
+    const normalized = normalizeValueChartData([
+      { label: "Direct", value: 100 },
+      { label: "Referral", value: 0 },
+    ]).data;
+
+    expect(buildDonutStops(normalized)).toBe("var(--ak-chart-series-1) 0deg 360deg");
+  });
+
   it("should normalize heatmap data into ordered axes and mixed backgrounds", () => {
     const normalized = normalizeHeatmapData([
       { x: "Mon", y: "Week 1", value: 8 },
