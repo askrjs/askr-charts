@@ -90,7 +90,7 @@ export function StackedBarChart({
         key: `${datum.label}-${segment.label}-${rowIndex}-${segmentIndex}`,
         rowLabel: datum.label,
         segmentLabel: segment.label,
-        value: segment.value,
+        value: clampChartValue(segment.value),
       });
     }
   }
@@ -133,6 +133,7 @@ export function StackedBarChart({
                   >
                     {datum.segments.map((segment, segmentIndex) => {
                       const segmentValue = clampChartValue(segment.value);
+                      const formattedSegmentValue = formatChartValue(segmentValue, formatter);
 
                       return (
                         <span
@@ -141,7 +142,7 @@ export function StackedBarChart({
                           data-ak-chart-tooltip-trigger="true"
                           data-slot="stacked-bar-chart-segment"
                           className="ak-stacked-bar-chart-segment"
-                          aria-label={`${segment.label}: ${formatChartValue(segment.value, formatter)}`}
+                          aria-label={`${segment.label}: ${formattedSegmentValue}`}
                           tabIndex={0}
                           style={mergeChartStyles({
                             "--ak-chart-item-color": getChartSeriesColor(
@@ -161,9 +162,7 @@ export function StackedBarChart({
                             <span className="chart-tooltip-title">
                               {datum.label}: {segment.label}
                             </span>
-                            <span className="chart-tooltip-value">
-                              {formatChartValue(segment.value, formatter)}
-                            </span>
+                            <span className="chart-tooltip-value">{formattedSegmentValue}</span>
                             {(segment.description ?? datum.description) ? (
                               <span>{segment.description ?? datum.description}</span>
                             ) : null}

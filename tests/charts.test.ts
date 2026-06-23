@@ -508,6 +508,29 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="stacked-bar-chart-stack"');
   });
 
+  it("should clamps stacked bar segment values in accessible output", () => {
+    const html = renderChart(() =>
+      StackedBarChart({
+        label: "Pipeline mix",
+        data: [
+          {
+            label: "Q1",
+            segments: [
+              { label: "Loss", value: -5 },
+              { label: "Unknown", value: Number.NaN },
+              { label: "Won", value: 10 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('aria-label="Loss: 0"');
+    expect(html).toContain('aria-label="Unknown: 0"');
+    expect(html).not.toContain("-5");
+    expect(html).not.toContain("NaN");
+  });
+
   it("should scales stacked bar rows against the shared scale while preserving composition", () => {
     const html = renderChart(() =>
       StackedBarChart({

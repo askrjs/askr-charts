@@ -11,10 +11,10 @@ export function ChartPanel({
 }: ChartPanelProps) {
   return (
     <article
+      {...rest}
       data-slot="chart-panel"
       className={cx("chart-panel", "ak-chart-panel", className)}
       style={style}
-      {...rest}
     >
       {title || description ? (
         <header data-slot="chart-panel-header" className="chart-panel-header">

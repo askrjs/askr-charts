@@ -11,10 +11,10 @@ export function ChartEmptyState({
 }: ChartEmptyStateProps) {
   return (
     <section
+      {...rest}
       data-slot="chart-empty-state"
       className={cx("chart-empty-state", "ak-chart-empty-state", className)}
       style={style}
-      {...rest}
     >
       <h3 data-slot="chart-empty-state-title" className="chart-empty-state-title">
         {title}

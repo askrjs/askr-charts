@@ -5,10 +5,10 @@ import type { ChartLegendProps } from "./chart-legend.types";
 export function ChartLegend({ className, items, style, title, ...rest }: ChartLegendProps) {
   return (
     <aside
+      {...rest}
       data-slot="chart-legend"
       className={cx("chart-legend", "ak-chart-legend", className)}
       style={style}
-      {...rest}
     >
       {title ? (
         <h3 data-slot="chart-legend-title" className="chart-legend-title">
@@ -17,7 +17,7 @@ export function ChartLegend({ className, items, style, title, ...rest }: ChartLe
       ) : null}
 
       <ul data-slot="chart-legend-list" className="chart-legend-list">
-        <For each={items} by={(item) => item.label}>
+        <For each={items} by={(item, index) => `${item.label}-${index}`}>
           {(item) => (
             <li data-slot="chart-legend-item" className="chart-legend-item">
               <span

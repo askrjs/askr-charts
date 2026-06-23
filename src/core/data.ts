@@ -90,6 +90,17 @@ function calculateChartFraction(value: number, max: number, min = 0): number {
   return Math.min(1, Math.max(0, (value - min) / (max - min)));
 }
 
+function resolveChartScaleMax(
+  detectedMax: number,
+  explicitMax: number | undefined,
+  min: number,
+): number {
+  const max =
+    explicitMax != null && explicitMax > 0 ? explicitMax : detectedMax > 0 ? detectedMax : 1;
+
+  return Math.max(max, min);
+}
+
 export function getValueChartMin(
   data: readonly ValueChartDatumInput[],
   explicitMin?: number,
@@ -194,12 +205,7 @@ export function normalizeValueChartData(
     };
   }
 
-  const max =
-    normalizedExplicitMax && normalizedExplicitMax > 0
-      ? normalizedExplicitMax
-      : detectedMax > 0
-        ? detectedMax
-        : 1;
+  const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
 
   for (let index = 0; index < normalizedData.length; index += 1) {
     const datum = normalizedData[index]!;
@@ -237,7 +243,12 @@ export function buildValueChartSummary(
 }
 
 export function getChartSeriesColor(index: number, color?: string): string {
-  return color ?? `var(--ak-chart-series-${(index % 10) + 1})`;
+  if (color) {
+    return color;
+  }
+
+  const normalizedIndex = Number.isFinite(index) ? Math.max(0, Math.trunc(index)) : 0;
+  return `var(--ak-chart-series-${(normalizedIndex % 10) + 1})`;
 }
 
 export type ChartStatusTone = "default" | "success" | "warning" | "danger" | "info";
@@ -421,12 +432,7 @@ export function normalizeHeatmapData(
     };
   }
 
-  const max =
-    normalizedExplicitMax && normalizedExplicitMax > 0
-      ? normalizedExplicitMax
-      : detectedMax > 0
-        ? detectedMax
-        : 1;
+  const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
 
   for (let index = 0; index < cells.length; index += 1) {
     const cell = cells[index]!;
@@ -493,12 +499,7 @@ export function createHeatmapLegendItems(
     }
   }
 
-  const max =
-    normalizedExplicitMax && normalizedExplicitMax > 0
-      ? normalizedExplicitMax
-      : detectedMax > 0
-        ? detectedMax
-        : 1;
+  const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
   const stepCount = Math.max(1, Math.min(6, Math.floor(options.steps ?? 4)));
   const items: ChartLegendDatum[] = [];
   const stepSize = (max - min) / stepCount;
