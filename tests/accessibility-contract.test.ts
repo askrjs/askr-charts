@@ -152,4 +152,23 @@ describe("accessibility contract", () => {
     expect(countOccurrences(barChart, 'data-slot="bar-chart-item"')).toBe(2);
     expect(countOccurrences(timeline, 'data-slot="timeline-item"')).toBe(2);
   });
+
+  it("should include heatmap fallback table rows for missing coordinate cells", () => {
+    const chart = renderChart(() =>
+      Heatmap({
+        label: "Weekly activity",
+        valueFormatter: (value) => `${value} units`,
+        data: [
+          { x: "Mon", y: "Week 1", value: 8 },
+          { x: "Tue", y: "Week 1", value: 4 },
+          { x: "Mon", y: "Week 2", value: 2 },
+        ],
+      }),
+    );
+
+    expect(countOccurrences(chart, 'data-slot="heatmap-cell"')).toBe(4);
+    expect(countOccurrences(chart, '<th scope="row">')).toBe(4);
+    expect(chart).toContain("Week 2, Tue: 0 units");
+    expect(chart).toContain("<td>Tue</td><td>0 units</td>");
+  });
 });
