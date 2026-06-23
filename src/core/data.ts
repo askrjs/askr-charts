@@ -500,7 +500,10 @@ export function createHeatmapLegendItems(
   }
 
   const max = resolveChartScaleMax(detectedMax, normalizedExplicitMax, min);
-  const stepCount = Math.max(1, Math.min(6, Math.floor(options.steps ?? 4)));
+  const requestedSteps = options.steps ?? 4;
+  const stepCount = Number.isFinite(requestedSteps)
+    ? Math.max(1, Math.min(6, Math.floor(requestedSteps)))
+    : 4;
   const items: ChartLegendDatum[] = [];
   const stepSize = (max - min) / stepCount;
 
