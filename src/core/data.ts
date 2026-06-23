@@ -86,8 +86,9 @@ export function formatChartValue(value: number, formatter?: ChartValueFormatter)
 }
 
 function calculateChartFraction(value: number, max: number, min = 0): number {
-  if (!Number.isFinite(max) || max <= min) return 0;
-  return Math.min(1, Math.max(0, (value - min) / (max - min)));
+  const normalizedMin = Number.isFinite(min) ? min : 0;
+  if (!Number.isFinite(max) || max <= normalizedMin) return 0;
+  return Math.min(1, Math.max(0, (value - normalizedMin) / (max - normalizedMin)));
 }
 
 function resolveChartScaleMax(
