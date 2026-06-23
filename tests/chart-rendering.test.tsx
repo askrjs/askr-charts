@@ -80,7 +80,11 @@ describe("chart rendering in jsdom", () => {
         label="Messages"
         data={[
           {
-            label: "Messages",
+            label: "Inbox",
+            segments: [{ label: "Ready", value: 7 }],
+          },
+          {
+            label: "Archive",
             segments: [{ label: "Ready", value: 7 }],
           },
         ]}
@@ -89,11 +93,16 @@ describe("chart rendering in jsdom", () => {
     await flushUpdates();
 
     const fallbackRows = container.querySelectorAll('[data-slot="chart-table"] tbody tr');
+    const segments = [...container.querySelectorAll('[data-slot="stacked-bar-chart-segment"]')];
 
-    expect(fallbackRows).toHaveLength(1);
-    expect(fallbackRows[0]?.textContent).toContain("Messages");
+    expect(fallbackRows).toHaveLength(2);
+    expect(fallbackRows[0]?.textContent).toContain("Inbox");
     expect(fallbackRows[0]?.textContent).toContain("Ready");
     expect(fallbackRows[0]?.textContent).toContain("7");
+    expect(segments.map((segment) => segment.getAttribute("aria-label"))).toEqual([
+      "Inbox: Ready: 7",
+      "Archive: Ready: 7",
+    ]);
   });
 
   it("should aligns chart tooltips to the pointer inside the hovered trigger", async () => {
