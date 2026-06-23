@@ -11,10 +11,10 @@ export function ChartShell({
 }: ChartShellProps) {
   return (
     <section
+      {...rest}
       data-slot="chart-shell"
       className={cx("chart-shell", "ak-chart-shell", className)}
       style={style}
-      {...rest}
     >
       {title || description ? (
         <header data-slot="chart-shell-header" className="chart-shell-header">

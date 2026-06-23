@@ -16,6 +16,14 @@ const contractCharts = [
   ["RadialGauge", "radial-gauge-example.tsx"],
 ] as const;
 
+function getChartSection(docs: string, chartName: string): string {
+  const start = docs.indexOf(`### ${chartName}`);
+  expect(start, `${chartName} section should exist`).toBeGreaterThanOrEqual(0);
+
+  const next = docs.indexOf("\n### ", start + 1);
+  return next === -1 ? docs.slice(start) : docs.slice(start, next);
+}
+
 describe("chart contract documentation", () => {
   it("should keeps package docs, exports, and the app gallery aligned", () => {
     const packageRoot = join(__dirname, "..");
@@ -40,5 +48,29 @@ describe("chart contract documentation", () => {
         expect(gallery).toContain(`<${importName} `);
       }
     }
+  });
+
+  it("should documents public data color fields with exported prop names", () => {
+    const docs = readFileSync(join(__dirname, "..", "CHARTING.md"), "utf8");
+
+    for (const chartName of [
+      "AreaChart",
+      "BarChart",
+      "LineChart",
+      "StackedBarChart",
+      "Sparkline",
+      "Heatmap",
+      "FlameGraph",
+    ]) {
+      const section = getChartSection(docs, chartName);
+
+      expect(section).toContain("color");
+      expect(section).not.toContain("accentColor");
+    }
+
+    const timelineSection = getChartSection(docs, "Timeline");
+
+    expect(timelineSection).toContain("accentColor");
+    expect(timelineSection).not.toContain("valueFormatter");
   });
 });

@@ -129,7 +129,7 @@ baseline, and enough horizontal rhythm to read as time or sequence. It must not
 read as a histogram or a row of independent blocks.
 
 Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `accentColor`. Supports `min`, `max`,
+optional `description`, and optional `color`. Supports `min`, `max`,
 `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
@@ -147,7 +147,7 @@ Visual grammar: one bar per category, stable tracks, visible labels, and clear
 relative length. Zero values must stay zero width.
 
 Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `accentColor`. Supports `min`, `max`,
+optional `description`, and optional `color`. Supports `min`, `max`,
 `labelDensity`, `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose focusable
@@ -165,7 +165,7 @@ Visual grammar: connected points and sloped segments across a quiet plotting
 area. The chart must read as a line first, without area fill or bar-like stems.
 
 Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `accentColor`. Supports `min`, `max`,
+optional `description`, and optional `color`. Supports `min`, `max`,
 `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
@@ -199,7 +199,7 @@ Visual grammar: one horizontal track per category, split into proportional
 segments with stable boundaries and concise labels.
 
 Data shape: accepts rows with `label` and `segments`; each segment has `label`,
-`value`, optional `description`, and optional `accentColor`. Supports `summary`,
+`value`, optional `description`, and optional `color`. Supports `summary`,
 `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
@@ -217,7 +217,7 @@ Visual grammar: minimal inline trend with small points or columns, no axes, no
 legend, and no surrounding chart chrome.
 
 Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `accentColor`. Supports `min`, `max`,
+optional `description`, and optional `color`. Supports `min`, `max`,
 `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
@@ -234,7 +234,7 @@ Visual grammar: dense grid of equally sized cells where color intensity carries
 the value. Missing combinations render as zero-value cells.
 
 Data shape: accepts object inputs with `x`, `y`, `value`, optional
-`description`, and optional `accentColor`, or tuple inputs. Supports `min`,
+`description`, and optional `color`, or tuple inputs. Supports `min`,
 `max`, `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
@@ -252,7 +252,7 @@ and bounded item rhythm. It must not look like an oversized bulleted list.
 
 Data shape: accepts items with `label`, optional `value`, optional
 `description`, and optional `accentColor`. Supports `labelDensity`, `summary`,
-`valueFormatter`, `animate`, and `animation`.
+`animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
 milestones, and use `slide` animation by default.
@@ -269,7 +269,7 @@ hierarchy and width maps to cost. Layout should resize stably without chaotic
 motion.
 
 Data shape: accepts nested frames with `label`, `value`, optional
-`description`, optional `accentColor`, and optional `children`. Supports
+`description`, optional `color`, and optional `children`. Supports
 `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready

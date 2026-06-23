@@ -7,6 +7,7 @@ import {
   clampChartValue,
   createHeatmapLegendItems,
   createValueChartLegendItems,
+  getChartSeriesColor,
   getValueChartMin,
   getValueChartMax,
   normalizeHeatmapData,
@@ -87,6 +88,23 @@ describe("core data contract", () => {
     expect(normalized.cells[1]?.fraction).toBe(1);
   });
 
+  it("should not report scale maximums below explicit minimums", () => {
+    const valueData = normalizeValueChartData([{ label: "Jan", value: 5 }], { min: 10 });
+    const heatmapData = normalizeHeatmapData([{ x: "Mon", y: "Week 1", value: 5 }], {
+      min: 10,
+    });
+    const heatmapLegend = createHeatmapLegendItems([{ x: "Mon", y: "Week 1", value: 5 }], {
+      min: 10,
+      steps: 2,
+    });
+
+    expect(valueData.max).toBe(10);
+    expect(valueData.data[0]?.fraction).toBe(0);
+    expect(heatmapData.max).toBe(10);
+    expect(heatmapData.cells[0]?.fraction).toBe(0);
+    expect(heatmapLegend.map((item) => item.label)).toEqual(["10-10", "10-10"]);
+  });
+
   it("should build summaries that stay readable in plain text", () => {
     const formatter = (value: number) => `$${value}k`;
     const valueData = normalizeValueChartData(
@@ -118,6 +136,14 @@ describe("core data contract", () => {
     expect(toChartFraction(25, 100)).toBe(0.25);
     expect(toChartFraction(25, 100, 20)).toBe(0.0625);
     expect(toChartFraction(25, 0)).toBe(0);
+  });
+
+  it("should keep generated series colors inside the defined token range", () => {
+    expect(getChartSeriesColor(-1)).toBe("var(--ak-chart-series-1)");
+    expect(getChartSeriesColor(Number.NaN)).toBe("var(--ak-chart-series-1)");
+    expect(getChartSeriesColor(9)).toBe("var(--ak-chart-series-10)");
+    expect(getChartSeriesColor(10)).toBe("var(--ak-chart-series-1)");
+    expect(getChartSeriesColor(-1, "tomato")).toBe("tomato");
   });
 
   it("should derive chart legend items from value chart data", () => {

@@ -88,6 +88,52 @@ describe("component surfaces", () => {
     ).toBe("Review systems");
   });
 
+  it("should preserves support primitive root slots when passthrough props include data-slot", async () => {
+    container = mount(
+      <ChartShell data-slot="external-shell" title="Operations">
+        <ChartPanel data-slot="external-panel" title="Revenue panel">
+          <ChartLegend
+            data-slot="external-legend"
+            items={[{ label: "North", value: "42", color: "#2563eb" }]}
+          />
+          <ChartEmptyState data-slot="external-empty" title="No alerts" />
+        </ChartPanel>
+      </ChartShell>,
+    );
+    await flushUpdates();
+
+    expect(container.querySelector(".ak-chart-shell")?.getAttribute("data-slot")).toBe(
+      "chart-shell",
+    );
+    expect(container.querySelector(".ak-chart-panel")?.getAttribute("data-slot")).toBe(
+      "chart-panel",
+    );
+    expect(container.querySelector(".ak-chart-legend")?.getAttribute("data-slot")).toBe(
+      "chart-legend",
+    );
+    expect(container.querySelector(".ak-chart-empty-state")?.getAttribute("data-slot")).toBe(
+      "chart-empty-state",
+    );
+  });
+
+  it("should renders legend items with duplicate labels", async () => {
+    container = mount(
+      <ChartLegend
+        items={[
+          { label: "Queue", value: "Ready", color: "#2563eb" },
+          { label: "Queue", value: "Delayed", color: "#dc2626" },
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const items = [...container.querySelectorAll('[data-slot="chart-legend-item"]')];
+
+    expect(items).toHaveLength(2);
+    expect(items[0]?.textContent).toContain("Ready");
+    expect(items[1]?.textContent).toContain("Delayed");
+  });
+
   it("should renders trend and compact charts with their specialized slots and values", async () => {
     container = mount(
       <div>
