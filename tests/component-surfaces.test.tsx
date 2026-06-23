@@ -116,6 +116,16 @@ describe("component surfaces", () => {
     );
   });
 
+  it("should preserves falsy empty state children", async () => {
+    container = mount(<ChartEmptyState title="No alerts">{0}</ChartEmptyState>);
+    await flushUpdates();
+
+    const content = container.querySelector('[data-slot="chart-empty-state-content"]');
+
+    expect(content).toBeTruthy();
+    expect(content?.textContent).toBe("0");
+  });
+
   it("should renders legend items with duplicate labels", async () => {
     container = mount(
       <ChartLegend
