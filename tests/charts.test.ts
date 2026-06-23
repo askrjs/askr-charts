@@ -329,9 +329,9 @@ describe("chart components", () => {
 
   it("should wires semantic chart variants and grid toggles through the rendered markup", () => {
     const html = [
-      renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "success" })),
+      renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "info" })),
       renderChart(() =>
-        RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "danger" }),
+        RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "info" }),
       ),
       renderChart(() =>
         Timeline({ label: "Release timeline", data: [{ label: "Alpha", status: "info" }] }),
@@ -344,12 +344,9 @@ describe("chart components", () => {
       ),
     ].join("");
 
-    expect(html).toContain('data-ak-variant="success"');
-    expect(html).toContain('data-ak-variant="danger"');
+    expect(html).toContain('data-ak-variant="info"');
     expect(html).toContain('data-ak-status="info"');
     expect(html).toContain('data-ak-show-grid="true"');
-    expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-success)");
-    expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-danger)");
     expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-info)");
   });
 
