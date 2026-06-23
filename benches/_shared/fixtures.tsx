@@ -12,8 +12,8 @@ import { Timeline } from "../../src/components/timeline";
 import {
   createHeatmapLegendItems,
   createValueChartLegendItems,
-  type HeatmapDatumInput,
-  type ValueChartDatumInput,
+  type HeatmapDatum,
+  type ValueChartDatum,
 } from "../../src/core";
 
 const SERIES_COLORS = ["#0f766e", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#059669"] as const;
@@ -27,7 +27,7 @@ const dashboardStackedRows = buildStackedBarRows(6, 4);
 const dashboardFlameGraphData = buildFlameGraphData();
 const dashboardLegendItems = buildLegendItems();
 
-export function buildValueData(count = 24): ValueChartDatumInput[] {
+export function buildValueData(count = 24): ValueChartDatum[] {
   return Array.from({ length: count }, (_, index) => ({
     label: `Point ${index + 1}`,
     value: ((index * 17) % 91) + 9,
@@ -36,7 +36,7 @@ export function buildValueData(count = 24): ValueChartDatumInput[] {
   }));
 }
 
-export function buildHeatmapData(columns = 8, rows = 6): HeatmapDatumInput[] {
+export function buildHeatmapData(columns = 8, rows = 6): HeatmapDatum[] {
   return Array.from({ length: columns * rows }, (_, index) => {
     const columnIndex = index % columns;
     const rowIndex = Math.floor(index / columns);
