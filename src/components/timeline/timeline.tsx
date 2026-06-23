@@ -76,7 +76,7 @@ export function Timeline({
                     <span data-slot="timeline-label" className="ak-timeline-label">
                       {datum.label}
                     </span>
-                    {datum.value ? (
+                    {datum.value != null ? (
                       <span data-slot="timeline-value" className="ak-timeline-value">
                         {datum.value}
                       </span>
@@ -90,7 +90,9 @@ export function Timeline({
                 </div>
                 <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
                   <span className="chart-tooltip-title">{datum.label}</span>
-                  {datum.value ? <span className="chart-tooltip-value">{datum.value}</span> : null}
+                  {datum.value != null ? (
+                    <span className="chart-tooltip-value">{datum.value}</span>
+                  ) : null}
                   {datum.description ? <span>{datum.description}</span> : null}
                 </span>
               </li>

@@ -434,7 +434,7 @@ describe("browser chart rendering", () => {
         labelDensity="compact"
         animate
         data={[
-          { label: "Alpha", value: "Jan", description: "Internal preview", accentColor: "gold" },
+          { label: "Alpha", value: "", description: "Internal preview", accentColor: "gold" },
           { label: "Beta", value: "Feb", description: "Team rollout" },
         ]}
       />,
@@ -456,7 +456,9 @@ describe("browser chart rendering", () => {
     expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(firstMarker).toBeTruthy();
     expect(tooltipTitle?.textContent).toBe("Alpha");
-    expect(tooltipValue?.textContent).toBe("Jan");
+    expect(container.querySelector('[data-slot="timeline-value"]')).toBeTruthy();
+    expect(tooltipValue).toBeTruthy();
+    expect(tooltipValue?.textContent).toBe("");
     expect(parseFloat(getComputedStyle(list).rowGap)).toBeLessThanOrEqual(12);
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Release timeline",
