@@ -45,6 +45,11 @@ function normalizeStyle(style: string | null | undefined): string {
   return (style ?? "").replace(/\s*:\s*/g, ":").replace(/;\s*/g, ";");
 }
 
+function expectElement<T extends Element>(element: T | null): T {
+  expect(element).toBeTruthy();
+  return element as T;
+}
+
 describe("browser chart rendering", () => {
   let container: HTMLElement | undefined;
 
@@ -90,8 +95,9 @@ describe("browser chart rendering", () => {
     container = mount(<BarChart label="Monthly revenue" data={[{ label: "Jan", value: 40 }]} />);
     await flushUpdates();
 
-    const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement | null;
-    expect(item).toBeTruthy();
+    const item = expectElement(
+      container.querySelector<HTMLElement>('[data-slot="bar-chart-item"]'),
+    );
 
     Object.defineProperty(item, "getBoundingClientRect", {
       value: () => ({
