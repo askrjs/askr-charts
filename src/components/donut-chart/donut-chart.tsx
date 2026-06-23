@@ -82,33 +82,35 @@ export function DonutChart({
   const lastIndex = normalized.data.length - 1;
   let cursor = 0;
 
-  for (let index = 0; index < normalized.data.length; index += 1) {
-    const datum = normalized.data[index]!;
-    const slice = datum.fraction * 360;
-    const start = cursor;
-    const end = index === lastIndex ? 360 : cursor + slice;
-    const gap = index === lastIndex ? 0 : Math.min(2, Math.max(0, end - start));
-    const segmentEnd = Math.max(start, end - gap);
-    const color = getChartSeriesColor(index, datum.color);
+  if (total > 0) {
+    for (let index = 0; index < normalized.data.length; index += 1) {
+      const datum = normalized.data[index]!;
+      const slice = datum.fraction * 360;
+      const start = cursor;
+      const end = index === lastIndex ? 360 : cursor + slice;
+      const gap = index === lastIndex ? 0 : Math.min(2, Math.max(0, end - start));
+      const segmentEnd = Math.max(start, end - gap);
+      const color = getChartSeriesColor(index, datum.color);
 
-    if (segmentEnd > start) {
-      donutStops.push(`${color} ${start}deg ${segmentEnd}deg`);
+      if (segmentEnd > start) {
+        donutStops.push(`${color} ${start}deg ${segmentEnd}deg`);
+      }
+
+      if (gap > 0) {
+        donutStops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
+      }
+
+      if (datum.value > 0) {
+        donutSegments.push({
+          clipPath: buildDonutSegmentClipPath(start, end),
+          color,
+          datum,
+          index,
+        });
+      }
+
+      cursor = end;
     }
-
-    if (gap > 0) {
-      donutStops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
-    }
-
-    if (datum.value > 0) {
-      donutSegments.push({
-        clipPath: buildDonutSegmentClipPath(start, end),
-        color,
-        datum,
-        index,
-      });
-    }
-
-    cursor = end;
   }
 
   const donutStopsValue =

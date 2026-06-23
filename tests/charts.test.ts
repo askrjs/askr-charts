@@ -438,6 +438,15 @@ describe("chart components", () => {
         data: [{ label: "Q1", segments: [{ label: "Open", value: 0 }] }],
       }),
     );
+    const donut = renderChart(() =>
+      DonutChart({
+        label: "Zero traffic",
+        data: [
+          { label: "Direct", value: 0 },
+          { label: "Referral", value: 0 },
+        ],
+      }),
+    );
     const progress = ProgressMeter({
       label: "Zero quota",
       value: 0,
@@ -450,6 +459,8 @@ describe("chart components", () => {
     expect(sparkline).toContain("--ak-chart-item-min-block-size:0");
     expect(stacked).toContain("--ak-chart-item-value:0%");
     expect(stacked).toContain("--ak-chart-item-min-size:0");
+    expect(donut).toContain("--ak-chart-donut-stops:var(--ak-chart-color-muted) 0deg 360deg");
+    expect(donut).not.toContain("var(--ak-chart-series-2) 0deg 360deg");
     expect(String(progress.props.style)).toContain("--ak-chart-item-value:0%");
     expect(String(progress.props.style)).toContain("--ak-chart-item-min-size:0");
   });
