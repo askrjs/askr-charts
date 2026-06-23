@@ -15,7 +15,9 @@ import {
   Timeline,
 } from "../src/components";
 
-function renderChart(render: () => unknown): string {
+type RenderToStringComponent = Parameters<typeof renderToStringSync>[0];
+
+function renderChart(render: RenderToStringComponent): string {
   return renderToStringSync(() => render());
 }
 
