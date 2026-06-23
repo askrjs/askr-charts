@@ -3,10 +3,6 @@ import { defineConfig } from "vite-plus";
 const externalPackagePattern = /^@askrjs\/askr(?:\/.*)?$/;
 
 export default defineConfig({
-  esbuild: {
-    jsx: "automatic",
-    jsxImportSource: "@askrjs/askr",
-  },
   pack: {
     entry: {
       "components/index": "src/components/index.ts",
