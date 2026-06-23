@@ -19,6 +19,7 @@ export function Sparkline({
   data,
   id,
   label,
+  labelDensity = "full",
   min,
   max,
   variant = "bar",
@@ -63,6 +64,7 @@ export function Sparkline({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-ak-variant={variant}
       data-slot="sparkline"
       className={cx("ak-chart", "ak-sparkline", className)}

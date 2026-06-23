@@ -27,6 +27,7 @@ export function Heatmap({
   data,
   id,
   label,
+  labelDensity = "full",
   min,
   max,
   style,
@@ -104,6 +105,7 @@ export function Heatmap({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="heatmap"
       className={cx("ak-chart", "ak-heatmap", className)}
       style={mergeChartStyles(

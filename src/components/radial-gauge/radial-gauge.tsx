@@ -21,6 +21,7 @@ export function RadialGauge({
   description,
   id,
   label,
+  labelDensity = "full",
   max = 100,
   style,
   summary,
@@ -47,6 +48,7 @@ export function RadialGauge({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-ak-variant={variant}
       data-slot="radial-gauge"
       className={cx("ak-chart", "ak-radial-gauge", className)}

@@ -21,6 +21,7 @@ export function ProgressMeter({
   description,
   id,
   label,
+  labelDensity = "full",
   max = 100,
   style,
   summary,
@@ -45,6 +46,7 @@ export function ProgressMeter({
       {...rest}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-ak-variant={variant}
       data-slot="progress-meter"
       className={cx("ak-chart", "ak-progress-meter", className)}

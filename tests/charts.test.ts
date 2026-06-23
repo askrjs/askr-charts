@@ -634,4 +634,50 @@ describe("chart components", () => {
     expect(bar).toContain('data-ak-label-density="minimal"');
     expect(timeline).toContain('data-ak-label-density="compact"');
   });
+
+  it("should normalizes label density props on all visual chart roots", () => {
+    const html = [
+      renderChart(() =>
+        Heatmap({
+          label: "Activity",
+          data: [{ x: "Mon", y: "Week 1", value: 8 }],
+          labelDensity: "compact",
+        }),
+      ),
+      renderChart(() =>
+        ProgressMeter({
+          label: "Quota",
+          value: 48,
+          max: 80,
+          labelDensity: "minimal",
+        }),
+      ),
+      renderChart(() =>
+        RadialGauge({
+          label: "Fill rate",
+          value: 68,
+          max: 100,
+          labelDensity: "compact",
+        }),
+      ),
+      renderChart(() =>
+        Sparkline({
+          label: "Trend",
+          data: [{ label: "Mon", value: 8 }],
+          labelDensity: "minimal",
+        }),
+      ),
+      renderChart(() =>
+        StackedBarChart({
+          label: "Pipeline mix",
+          data: [{ label: "Q1", segments: [{ label: "Open", value: 12 }] }],
+          labelDensity: "compact",
+        }),
+      ),
+    ].join("");
+
+    expect(html).toContain('data-ak-label-density="compact"');
+    expect(html).toContain('data-ak-label-density="minimal"');
+    expect(html).not.toContain("labelDensity=");
+  });
 });

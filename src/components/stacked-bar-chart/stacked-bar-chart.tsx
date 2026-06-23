@@ -25,6 +25,7 @@ export function StackedBarChart({
   data,
   id,
   label,
+  labelDensity = "full",
   max,
   style,
   summary,
@@ -100,6 +101,7 @@ export function StackedBarChart({
       {...sectionProps}
       id={id}
       {...animationAttrs}
+      data-ak-label-density={labelDensity}
       data-slot="stacked-bar-chart"
       className={cx("ak-chart", "ak-stacked-bar-chart", className)}
       style={mergeChartStyles({ "--ak-chart-max": scaleMax, ...animationStyle }, style)}
