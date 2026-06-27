@@ -88,27 +88,12 @@
   min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: var(--ak-chart-track-thickness, 0.75rem);
   border-radius: calc(var(--ak-chart-radius-sm) - 1px);
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, black 10%) 0%,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
-    0 0 0 1px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%, transparent);
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
-}
-
-:where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"])::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 62%);
-  pointer-events: none;
 }
 
 :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover
@@ -145,13 +130,12 @@
   :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]),
 :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within
   :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
-  filter: brightness(1.08) saturate(1.08);
+  filter: saturate(1.08);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 36%, transparent),
     0 0 0 1px
       color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 34%, transparent),
     0 4px 10px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 14%, transparent);
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 10%, transparent);
 }
 
 :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
@@ -253,12 +237,7 @@
   min-inline-size: 0;
   min-block-size: var(--ak-chart-item-min-size, 0);
   border-radius: var(--ak-chart-radius-sm) var(--ak-chart-radius-sm) 0 0;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, white 10%),
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 54%,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 86%, black 14%)
-  );
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
 }
 
 :where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]

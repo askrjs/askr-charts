@@ -34,9 +34,7 @@
   border: 1px solid var(--ak-chart-track-border);
   border-radius: 999px;
   background: var(--ak-chart-track-bg, var(--ak-chart-color-muted));
-  box-shadow:
-    inset 0 1px 1px color-mix(in srgb, var(--ak-chart-color-text) 9%, transparent),
-    inset 0 -1px 0 color-mix(in srgb, white 28%, transparent);
+  box-shadow: none;
 }
 
 :where(.ak-stacked-bar-chart-stack, [data-slot="stacked-bar-chart-stack"]) {
@@ -53,14 +51,10 @@
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
   min-block-size: 100%;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, white 10%) 0%,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 100%
-  );
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
   box-shadow:
-    inset 1px 0 0 color-mix(in srgb, white 24%, transparent),
-    inset -1px 0 0 color-mix(in srgb, var(--ak-chart-color-text) 12%, transparent);
+    inset 1px 0 0 color-mix(in srgb, var(--ak-chart-color-surface) 36%, transparent),
+    inset -1px 0 0 color-mix(in srgb, var(--ak-chart-color-text) 10%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
@@ -68,7 +62,7 @@
 
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):hover,
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):focus-within {
-  filter: brightness(1.1) saturate(1.08);
+  filter: saturate(1.08);
   z-index: 1;
 }
 

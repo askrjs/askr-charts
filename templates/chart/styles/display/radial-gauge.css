@@ -37,25 +37,13 @@
   border-radius: 999px;
   background: conic-gradient(
     from 225deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 88%, black 12%) 0
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 0
       calc(var(--ak-chart-gauge-angle, 0deg) * 0.75),
     var(--ak-chart-color-muted) calc(var(--ak-chart-gauge-angle, 0deg) * 0.75) 270deg,
     transparent 270deg 360deg
   );
   mask: radial-gradient(circle, transparent 0 57%, black 58% 100%);
-  filter: drop-shadow(
-    0 6px 16px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent)
-  );
-}
-
-:where(.ak-radial-gauge-ring, [data-slot="radial-gauge-ring"])::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 48%);
-  pointer-events: none;
+  filter: none;
 }
 
 :where(.ak-radial-gauge-center, [data-slot="radial-gauge-center"]) {

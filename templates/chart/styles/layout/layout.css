@@ -2,15 +2,11 @@
   display: grid;
   align-content: start;
   gap: var(--ak-chart-gap);
-  padding: var(--ak-chart-padding);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-color-surface) 96%, white 4%),
-    var(--ak-chart-color-surface)
-  );
-  border: 1px solid var(--ak-chart-color-border);
-  border-radius: var(--ak-chart-radius);
-  box-shadow: var(--ak-chart-shadow);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 :where(.chart-shell-header, [data-slot="chart-shell-header"]),
@@ -30,15 +26,12 @@
 :where(.chart-panel, [data-slot="chart-panel"]) {
   display: grid;
   align-content: start;
-  gap: 0.875rem;
-  padding: 1rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-surface-elevated) 92%, var(--ak-chart-color-surface) 8%),
-    var(--ak-chart-surface-elevated)
-  );
+  gap: var(--ak-space-lg, 1rem);
+  min-inline-size: 0;
+  padding: var(--ak-layout-panel-padding, var(--ak-chart-padding));
+  background: var(--ak-chart-surface-elevated);
   border: 1px solid var(--ak-chart-color-border);
-  border-radius: var(--ak-chart-radius);
+  border-radius: var(--ak-chart-radius-lg);
   box-shadow: var(--ak-chart-shadow-soft);
 }
 

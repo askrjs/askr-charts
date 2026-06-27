@@ -3,14 +3,10 @@
 }
 
 :where(.chart-surface, [data-slot="chart-surface"]) {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-color-surface) 96%, white 4%),
-    var(--ak-chart-color-surface)
-  );
+  background: var(--ak-chart-color-surface);
   border: 1px solid var(--ak-chart-color-border);
   border-radius: var(--ak-chart-radius);
-  box-shadow: var(--ak-chart-shadow);
+  box-shadow: var(--ak-chart-shadow-soft);
 }
 
 :where(.chart-divider, [data-slot="chart-divider"]) {

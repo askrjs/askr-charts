@@ -18,16 +18,9 @@
   position: absolute;
   inset: 0.55rem 0.7rem 0.85rem;
   display: block;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 82%, white 18%),
-    var(--ak-chart-item-color, var(--ak-chart-color-primary))
-  );
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
   clip-path: var(--ak-sparkline-polygon);
-  filter: drop-shadow(
-    0 2px 5px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 20%, transparent)
-  );
+  filter: none;
   pointer-events: none;
 }
 
@@ -66,12 +59,12 @@
   block-size: var(--ak-chart-item-value, 0%);
   min-block-size: var(--ak-chart-item-min-block-size, 0);
   border-radius: 999px 999px 0 0;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 78%, white 12%),
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 62%, transparent)
+  background: color-mix(
+    in srgb,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 82%,
+    transparent
   );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 28%, transparent);
+  box-shadow: none;
 }
 
 :where(.ak-sparkline, [data-slot="sparkline"])[data-ak-variant="line"]
@@ -86,8 +79,7 @@
   border: 1px solid var(--ak-chart-color-surface);
   border-radius: 999px;
   background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
-  box-shadow: 0 0 0 0.1rem
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
+  box-shadow: 0 0 0 0.1rem var(--ak-chart-color-surface);
 }
 
 :where(.ak-sparkline, [data-slot="sparkline"])[data-ak-variant="line"]
