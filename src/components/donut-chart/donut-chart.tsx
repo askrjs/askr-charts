@@ -159,31 +159,46 @@ export function DonutChart({
           />
 
           <For each={donutSegments} by={(segment) => `${segment.datum.label}-${segment.index}`}>
-            {(segment) => (
-              <button
-                type="button"
-                data-ak-chart-item="true"
-                data-ak-chart-tooltip-trigger="true"
-                data-slot="donut-chart-segment"
-                className="ak-donut-chart-segment"
-                aria-label={`${segment.datum.label}: ${segment.datum.formattedValue}`}
-                tabIndex={0}
-                style={mergeChartStyles({
-                  "--ak-chart-item-color": segment.color,
-                  "--ak-chart-item-index": segment.index,
-                  "--ak-donut-segment-clip-path": segment.clipPath ?? "none",
-                })}
-              >
-                <span className="ak-chart-sr-only">
-                  {segment.datum.label}: {segment.datum.formattedValue}
+            {(segment) => {
+              const tooltipId = createChartId(
+                "donut-chart-segment-tooltip",
+                `${id ?? label}-${segment.datum.label}-${segment.index}`,
+              );
+
+              return (
+                <span data-slot="donut-chart-segment-wrap" className="ak-donut-chart-segment-wrap">
+                  <button
+                    type="button"
+                    data-ak-chart-item="true"
+                    data-ak-chart-tooltip-trigger="true"
+                    data-slot="donut-chart-segment"
+                    className="ak-donut-chart-segment"
+                    aria-label={`${segment.datum.label}: ${segment.datum.formattedValue}`}
+                    aria-describedby={tooltipId}
+                    tabIndex={0}
+                    style={mergeChartStyles({
+                      "--ak-chart-item-color": segment.color,
+                      "--ak-chart-item-index": segment.index,
+                      "--ak-donut-segment-clip-path": segment.clipPath ?? "none",
+                    })}
+                  >
+                    <span className="ak-chart-sr-only">
+                      {segment.datum.label}: {segment.datum.formattedValue}
+                    </span>
+                  </button>
+                  <span
+                    id={tooltipId}
+                    data-slot="tooltip-content"
+                    className="ak-donut-chart-segment-tooltip chart-tooltip"
+                    role="tooltip"
+                  >
+                    <span className="chart-tooltip-title">{segment.datum.label}</span>
+                    <span className="chart-tooltip-value">{segment.datum.formattedValue}</span>
+                    {segment.datum.description ? <span>{segment.datum.description}</span> : null}
+                  </span>
                 </span>
-                <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                  <span className="chart-tooltip-title">{segment.datum.label}</span>
-                  <span className="chart-tooltip-value">{segment.datum.formattedValue}</span>
-                  {segment.datum.description ? <span>{segment.datum.description}</span> : null}
-                </span>
-              </button>
-            )}
+              );
+            }}
           </For>
 
           <div data-slot="donut-chart-center" className="ak-donut-chart-center">

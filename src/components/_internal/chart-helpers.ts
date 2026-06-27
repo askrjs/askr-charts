@@ -69,6 +69,7 @@ export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyleInput): 
 const CHART_TOOLTIP_TRIGGER_SELECTOR = '[data-ak-chart-tooltip-trigger="true"]';
 const CHART_TOOLTIP_ANCHOR_X_VAR = "--ak-chart-tooltip-anchor-x";
 const CHART_TOOLTIP_ANCHOR_Y_VAR = "--ak-chart-tooltip-anchor-y";
+const EXTERNAL_TOOLTIP_SLOTS = new Set(["donut-chart-segment"]);
 
 function getChartTooltipTrigger(event: Event): HTMLElement | null {
   if (!(event.target instanceof HTMLElement)) {
@@ -78,6 +79,27 @@ function getChartTooltipTrigger(event: Event): HTMLElement | null {
   return event.target.closest(CHART_TOOLTIP_TRIGGER_SELECTOR) as HTMLElement | null;
 }
 
+function getExternalChartTooltipAnchorTarget(trigger: HTMLElement): HTMLElement | null {
+  const slot = trigger.getAttribute("data-slot");
+
+  if (!slot || !EXTERNAL_TOOLTIP_SLOTS.has(slot)) {
+    return null;
+  }
+
+  return trigger.parentElement instanceof HTMLElement ? trigger.parentElement : null;
+}
+
+function setChartTooltipAnchor(trigger: HTMLElement, x: string, y: string): void {
+  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_X_VAR, x);
+  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_Y_VAR, y);
+
+  const externalTarget = getExternalChartTooltipAnchorTarget(trigger);
+  if (externalTarget) {
+    externalTarget.style.setProperty(CHART_TOOLTIP_ANCHOR_X_VAR, x);
+    externalTarget.style.setProperty(CHART_TOOLTIP_ANCHOR_Y_VAR, y);
+  }
+}
+
 function centerChartTooltip(event: Event): void {
   const trigger = getChartTooltipTrigger(event);
   if (!trigger) {
@@ -85,8 +107,7 @@ function centerChartTooltip(event: Event): void {
   }
 
   const rect = trigger.getBoundingClientRect();
-  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_X_VAR, `${Math.max(0, rect.width / 2)}px`);
-  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_Y_VAR, "0px");
+  setChartTooltipAnchor(trigger, `${Math.max(0, rect.width / 2)}px`, "0px");
 }
 
 function positionChartTooltip(event: Event): void {
@@ -108,8 +129,7 @@ function positionChartTooltip(event: Event): void {
   const x = Math.min(Math.max(rawX, 0), Math.max(rect.width, 0));
   const y = Math.min(Math.max(rawY, 0), Math.max(rect.height, 0));
 
-  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_X_VAR, `${x}px`);
-  trigger.style.setProperty(CHART_TOOLTIP_ANCHOR_Y_VAR, `${y}px`);
+  setChartTooltipAnchor(trigger, `${x}px`, `${y}px`);
 }
 
 export const chartTooltipTriggerProps = {
