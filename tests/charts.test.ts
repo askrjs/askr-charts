@@ -11,6 +11,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   Sparkline,
@@ -56,8 +57,28 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="bar-chart"');
     expect(html).toContain('data-ak-animate="true"');
     expect(html).toContain('data-ak-animation="grow"');
+    expect(html).toContain('data-ak-chart-variant="bar"');
     expect(html).toContain("--ak-chart-animation-duration:300ms");
     expect(html).toContain("ak-bar-chart");
+    expect(html).toContain("--ak-chart-item-index:0");
+  });
+
+  it("should renders histogram bar charts with a first-class variant hook", () => {
+    const html = renderChart(() =>
+      BarChart({
+        label: "Latency distribution",
+        variant: "histogram",
+        data: [
+          { label: "0-50ms", value: 18 },
+          { label: "51-100ms", value: 34 },
+        ],
+        animate: true,
+      }),
+    );
+
+    expect(html).toContain('data-ak-chart-variant="histogram"');
+    expect(html).toContain('data-slot="bar-chart-track"');
+    expect(html).toContain('data-slot="bar-chart-fill"');
     expect(html).toContain("--ak-chart-item-index:0");
   });
 
@@ -84,7 +105,7 @@ describe("chart components", () => {
     );
 
     expect(line).toContain('data-slot="line-chart"');
-    expect(line).toContain('data-ak-animation="fade"');
+    expect(line).toContain('data-ak-animation="reveal"');
     expect(line).toContain("--ak-chart-item-index:0");
     expect(line).toContain("--ak-chart-item-value:");
     expect(area).toContain('data-slot="area-chart"');
@@ -158,6 +179,9 @@ describe("chart components", () => {
     const donut = renderChart(() =>
       DonutChart({ label: "Traffic split", data: [{ label: "Direct", value: 50 }], animate: true }),
     );
+    const pie = renderChart(() =>
+      PieChart({ label: "Traffic share", data: [{ label: "Direct", value: 50 }], animate: true }),
+    );
     const flameGraph = renderChart(() =>
       FlameGraph({
         label: "Call stack",
@@ -186,6 +210,7 @@ describe("chart components", () => {
     );
 
     expect(donut).toContain('data-ak-animation="sweep"');
+    expect(pie).toContain('data-ak-animation="sweep"');
     expect(flameGraph).toContain('data-ak-animation="grow"');
     expect(heatmap).toContain('data-ak-animation="fade"');
     expect(progress).toContain('data-ak-animation="grow"');
@@ -254,6 +279,41 @@ describe("chart components", () => {
     );
 
     expect(html).toContain("--ak-chart-donut-stops:var(--ak-chart-series-1) 0deg 360deg");
+    expect(html).not.toContain("var(--ak-chart-color-muted) 358deg 360deg");
+  });
+
+  it("should renders a pie chart with CSS-variable gradient stops", () => {
+    const html = renderChart(() =>
+      PieChart({
+        label: "Traffic share",
+        data: [
+          { label: "Direct", value: 40 },
+          { label: "Referral", value: 60 },
+        ],
+        valueFormatter: (value) => `${value}%`,
+      }),
+    );
+
+    expect(html).toContain('data-slot="pie-chart"');
+    expect(html).toContain("--ak-chart-pie-stops:");
+    expect(html).toContain("deg");
+    expect(html).toContain('data-slot="pie-chart-disc"');
+    expect(html).toContain('data-slot="pie-chart-segment"');
+    expect(html).toContain("Scale max is 100%");
+  });
+
+  it("should renders complete pie discs when trailing segments are zero", () => {
+    const html = renderChart(() =>
+      PieChart({
+        label: "Traffic share",
+        data: [
+          { label: "Direct", value: 100 },
+          { label: "Referral", value: 0 },
+        ],
+      }),
+    );
+
+    expect(html).toContain("--ak-chart-pie-stops:var(--ak-chart-series-1) 0deg 360deg");
     expect(html).not.toContain("var(--ak-chart-color-muted) 358deg 360deg");
   });
 
@@ -332,9 +392,7 @@ describe("chart components", () => {
   it("should wires semantic chart variants and grid toggles through the rendered markup", () => {
     const html = [
       renderChart(() => ProgressMeter({ label: "Quota", value: 48, max: 80, variant: "info" })),
-      renderChart(() =>
-        RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "info" }),
-      ),
+      renderChart(() => RadialGauge({ label: "Fill rate", value: 68, max: 100, variant: "info" })),
       renderChart(() =>
         Timeline({ label: "Release timeline", data: [{ label: "Alpha", status: "info" }] }),
       ),
@@ -359,7 +417,14 @@ describe("chart components", () => {
     const progressCss = readFileSync(join(displayRoot, "progress-meter.css"), "utf8");
     const areaCss = readFileSync(join(displayRoot, "area-chart.css"), "utf8");
     const lineCss = readFileSync(join(displayRoot, "line-chart.css"), "utf8");
+    const donutCss = readFileSync(join(displayRoot, "donut-chart.css"), "utf8");
+    const pieCss = readFileSync(join(displayRoot, "pie-chart.css"), "utf8");
+    const flameGraphCss = readFileSync(join(displayRoot, "flame-graph.css"), "utf8");
     const heatmapCss = readFileSync(join(displayRoot, "heatmap.css"), "utf8");
+    const animationsCss = readFileSync(
+      join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
+      "utf8",
+    );
     const tooltipCss = readFileSync(
       join(__dirname, "..", "src", "charts", "default", "styles", "overlays", "tooltip.css"),
       "utf8",
@@ -367,13 +432,23 @@ describe("chart components", () => {
 
     expect(barCss).toContain("linear-gradient(");
     expect(barCss).toContain("brightness(1.08)");
+    expect(barCss).toContain("repeating-linear-gradient(");
+    expect(barCss).toContain("border-inline-start");
+    expect(barCss).toContain('data-ak-chart-variant="histogram"');
+    expect(animationsCss).toContain("ak-chart-grow-y");
     expect(stackedBarCss).toContain("linear-gradient(");
     expect(stackedBarCss).toContain("brightness(1.1)");
     expect(stackedBarCss).toContain("--ak-chart-row-value");
     expect(progressCss).toContain("linear-gradient(");
     expect(areaCss).toContain("52%, transparent");
     expect(areaCss).toContain("repeating-linear-gradient");
+    expect(lineCss).toContain("line-chart-stroke-wrap");
+    expect(lineCss).toContain("filter: blur(0.55rem)");
     expect(lineCss).toContain('data-ak-show-grid="true"');
+    expect(donutCss).toContain("selector(:has(*))");
+    expect(pieCss).toContain("selector(:has(*))");
+    expect(flameGraphCss).toContain("background-size: 25% 100%");
+    expect(flameGraphCss).toContain("outline: none");
     expect(heatmapCss).toContain("saturate(1.1)");
     expect(heatmapCss).toContain("outline: 2px solid");
     expect(tooltipCss).toContain("--ak-chart-tooltip-anchor-x");
@@ -414,6 +489,7 @@ describe("chart components", () => {
 
       expect(css).toContain("inline-size: 1px");
       expect(css).toContain("block-size: 1px");
+      expect(css).toContain("table-layout: fixed");
       expect(css).toContain(".ak-chart-table:not(.ak-chart-sr-only)");
       expect(css).toContain('[data-slot="chart-table"]:not(.ak-chart-sr-only)');
     }
@@ -435,7 +511,7 @@ describe("chart components", () => {
     }
 
     const tokensCss = readFileSync(join(root, "src", "charts", "default", "tokens.css"), "utf8");
-    expect(tokensCss).toContain("var(--ak-color-accent, #2563eb)");
+    expect(tokensCss).toContain("var(--ak-color-chart-primary, var(--ak-chart-series-1, #2563eb))");
     expect(tokensCss).toContain("--ak-chart-focus-ring");
     expect(tokensCss).toContain("--ak-chart-tooltip-border");
   });

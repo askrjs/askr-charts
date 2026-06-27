@@ -8,6 +8,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   Sparkline,
@@ -44,6 +45,12 @@ describe("accessibility contract", () => {
         DonutChart({
           label: "Traffic split",
           data: [{ label: "Direct", value: 64, description: "Homepage traffic" }],
+        }),
+      ),
+      renderChart(() =>
+        PieChart({
+          label: "Traffic share",
+          data: [{ label: "Docs", value: 38, description: "Documentation traffic" }],
         }),
       ),
       renderChart(() =>

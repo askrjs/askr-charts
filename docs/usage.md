@@ -13,6 +13,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   Sparkline,
@@ -62,6 +63,16 @@ export function AnalyticsPreview() {
           { label: "Direct", value: 44 },
           { label: "Referral", value: 21 },
           { label: "Social", value: 35 },
+        ]}
+      />
+
+      <PieChart
+        label="Traffic share"
+        animation={{ type: "sweep", duration: 360, stagger: 24 }}
+        data={[
+          { label: "Docs", value: 38 },
+          { label: "Trials", value: 27 },
+          { label: "Teams", value: 21 },
         ]}
       />
 
@@ -142,7 +153,7 @@ export function AnalyticsPreview() {
 
 ## Data Shapes And Scale Controls
 
-`BarChart`, `LineChart`, `AreaChart`, `DonutChart`, `Sparkline`, and `Heatmap`
+`BarChart`, `LineChart`, `AreaChart`, `DonutChart`, `PieChart`, `Sparkline`, and `Heatmap`
 accept either object data or tuple data.
 
 `LineChart` and `AreaChart` are best viewed as discrete CSS trend snapshots, and
@@ -160,6 +171,16 @@ canvas charting engine.
   min={20}
   max={40}
   labelDensity="compact"
+/>
+
+<BarChart
+  label="Latency distribution"
+  variant="histogram"
+  data={[
+    ["0-50ms", 18],
+    ["51-100ms", 34],
+    ["101-200ms", 29],
+  ]}
 />
 
 <Heatmap
@@ -249,9 +270,10 @@ Default chart animations:
 - `BarChart`: `grow`
 - `StackedBarChart`: `grow`
 - `DonutChart`: `sweep`
+- `PieChart`: `sweep`
 - `FlameGraph`: `grow`
 - `Heatmap`: `fade`
-- `LineChart`: `fade`
+- `LineChart`: `reveal`
 - `ProgressMeter`: `grow`
 - `RadialGauge`: `sweep`
 - `Timeline`: `slide`

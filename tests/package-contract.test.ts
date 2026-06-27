@@ -19,6 +19,9 @@ describe("package contract", () => {
     expect(pkg.exports["./default/line-chart.css"]).toBe(
       "./src/charts/default/styles/display/line-chart.css",
     );
+    expect(pkg.exports["./default/pie-chart.css"]).toBe(
+      "./src/charts/default/styles/display/pie-chart.css",
+    );
     expect(pkg.exports["./default/radial-gauge.css"]).toBe(
       "./src/charts/default/styles/display/radial-gauge.css",
     );

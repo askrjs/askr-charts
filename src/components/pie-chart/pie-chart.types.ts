@@ -1,12 +1,9 @@
 import type { ChartValueFormatter, ValueChartDatumInput } from "../../core";
 import type { ChartVisualBaseProps } from "../_internal/types";
 
-export interface BarChartProps extends ChartVisualBaseProps {
+export interface PieChartProps extends ChartVisualBaseProps {
   data: readonly ValueChartDatumInput[];
   label: string;
-  min?: number;
   summary?: string;
-  max?: number;
   valueFormatter?: ChartValueFormatter;
-  variant?: "bar" | "histogram";
 }

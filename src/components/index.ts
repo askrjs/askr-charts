@@ -20,6 +20,8 @@ export { LineChart } from "./line-chart";
 export type { LineChartProps } from "./line-chart";
 export { Heatmap } from "./heatmap";
 export type { HeatmapProps } from "./heatmap";
+export { PieChart } from "./pie-chart";
+export type { PieChartProps } from "./pie-chart";
 export { ProgressMeter } from "./progress-meter";
 export type { ProgressMeterProps, ProgressMeterVariant } from "./progress-meter";
 export { RadialGauge } from "./radial-gauge";

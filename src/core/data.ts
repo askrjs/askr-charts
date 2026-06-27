@@ -215,8 +215,7 @@ export function normalizeValueChartData(
       value,
       color,
       description,
-      fraction:
-        explicitScaleMax == null ? 0 : calculateChartFraction(value, explicitScaleMax, min),
+      fraction: explicitScaleMax == null ? 0 : calculateChartFraction(value, explicitScaleMax, min),
       formattedValue: formatChartValue(value, formatter),
     };
   }

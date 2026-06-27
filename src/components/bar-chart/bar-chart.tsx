@@ -25,6 +25,7 @@ export function BarChart({
   style,
   summary,
   valueFormatter,
+  variant = "bar",
   ...rest
 }: BarChartProps) {
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
@@ -46,6 +47,7 @@ export function BarChart({
       id={id}
       {...animationAttrs}
       data-ak-label-density={labelDensity}
+      data-ak-chart-variant={variant}
       data-slot="bar-chart"
       className={cx("ak-chart", "ak-bar-chart", className)}
       style={mergeChartStyles(

@@ -7,6 +7,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   Sparkline,
@@ -15,6 +16,7 @@ import {
 } from "../../src/components";
 import {
   benchFlameGraphData,
+  benchPieData,
   benchSparklineData,
   benchStackedRows,
   benchTimelineData,
@@ -82,7 +84,11 @@ describe("tier4 browser integration benches", () => {
     await runMountedBench(
       <ProgressMeter label="SLO" animate max={100} value={81} />,
       async (container) => {
-        const meter = expectBenchElement<HTMLElement>(container, '[role="meter"]', "progress meter");
+        const meter = expectBenchElement<HTMLElement>(
+          container,
+          '[role="meter"]',
+          "progress meter",
+        );
 
         await flushBenchUpdates();
         if (meter.getAttribute("aria-valuetext") !== "81%") {
@@ -102,6 +108,25 @@ describe("tier4 browser integration benches", () => {
 
         if (!segment) {
           throw new Error("browser donut bench failed to mount a segment");
+        }
+
+        segment.focus();
+        await flushBenchUpdates();
+        void getComputedStyle(segment).clipPath;
+      },
+    );
+  });
+
+  bench("pie segment interaction and style scan", async () => {
+    await runMountedBench(
+      <PieChart label="Share" animate data={benchPieData} />,
+      async (container) => {
+        const segment = container.querySelector(
+          '[data-slot="pie-chart-segment"]',
+        ) as HTMLElement | null;
+
+        if (!segment) {
+          throw new Error("browser pie bench failed to mount a segment");
         }
 
         segment.focus();
@@ -214,7 +239,11 @@ describe("tier4 browser integration benches", () => {
           '[data-slot="stacked-bar-chart-segment"]',
           "stacked bar",
         );
-        expectBenchCount(container, '[data-slot="stacked-bar-chart-item"]', benchStackedRows.length);
+        expectBenchCount(
+          container,
+          '[data-slot="stacked-bar-chart-item"]',
+          benchStackedRows.length,
+        );
 
         await flushBenchUpdates();
         void getComputedStyle(segment).inlineSize;

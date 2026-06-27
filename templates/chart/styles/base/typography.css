@@ -10,6 +10,7 @@
   [data-slot="flame-graph"],
   [data-slot="heatmap"],
   [data-slot="line-chart"],
+  [data-slot="pie-chart"],
   [data-slot="progress-meter"],
   [data-slot="radial-gauge"],
   [data-slot="sparkline"],

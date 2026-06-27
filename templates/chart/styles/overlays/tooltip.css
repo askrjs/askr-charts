@@ -10,11 +10,13 @@
   [data-slot="donut-chart-segment"],
   [data-slot="flame-graph-cell"],
   [data-slot="line-chart-item"],
+  [data-slot="pie-chart-segment"],
   [data-slot="stacked-bar-chart-segment"],
   [data-slot="sparkline-item"],
   [data-slot="heatmap-cell"],
   [data-slot="timeline-item"],
-  [data-slot="donut-chart-item"]
+  [data-slot="donut-chart-item"],
+  [data-slot="pie-chart-item"]
 )[data-ak-chart-tooltip-trigger="true"] {
   position: relative;
 }
@@ -24,7 +26,7 @@
   inset-block-start: var(--ak-chart-tooltip-anchor-y, 0px);
   z-index: var(--ak-chart-z-tooltip, 20);
   pointer-events: none;
-  display: grid;
+  display: none;
   gap: 0.2rem;
   min-inline-size: 9rem;
   max-inline-size: min(16rem, calc(100vw - 2rem));
@@ -62,6 +64,7 @@
     [data-ak-chart-tooltip-trigger="true"]:focus-within
   )
   :where(.chart-tooltip, [data-slot="tooltip-content"], [data-slot="chart-tooltip"]) {
+  display: grid;
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, calc(-100% - 0.5rem)) scale(1);

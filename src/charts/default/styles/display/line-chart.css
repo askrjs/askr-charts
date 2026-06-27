@@ -57,6 +57,17 @@
   pointer-events: none;
 }
 
+:where(.ak-line-chart-stroke-wrap, [data-slot="line-chart-stroke-wrap"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--ak-line-chart-polygon);
+  background: color-mix(in srgb, var(--ak-chart-color-primary) 34%, transparent);
+  filter: blur(0.55rem);
+  opacity: 0.28;
+  pointer-events: none;
+}
+
 :where(.ak-line-chart-item, [data-slot="line-chart-item"]) {
   position: relative;
   display: grid;
@@ -67,6 +78,12 @@
   align-items: end;
   gap: 0.5rem;
   min-block-size: 9.75rem;
+  border-radius: var(--ak-chart-radius-sm);
+  outline: none;
+}
+
+:where(.ak-line-chart-item, [data-slot="line-chart-item"]):focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ak-chart-focus-ring) 68%, transparent);
 }
 
 :where(.ak-line-chart-stage, [data-slot="line-chart-stage"]) {
@@ -76,6 +93,30 @@
   min-block-size: 7.25rem;
   border-block-end: 1px solid color-mix(in srgb, var(--ak-chart-axis) 78%, transparent);
   background: transparent;
+}
+
+:where(.ak-line-chart-stage, [data-slot="line-chart-stage"])::before {
+  content: "";
+  position: absolute;
+  inset-block: 0.25rem 0;
+  inset-inline-start: 50%;
+  inline-size: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 42%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+}
+
+:where(.ak-line-chart-item, [data-slot="line-chart-item"]):hover
+  :where(.ak-line-chart-stage, [data-slot="line-chart-stage"])::before,
+:where(.ak-line-chart-item, [data-slot="line-chart-item"]):focus-within
+  :where(.ak-line-chart-stage, [data-slot="line-chart-stage"])::before {
+  opacity: 1;
 }
 
 :where(.ak-line-chart, [data-slot="line-chart"])[data-ak-show-grid="true"]
@@ -134,6 +175,14 @@
   text-align: center;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transition: color var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+}
+
+:where(.ak-line-chart-item, [data-slot="line-chart-item"]):hover
+  :where(.ak-line-chart-label, [data-slot="line-chart-label"]),
+:where(.ak-line-chart-item, [data-slot="line-chart-item"]):focus-within
+  :where(.ak-line-chart-label, [data-slot="line-chart-label"]) {
+  color: var(--ak-chart-color-text);
 }
 
 :where(.ak-line-chart-value, [data-slot="line-chart-value"]) {

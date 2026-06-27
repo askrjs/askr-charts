@@ -61,9 +61,7 @@ export function expectBenchCount(container: ParentNode, selector: string, count:
   const elements = container.querySelectorAll(selector);
 
   if (elements.length !== count) {
-    throw new Error(
-      `bench expected ${count} elements for ${selector}, mounted ${elements.length}`,
-    );
+    throw new Error(`bench expected ${count} elements for ${selector}, mounted ${elements.length}`);
   }
 
   return elements;

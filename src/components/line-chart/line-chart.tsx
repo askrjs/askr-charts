@@ -29,7 +29,7 @@ export function LineChart({
   ...rest
 }: LineChartProps) {
   const { animationAttrs, animationStyle } = resolveChartAnimation(animate, animation, {
-    type: "fade",
+    type: "reveal",
   });
   const formatter = resolveValueFormatter(valueFormatter);
   const normalized = normalizeValueChartData(data, {
@@ -84,15 +84,11 @@ export function LineChart({
           data-slot="line-chart-stroke-wrap"
           className="ak-line-chart-stroke-wrap"
           aria-hidden="true"
+          style={mergeChartStyles({
+            "--ak-line-chart-polygon": linePolygon,
+          })}
         >
-          <span
-            data-slot="line-chart-stroke"
-            className="ak-line-chart-stroke"
-            aria-hidden="true"
-            style={mergeChartStyles({
-              "--ak-line-chart-polygon": linePolygon,
-            })}
-          />
+          <span data-slot="line-chart-stroke" className="ak-line-chart-stroke" aria-hidden="true" />
         </span>
         <ol data-slot="line-chart-list" className="ak-line-chart-list">
           <For each={points} by={(datum, index) => `${datum.label}-${index}`}>

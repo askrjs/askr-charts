@@ -12,6 +12,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   Sparkline,
@@ -28,6 +29,7 @@ describe("components entrypoint", () => {
     expect(typeof FlameGraph).toBe("function");
     expect(typeof Heatmap).toBe("function");
     expect(typeof LineChart).toBe("function");
+    expect(typeof PieChart).toBe("function");
     expect(typeof ProgressMeter).toBe("function");
     expect(typeof RadialGauge).toBe("function");
     expect(typeof Sparkline).toBe("function");
@@ -60,6 +62,11 @@ describe("components entrypoint", () => {
     expect(
       renderToStringSync(() => LineChart({ label: "Trend", data: [{ label: "Mon", value: 42 }] })),
     ).toContain('data-slot="line-chart"');
+    expect(
+      renderToStringSync(() =>
+        PieChart({ label: "Traffic share", data: [{ label: "Direct", value: 42 }] }),
+      ),
+    ).toContain('data-slot="pie-chart"');
     expect(
       renderToStringSync(() =>
         Heatmap({ label: "Weekly activity", data: [{ x: "Mon", y: "Week 1", value: 8 }] }),

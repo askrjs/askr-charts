@@ -40,6 +40,15 @@
   animation-name: ak-chart-grow-x;
 }
 
+:where(
+    .ak-bar-chart[data-ak-chart-variant="histogram"][data-ak-animate="true"][data-ak-animation="grow"]
+  )
+  :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
+  transform: scaleY(1);
+  transform-origin: bottom;
+  animation-name: ak-chart-grow-y;
+}
+
 :where(.ak-heatmap[data-ak-animate="true"][data-ak-animation="fade"])
   :where(.ak-heatmap-cell, [data-slot="heatmap-cell"]) {
   animation-name: ak-chart-fade-in;
@@ -55,12 +64,16 @@
 :where(.ak-timeline[data-ak-animate="true"][data-ak-animation="slide"])
   :where(.ak-timeline-item, [data-slot="timeline-item"]),
 :where(.ak-donut-chart[data-ak-animate="true"])
-  :where(.ak-donut-chart-item, [data-slot="donut-chart-item"]) {
+  :where(.ak-donut-chart-item, [data-slot="donut-chart-item"]),
+:where(.ak-pie-chart[data-ak-animate="true"])
+  :where(.ak-pie-chart-item, [data-slot="pie-chart-item"]) {
   animation-name: ak-chart-fade-in;
 }
 
 :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
-  :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
+  :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]),
+:where(.ak-pie-chart[data-ak-animate="true"][data-ak-animation="sweep"])
+  :where(.ak-pie-chart-disc, [data-slot="pie-chart-disc"]) {
   animation-name: ak-chart-donut-fade;
 }
 
@@ -81,8 +94,25 @@
     (-webkit-mask: conic-gradient(from 0deg, #000 0deg, transparent 360deg))
 ) {
   :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
-    :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
+    :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]),
+  :where(.ak-pie-chart[data-ak-animate="true"][data-ak-animation="sweep"])
+    :where(.ak-pie-chart-disc, [data-slot="pie-chart-disc"]) {
     --ak-chart-reveal-angle: 0deg;
+    mask: conic-gradient(
+      from -90deg,
+      #000 0deg var(--ak-chart-reveal-angle),
+      transparent var(--ak-chart-reveal-angle) 360deg
+    );
+    -webkit-mask: conic-gradient(
+      from -90deg,
+      #000 0deg var(--ak-chart-reveal-angle),
+      transparent var(--ak-chart-reveal-angle) 360deg
+    );
+    animation-name: ak-chart-donut-sweep;
+  }
+
+  :where(.ak-donut-chart[data-ak-animate="true"][data-ak-animation="sweep"])
+    :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
     mask:
       radial-gradient(circle, transparent 0 56%, #000 57% 100%),
       conic-gradient(
@@ -99,7 +129,6 @@
         transparent var(--ak-chart-reveal-angle) 360deg
       );
     -webkit-mask-composite: source-in;
-    animation-name: ak-chart-donut-sweep;
   }
 }
 
@@ -114,6 +143,16 @@
   animation-delay: var(--ak-chart-animation-delay);
   animation-fill-mode: both;
   animation-timing-function: var(--ak-chart-animation-easing);
+}
+
+:where(.ak-line-chart[data-ak-animate="true"][data-ak-animation="reveal"])
+  :where(.ak-line-chart-point, [data-slot="line-chart-point"]) {
+  animation: ak-chart-scale-in var(--ak-chart-animation-duration) var(--ak-chart-animation-easing)
+    both;
+  animation-delay: calc(
+    var(--ak-chart-animation-delay) +
+      (var(--ak-chart-item-index, 0) * var(--ak-chart-animation-stagger)) + 120ms
+  );
 }
 
 @keyframes ak-chart-grow-y {
