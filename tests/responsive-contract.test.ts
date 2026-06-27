@@ -12,6 +12,8 @@ const defaultPatternImports = [
   "./styles/display/bar-chart.css",
   "./styles/display/donut-chart.css",
   "./styles/display/heatmap.css",
+  "./styles/display/line-chart.css",
+  "./styles/display/pie-chart.css",
   "./styles/display/progress-meter.css",
   "./styles/display/sparkline.css",
   "./styles/display/stacked-bar-chart.css",
@@ -63,6 +65,7 @@ describe("responsive chart contract", () => {
       ':where(.chart-shell, [data-slot="chart-shell"])',
       ':where(.chart-panel, [data-slot="chart-panel"])',
       ':where(.chart-shell-content, [data-slot="chart-shell-content"])',
+      "align-content: start",
       "--ak-chart-gap",
       "--ak-chart-padding",
     ];

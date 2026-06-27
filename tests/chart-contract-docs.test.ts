@@ -7,6 +7,7 @@ const contractCharts = [
   ["BarChart", "bar-chart-example.tsx"],
   ["LineChart", "line-chart-example.tsx"],
   ["DonutChart", "donut-chart-example.tsx"],
+  ["PieChart", "pie-chart-example.tsx"],
   ["StackedBarChart", "stacked-bar-chart-example.tsx"],
   ["Sparkline", "sparkline-example.tsx"],
   ["Heatmap", "heatmap-example.tsx"],
@@ -30,7 +31,7 @@ describe("chart contract documentation", () => {
     const repoRoot = join(packageRoot, "..");
     const docs = readFileSync(join(packageRoot, "CHARTING.md"), "utf8");
     const exportsFile = readFileSync(join(packageRoot, "src", "components", "index.ts"), "utf8");
-    const galleryPath = join(repoRoot, "my-app", "src", "pages", "charts.tsx");
+    const galleryPath = join(repoRoot, "my-app", "src", "pages", "public", "charts.tsx");
     const gallery = existsSync(galleryPath) ? readFileSync(galleryPath, "utf8") : undefined;
 
     for (const [chartName, exampleFile] of contractCharts) {
@@ -39,12 +40,18 @@ describe("chart contract documentation", () => {
 
       expect(exportsFile).toContain(`export { ${chartName} }`);
       expect(docs).toContain(`### ${chartName}`);
-      expect(docs).toContain(`../my-app/src/components/${exampleFile}`);
+      expect(docs).toContain(`../my-app/src/components/examples/charts/${exampleFile}`);
 
       if (gallery) {
-        expect(existsSync(join(repoRoot, "my-app", "src", "components", exampleFile))).toBe(true);
+        expect(
+          existsSync(
+            join(repoRoot, "my-app", "src", "components", "examples", "charts", exampleFile),
+          ),
+        ).toBe(true);
         expect(gallery).toContain(`data-chart-contract="${chartName}"`);
-        expect(gallery).toContain(`import ${importName} from '../components/${importPath}'`);
+        expect(gallery).toContain(
+          `import ${importName} from '../../components/examples/charts/${importPath}'`,
+        );
         expect(gallery).toContain(`<${importName} `);
       }
     }
@@ -61,6 +68,7 @@ describe("chart contract documentation", () => {
       "Sparkline",
       "Heatmap",
       "FlameGraph",
+      "PieChart",
     ]) {
       const section = getChartSection(docs, chartName);
 

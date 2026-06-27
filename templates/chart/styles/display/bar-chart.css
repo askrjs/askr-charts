@@ -1,5 +1,6 @@
 :where(.ak-bar-chart, [data-slot="bar-chart"]) {
   --ak-chart-graphic-min-block-size: 8.75rem;
+  --ak-chart-histogram-min-block-size: 8rem;
   --ak-chart-track-thickness: 0.75rem;
 }
 
@@ -17,33 +18,67 @@
 }
 
 :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]) {
+  position: relative;
   display: grid;
+  grid-template-areas: "label track value";
   grid-template-columns: minmax(0, clamp(4.75rem, 24%, 7rem)) minmax(4rem, 1fr) auto;
   align-items: center;
   gap: 0.625rem;
   min-block-size: 1.625rem;
-  padding-block: 0.0625rem;
-  margin-block: 0;
+  padding: 0.125rem 0.25rem;
+  margin: 0;
+  border-radius: var(--ak-chart-radius-sm);
+  outline: none;
+  transition:
+    background var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
+    box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover,
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within {
+  background: color-mix(
+    in srgb,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 8%,
+    transparent
+  );
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ak-chart-focus-ring) 68%, transparent);
 }
 
 :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
+  grid-area: label;
   overflow: hidden;
   font-weight: var(--ak-chart-font-weight-semibold);
   line-height: 1.2;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transition: color var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
 }
 
 :where(.ak-bar-chart-track, [data-slot="bar-chart-track"]) {
+  grid-area: track;
   position: relative;
-  min-height: var(--ak-chart-track-thickness, 0.75rem);
-  border: 1px solid var(--ak-chart-track-border);
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--ak-chart-track-bg, var(--ak-chart-color-muted));
-  box-shadow:
-    inset 0 1px 1px color-mix(in srgb, var(--ak-chart-color-text) 9%, transparent),
-    inset 0 -1px 0 color-mix(in srgb, white 32%, transparent);
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--ak-chart-track-thickness, 0.75rem) + 0.45rem);
+  border: 0;
+  border-inline-start: 1px solid color-mix(in srgb, var(--ak-chart-axis) 84%, transparent);
+  border-radius: 0;
+  overflow: visible;
+  background:
+    repeating-linear-gradient(
+      to right,
+      var(--ak-chart-grid) 0px,
+      var(--ak-chart-grid) 1px,
+      transparent 1px,
+      transparent 25%
+    ),
+    transparent;
+  box-shadow: none;
+  transition: background var(--ak-chart-duration-fast, 120ms)
+    var(--ak-chart-ease-standard, ease-out);
 }
 
 :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
@@ -51,18 +86,17 @@
   display: block;
   inline-size: var(--ak-chart-item-value, 0%);
   min-inline-size: var(--ak-chart-item-min-size, 0);
-  min-block-size: calc(var(--ak-chart-track-thickness, 0.75rem) - 2px);
-  border-radius: inherit;
+  min-block-size: var(--ak-chart-track-thickness, 0.75rem);
+  border-radius: calc(var(--ak-chart-radius-sm) - 1px);
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 88%, black 12%) 0%,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 55%,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 92%, white 8%) 100%
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, black 10%) 0%,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 100%
   );
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
     0 0 0 1px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent);
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
@@ -73,8 +107,38 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 58%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 62%);
   pointer-events: none;
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]),
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]) {
+  color: color-mix(
+    in srgb,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 82%,
+    var(--ak-chart-color-text)
+  );
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover
+  :where(.ak-bar-chart-track, [data-slot="bar-chart-track"]),
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within
+  :where(.ak-bar-chart-track, [data-slot="bar-chart-track"]) {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 7%, transparent),
+      transparent 72%
+    ),
+    repeating-linear-gradient(
+      to right,
+      var(--ak-chart-grid) 0px,
+      var(--ak-chart-grid) 1px,
+      transparent 1px,
+      transparent 25%
+    );
 }
 
 :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover
@@ -86,17 +150,131 @@
     inset 0 1px 0 color-mix(in srgb, white 36%, transparent),
     0 0 0 1px
       color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 34%, transparent),
-    0 6px 14px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent);
+    0 4px 10px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 14%, transparent);
 }
 
 :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  grid-area: value;
   justify-self: end;
   font-family: var(--ak-chart-font-family-mono);
   color: var(--ak-chart-color-text-muted);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  transition: color var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+}
+
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]),
+:where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  color: var(--ak-chart-color-text);
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-animate="true"]
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]),
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-animate="true"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  animation: ak-chart-slide-in var(--ak-chart-animation-duration, 300ms)
+    var(--ak-chart-animation-easing, ease-out) both;
+  animation-delay: calc(
+    var(--ak-chart-animation-delay, 0ms) +
+      (var(--ak-chart-item-index, 0) * var(--ak-chart-animation-stagger, 24ms)) + 60ms
+  );
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"] {
+  --ak-chart-graphic-min-block-size: 10rem;
+  --ak-chart-track-thickness: 100%;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-list, [data-slot="bar-chart-list"]) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
+  align-items: stretch;
+  gap: 0.35rem;
+  min-block-size: var(--ak-chart-histogram-min-block-size, 8rem);
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]) {
+  grid-template-areas:
+    "track"
+    "value"
+    "label";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(var(--ak-chart-histogram-min-block-size, 8rem), 1fr) auto auto;
+  justify-items: stretch;
+  align-content: end;
+  gap: 0.25rem;
+  min-block-size: 100%;
+  padding: 0.25rem 0.15rem 0;
+  margin: 0;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):hover,
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-item, [data-slot="bar-chart-item"]):focus-within {
+  background: transparent;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-track, [data-slot="bar-chart-track"]) {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  inline-size: 100%;
+  block-size: var(--ak-chart-histogram-min-block-size, 8rem);
+  min-block-size: var(--ak-chart-histogram-min-block-size, 8rem);
+  border: 0;
+  border-inline-start: 0;
+  border-block-end: 1px solid color-mix(in srgb, var(--ak-chart-axis) 82%, transparent);
+  border-radius: 0;
+  overflow: visible;
+  background:
+    repeating-linear-gradient(
+      to top,
+      var(--ak-chart-grid) 0px,
+      var(--ak-chart-grid) 1px,
+      transparent 1px,
+      transparent 25%
+    ),
+    transparent;
+  box-shadow: none;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-fill, [data-slot="bar-chart-fill"]) {
+  inline-size: min(2.5rem, 62%);
+  block-size: var(--ak-chart-item-value, 0%);
+  min-inline-size: 0;
+  min-block-size: var(--ak-chart-item-min-size, 0);
+  border-radius: var(--ak-chart-radius-sm) var(--ak-chart-radius-sm) 0 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 90%, white 10%),
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 54%,
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 86%, black 14%)
+  );
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-label, [data-slot="bar-chart-label"]),
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  justify-self: center;
+  max-inline-size: 100%;
+  font-size: 0.75rem;
+  line-height: 1.15;
+  text-align: center;
+}
+
+:where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-chart-variant="histogram"]
+  :where(.ak-bar-chart-value, [data-slot="bar-chart-value"]) {
+  color: var(--ak-chart-color-text);
 }
 
 :where(.ak-bar-chart, [data-slot="bar-chart"])[data-ak-label-density="compact"]

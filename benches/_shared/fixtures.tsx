@@ -6,6 +6,7 @@ import { DonutChart } from "../../src/components/donut-chart";
 import { FlameGraph } from "../../src/components/flame-graph";
 import type { FlameGraphDatum } from "../../src/components/flame-graph";
 import { Heatmap } from "../../src/components/heatmap";
+import { PieChart } from "../../src/components/pie-chart";
 import { ProgressMeter } from "../../src/components/progress-meter";
 import { StackedBarChart } from "../../src/components/stacked-bar-chart";
 import { Timeline } from "../../src/components/timeline";
@@ -21,6 +22,7 @@ const SERIES_COLORS = ["#0f766e", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#
 const TIMELINE_STATUSES = ["success", "info", "warning", "default"] as const;
 const dashboardBarData = buildValueData(18);
 const dashboardDonutData = buildValueData(6);
+const dashboardPieData = buildValueData(5);
 const dashboardHeatmapData = buildHeatmapData(6, 4);
 const dashboardTimelineData = buildTimelineData(8);
 const dashboardStackedRows = buildStackedBarRows(6, 4);
@@ -31,6 +33,7 @@ export const benchValueData = buildValueData(18);
 export const benchTrendData = buildValueData(12);
 export const benchSparklineData = buildValueData(10);
 export const benchDonutData = buildValueData(6);
+export const benchPieData = buildValueData(5);
 export const benchHeatmapData = buildHeatmapData(6, 4);
 export const benchTimelineData = buildTimelineData(8);
 export const benchStackedRows = buildStackedBarRows(6, 4);
@@ -138,6 +141,7 @@ export function DashboardBench(): JSX.Element {
 
       <ChartPanel title="Mix and milestones" description="Composition coverage.">
         <DonutChart label="Channel mix" animate data={dashboardDonutData} />
+        <PieChart label="Channel share" animate data={dashboardPieData} />
         <Timeline label="Launch plan" animate data={dashboardTimelineData} />
       </ChartPanel>
 

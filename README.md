@@ -46,7 +46,7 @@ export function RevenueChart() {
 ## Use The Right Surface
 
 - `@askrjs/charts/components` exports the chart components and chart chrome:
-  `AreaChart`, `BarChart`, `LineChart`, `DonutChart`, `StackedBarChart`,
+  `AreaChart`, `BarChart`, `LineChart`, `DonutChart`, `PieChart`, `StackedBarChart`,
   `Sparkline`, `Heatmap`, `Timeline`, `FlameGraph`, `ProgressMeter`,
   `RadialGauge`, `ChartShell`, `ChartPanel`, `ChartLegend`, and
   `ChartEmptyState`.

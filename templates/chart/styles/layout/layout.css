@@ -1,5 +1,6 @@
 :where(.chart-shell, [data-slot="chart-shell"]) {
   display: grid;
+  align-content: start;
   gap: var(--ak-chart-gap);
   padding: var(--ak-chart-padding);
   background: linear-gradient(
@@ -22,11 +23,13 @@
 :where(.chart-shell-content, [data-slot="chart-shell-content"]),
 :where(.chart-panel-body, [data-slot="chart-panel-body"]) {
   display: grid;
+  align-content: start;
   gap: var(--ak-chart-gap);
 }
 
 :where(.chart-panel, [data-slot="chart-panel"]) {
   display: grid;
+  align-content: start;
   gap: 0.875rem;
   padding: 1rem;
   background: linear-gradient(
@@ -47,6 +50,7 @@
   [data-slot="flame-graph"],
   [data-slot="heatmap"],
   [data-slot="line-chart"],
+  [data-slot="pie-chart"],
   [data-slot="progress-meter"],
   [data-slot="radial-gauge"],
   [data-slot="sparkline"],

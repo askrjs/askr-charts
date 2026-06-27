@@ -9,6 +9,7 @@ import {
   FlameGraph,
   Heatmap,
   LineChart,
+  PieChart,
   ProgressMeter,
   RadialGauge,
   StackedBarChart,
@@ -74,6 +75,7 @@ describe("browser chart rendering", () => {
     const graphic = container.querySelector('[role="img"]');
     const items = [...container.querySelectorAll('[data-slot="bar-chart-item"]')];
     const firstFill = container.querySelector('[data-slot="bar-chart-fill"]');
+    const firstTrack = container.querySelector('[data-slot="bar-chart-track"]') as HTMLElement;
 
     expect(graphic?.getAttribute("aria-label")).toBe("Monthly revenue");
     expect(items).toHaveLength(2);
@@ -86,9 +88,45 @@ describe("browser chart rendering", () => {
     );
     expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(firstFill?.getAttribute("data-ak-chart-item")).toBe("true");
+    expect(getComputedStyle(firstTrack).borderTopLeftRadius).toBe("0px");
+    expect(getComputedStyle(firstTrack).borderInlineStartStyle).toBe("solid");
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Monthly revenue",
     );
+  });
+
+  it("should render histogram bar charts as vertical bins", async () => {
+    container = mount(
+      <div style={{ width: "18rem" }}>
+        <BarChart
+          label="Latency distribution"
+          variant="histogram"
+          data={[
+            { label: "0-50ms", value: 18 },
+            { label: "51-100ms", value: 34 },
+            { label: "101-200ms", value: 29 },
+            { label: "400ms+", value: 6 },
+          ]}
+        />
+      </div>,
+    );
+    await flushUpdates();
+
+    const root = container.querySelector('[data-slot="bar-chart"]');
+    const list = container.querySelector('[data-slot="bar-chart-list"]') as HTMLElement;
+    const item = container.querySelector('[data-slot="bar-chart-item"]') as HTMLElement;
+    const track = container.querySelector('[data-slot="bar-chart-track"]') as HTMLElement;
+    const fill = container.querySelector('[data-slot="bar-chart-fill"]') as HTMLElement;
+    const tooltip = container.querySelector('[data-slot="tooltip-content"]') as HTMLElement;
+
+    expect(root?.getAttribute("data-ak-chart-variant")).toBe("histogram");
+    expect(getComputedStyle(list).display).toBe("grid");
+    expect(list.scrollWidth).toBeLessThanOrEqual(list.clientWidth);
+    expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+    expect(getComputedStyle(tooltip).display).toBe("none");
+    expect(getComputedStyle(track).alignItems).toBe("end");
+    expect(parseFloat(getComputedStyle(fill).height)).toBeGreaterThan(0);
+    expect(parseFloat(getComputedStyle(fill).width)).toBeGreaterThan(0);
   });
 
   it("should align chart tooltips to the pointer inside the hovered trigger", async () => {
@@ -159,7 +197,7 @@ describe("browser chart rendering", () => {
       '[data-slot="area-chart"] [data-slot="chart-graphic"]',
     ) as HTMLElement;
 
-    expect(line?.getAttribute("data-ak-animation")).toBe("fade");
+    expect(line?.getAttribute("data-ak-animation")).toBe("reveal");
     expect(area?.getAttribute("data-ak-animation")).toBe("grow");
     expect(radial?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(container.querySelector('[data-slot="line-chart-point"]')).toBeTruthy();
@@ -222,6 +260,7 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="flame-graph"]');
     const cells = [...container.querySelectorAll('[data-slot="flame-graph-cell"]')];
+    const table = container.querySelector('[data-slot="chart-table"]') as HTMLElement;
 
     expect(root?.getAttribute("data-ak-animation")).toBe("grow");
     expect(cells).toHaveLength(3);
@@ -232,6 +271,7 @@ describe("browser chart rendering", () => {
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Call stack",
     );
+    expect(getComputedStyle(table).tableLayout).toBe("fixed");
   });
 
   it("should render semantic progress meters with live meter metadata", async () => {
@@ -272,18 +312,50 @@ describe("browser chart rendering", () => {
             { label: "Social", value: 35 },
           ]}
         />
+        <PieChart
+          label="Traffic share"
+          data={[
+            { label: "Direct", value: 48 },
+            { label: "Referral", value: 18 },
+            { label: "Social", value: 34 },
+          ]}
+        />
         <RadialGauge label="Fill rate" value={68} max={100} />
       </div>,
     );
     await flushUpdates();
 
     const donutRing = container.querySelector('[data-slot="donut-chart-ring-wrap"]') as HTMLElement;
+    const donutRingVisual = container.querySelector(
+      '[data-slot="donut-chart-ring"]',
+    ) as HTMLElement;
+    const donutSegment = container.querySelector(
+      '[data-slot="donut-chart-segment"]',
+    ) as HTMLElement;
+    const pieDisc = container.querySelector('[data-slot="pie-chart-disc-wrap"]') as HTMLElement;
+    const pieDiscVisual = container.querySelector('[data-slot="pie-chart-disc"]') as HTMLElement;
+    const pieSegment = container.querySelector('[data-slot="pie-chart-segment"]') as HTMLElement;
     const radialDial = container.querySelector('[data-slot="radial-gauge-dial"]') as HTMLElement;
+    const donutList = container.querySelector('[data-slot="donut-chart-list"]') as HTMLElement;
+    const pieList = container.querySelector('[data-slot="pie-chart-list"]') as HTMLElement;
     const donutItems = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
+    const pieItems = [...container.querySelectorAll('[data-slot="pie-chart-item"]')];
 
     expect(donutItems).toHaveLength(3);
+    expect(pieItems).toHaveLength(3);
+    expect(donutList.scrollWidth).toBeLessThanOrEqual(donutList.clientWidth);
+    expect(pieList.scrollWidth).toBeLessThanOrEqual(pieList.clientWidth);
     expect(parseFloat(getComputedStyle(donutRing).inlineSize)).toBeLessThanOrEqual(232);
+    expect(parseFloat(getComputedStyle(pieDisc).inlineSize)).toBeLessThanOrEqual(232);
     expect(parseFloat(getComputedStyle(radialDial).inlineSize)).toBeLessThanOrEqual(232);
+    expect(getComputedStyle(donutRingVisual).pointerEvents).toBe("none");
+    expect(parseFloat(getComputedStyle(donutSegment).zIndex)).toBeGreaterThan(
+      parseFloat(getComputedStyle(donutRingVisual).zIndex),
+    );
+    expect(getComputedStyle(pieDiscVisual).pointerEvents).toBe("none");
+    expect(parseFloat(getComputedStyle(pieSegment).zIndex)).toBeGreaterThan(
+      parseFloat(getComputedStyle(pieDiscVisual).zIndex),
+    );
   });
 
   it("should render stacked bar charts with compact track geometry", async () => {
@@ -430,6 +502,41 @@ describe("browser chart rendering", () => {
       "--ak-chart-item-color:tomato",
     );
     expect(totalValue?.textContent).toBe("100");
+    expect(tooltipTitle?.textContent).toBe("Direct");
+  });
+
+  it("should render pie charts with tooltip-ready solid segments", async () => {
+    container = mount(
+      <PieChart
+        label="Traffic share"
+        labelDensity="compact"
+        animate
+        data={[
+          ["Direct", 42, "tomato", "Owned traffic"],
+          ["Referral", 28],
+          ["Social", 30],
+        ]}
+      />,
+    );
+    await flushUpdates();
+
+    const root = container.querySelector('[data-slot="pie-chart"]');
+    const disc = container.querySelector('[data-slot="pie-chart-disc"]');
+    const segments = [...container.querySelectorAll('[data-slot="pie-chart-segment"]')];
+    const items = [...container.querySelectorAll('[data-slot="pie-chart-item"]')];
+    const tooltipTitle = container.querySelector(".chart-tooltip-title");
+
+    expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
+    expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
+    expect(root?.getAttribute("style")).toContain("--ak-chart-pie-stops:");
+    expect(normalizeStyle(disc?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
+    expect(segments).toHaveLength(3);
+    expect(segments[0]?.getAttribute("tabindex")).toBe("0");
+    expect(normalizeStyle(segments[0]?.getAttribute("style"))).toContain(
+      "--ak-chart-item-color:tomato",
+    );
+    expect(items).toHaveLength(3);
+    expect(items[0]?.getAttribute("tabindex")).toBe("0");
     expect(tooltipTitle?.textContent).toBe("Direct");
   });
 

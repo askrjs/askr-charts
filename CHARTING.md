@@ -36,19 +36,20 @@ The library does not aim to be:
 Shape-contract charts define data contracts, visual grammar, behavior
 guarantees, and acceptance criteria:
 
-| Chart             | Visual target                                          | Live example                                             |
-| ----------------- | ------------------------------------------------------ | -------------------------------------------------------- |
-| `AreaChart`       | Filled trend over time                                 | `../my-app/src/components/area-chart-example.tsx`        |
-| `BarChart`        | Discrete category comparison via bars                  | `../my-app/src/components/bar-chart-example.tsx`         |
-| `LineChart`       | Trend lines across an ordered axis                     | `../my-app/src/components/line-chart-example.tsx`        |
-| `DonutChart`      | Circular part-to-whole with a center void              | `../my-app/src/components/donut-chart-example.tsx`       |
-| `StackedBarChart` | Bars split into stacked segments                       | `../my-app/src/components/stacked-bar-chart-example.tsx` |
-| `Sparkline`       | Tiny minimal trend with no axes or legend              | `../my-app/src/components/sparkline-example.tsx`         |
-| `Heatmap`         | Grid of colored intensity cells                        | `../my-app/src/components/heatmap-example.tsx`           |
-| `Timeline`        | Ordered sequence of events or intervals                | `../my-app/src/components/timeline-example.tsx`          |
-| `FlameGraph`      | Hierarchical stacked rectangles for cost visualization | `../my-app/src/components/flame-graph-example.tsx`       |
-| `ProgressMeter`   | Linear progress fill versus max                        | `../my-app/src/components/progress-meter-example.tsx`    |
-| `RadialGauge`     | Circular scalar gauge                                  | `../my-app/src/components/radial-gauge-example.tsx`      |
+| Chart             | Visual target                                          | Live example                                                             |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `AreaChart`       | Filled trend over time                                 | `../my-app/src/components/examples/charts/area-chart-example.tsx`        |
+| `BarChart`        | Discrete category comparison via bars                  | `../my-app/src/components/examples/charts/bar-chart-example.tsx`         |
+| `LineChart`       | Trend lines across an ordered axis                     | `../my-app/src/components/examples/charts/line-chart-example.tsx`        |
+| `DonutChart`      | Circular part-to-whole with a center void              | `../my-app/src/components/examples/charts/donut-chart-example.tsx`       |
+| `PieChart`        | Solid circular part-to-whole composition               | `../my-app/src/components/examples/charts/pie-chart-example.tsx`         |
+| `StackedBarChart` | Bars split into stacked segments                       | `../my-app/src/components/examples/charts/stacked-bar-chart-example.tsx` |
+| `Sparkline`       | Tiny minimal trend with no axes or legend              | `../my-app/src/components/examples/charts/sparkline-example.tsx`         |
+| `Heatmap`         | Grid of colored intensity cells                        | `../my-app/src/components/examples/charts/heatmap-example.tsx`           |
+| `Timeline`        | Ordered sequence of events or intervals                | `../my-app/src/components/examples/charts/timeline-example.tsx`          |
+| `FlameGraph`      | Hierarchical stacked rectangles for cost visualization | `../my-app/src/components/examples/charts/flame-graph-example.tsx`       |
+| `ProgressMeter`   | Linear progress fill versus max                        | `../my-app/src/components/examples/charts/progress-meter-example.tsx`    |
+| `RadialGauge`     | Circular scalar gauge                                  | `../my-app/src/components/examples/charts/radial-gauge-example.tsx`      |
 
 Supporting primitives are not shape-contract charts:
 
@@ -107,8 +108,9 @@ Core CSS variables:
 - `--ak-chart-font-size`
 
 Chart CSS must remain self-sufficient. Broader Askr theme tokens may feed chart
-tokens as fallbacks, but display styles should use chart-owned `--ak-chart-*`
-variables as their contract.
+tokens through chart-specific overrides such as `--ak-color-chart-primary`, but
+display styles should use chart-owned `--ak-chart-*` variables as their
+contract.
 
 Responsive rules:
 
@@ -144,17 +146,20 @@ area mode.
 Purpose: compare discrete categories through horizontal bars.
 
 Visual grammar: one bar per category, stable tracks, visible labels, and clear
-relative length. Zero values must stay zero width.
+relative length. The default `bar` variant is horizontal; `histogram` renders
+vertical bins for compact distribution views. Zero values must stay zero width
+or zero height.
 
 Data shape: accepts value chart object or tuple inputs with `label`, `value`,
 optional `description`, and optional `color`. Supports `min`, `max`,
-`labelDensity`, `summary`, `valueFormatter`, `animate`, and `animation`.
+`variant`, `labelDensity`, `summary`, `valueFormatter`, `animate`, and
+`animation`.
 
 States and behavior: render a summary and fallback table, expose focusable
 tooltip-ready rows, and use `grow` animation by default.
 
-Non-goals: no grouped bars, no axis-heavy analytical layout, no vertical bar
-mode in the default contract.
+Non-goals: no grouped bars, no axis-heavy analytical layout, no multi-series
+histograms.
 
 ### LineChart
 
@@ -169,7 +174,7 @@ optional `description`, and optional `color`. Supports `min`, `max`,
 `summary`, `valueFormatter`, `animate`, and `animation`.
 
 States and behavior: render a summary and fallback table, expose tooltip-ready
-points, and use `fade` animation by default.
+points, and use `reveal` animation by default.
 
 Non-goals: no precise interpolation engine, no multi-axis plotting, no dense
 scientific time-series rendering.
@@ -190,6 +195,25 @@ segments and legend items, and use `sweep` animation by default.
 
 Non-goals: no nested donuts, no polar analytical charting, no tiny segments
 that depend on tooltip-only understanding.
+
+### PieChart
+
+Purpose: show part-to-whole composition as a solid circular disc when the center
+value treatment of a donut would add visual noise.
+
+Visual grammar: segmented circular disc, consistent slice boundaries, and a
+legend-style list for labels and values. It must read as a solid share chart,
+not as a radial gauge or a donut with a missing center label.
+
+Data shape: accepts object or tuple segment inputs with `label`, `value`,
+optional color, and optional `description`. Supports `labelDensity`,
+`summary`, `valueFormatter`, `animate`, and `animation`.
+
+States and behavior: render a summary and fallback table, expose tooltip-ready
+segments and legend items, and use `sweep` animation by default.
+
+Non-goals: no exploded slices, no nested pies, no polar analytical charting, no
+tiny segments that depend on tooltip-only understanding.
 
 ### StackedBarChart
 

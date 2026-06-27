@@ -13,6 +13,7 @@ const contractCharts = [
   { name: "BarChart", example: "bar-chart-example.tsx" },
   { name: "LineChart", example: "line-chart-example.tsx" },
   { name: "DonutChart", example: "donut-chart-example.tsx" },
+  { name: "PieChart", example: "pie-chart-example.tsx" },
   { name: "StackedBarChart", example: "stacked-bar-chart-example.tsx" },
   { name: "Sparkline", example: "sparkline-example.tsx" },
   { name: "Heatmap", example: "heatmap-example.tsx" },
@@ -26,8 +27,8 @@ const supportPrimitives = ["ChartShell", "ChartPanel", "ChartLegend", "ChartEmpt
 
 const docsPath = join(packageRoot, "CHARTING.md");
 const exportsPath = join(packageRoot, "src", "components", "index.ts");
-const galleryPath = join(repoRoot, "my-app", "src", "pages", "charts.tsx");
-const examplesRoot = join(repoRoot, "my-app", "src", "components");
+const galleryPath = join(repoRoot, "my-app", "src", "pages", "public", "charts.tsx");
+const examplesRoot = join(repoRoot, "my-app", "src", "components", "examples", "charts");
 
 const docs = readFileSync(docsPath, "utf8");
 const exportsFile = readFileSync(exportsPath, "utf8");
@@ -53,14 +54,16 @@ for (const chart of contractCharts) {
   );
   assert(docs.includes(`### ${chart.name}`), `${chart.name} must have a docs section`);
   assert(
-    docs.includes(`../my-app/src/components/${chart.example}`),
+    docs.includes(`../my-app/src/components/examples/charts/${chart.example}`),
     `${chart.name} docs must link to ${chart.example}`,
   );
   if (gallery) {
     assert(existsSync(examplePath), `${chart.name} must have ${chart.example}`);
     assert(
-      gallery.includes(`import ${importName} from '../components/${importPath}'`),
-      `${chart.name} example must be imported by my-app/src/pages/charts.tsx`,
+      gallery.includes(
+        `import ${importName} from '../../components/examples/charts/${importPath}'`,
+      ),
+      `${chart.name} example must be imported by my-app/src/pages/public/charts.tsx`,
     );
     assert(
       gallery.includes(`data-chart-contract="${chart.name}"`),
@@ -68,7 +71,7 @@ for (const chart of contractCharts) {
     );
     assert(
       gallery.includes(`<${importName} `),
-      `${chart.name} example must be rendered by my-app/src/pages/charts.tsx`,
+      `${chart.name} example must be rendered by my-app/src/pages/public/charts.tsx`,
     );
   }
 }

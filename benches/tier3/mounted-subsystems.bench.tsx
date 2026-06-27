@@ -73,17 +73,23 @@ describe("tier3 mounted subsystem benches", () => {
   });
 
   bench("area chart mounted point scan", async () => {
-    await runMountedBench(<AreaChart label="Orders" animate data={benchTrendData} />, (container) => {
-      expectBenchElement(container, '[data-slot="area-chart-surface"]', "area chart");
-      expectBenchCount(container, '[data-slot="area-chart-item"]', benchTrendData.length);
-    });
+    await runMountedBench(
+      <AreaChart label="Orders" animate data={benchTrendData} />,
+      (container) => {
+        expectBenchElement(container, '[data-slot="area-chart-surface"]', "area chart");
+        expectBenchCount(container, '[data-slot="area-chart-item"]', benchTrendData.length);
+      },
+    );
   });
 
   bench("line chart mounted terminal scan", async () => {
-    await runMountedBench(<LineChart label="Signups" animate data={benchTrendData} />, (container) => {
-      expectBenchCount(container, '[data-slot="line-chart-item"]', benchTrendData.length);
-      expectBenchElement(container, '[data-ak-line-terminal="true"]', "line chart");
-    });
+    await runMountedBench(
+      <LineChart label="Signups" animate data={benchTrendData} />,
+      (container) => {
+        expectBenchCount(container, '[data-slot="line-chart-item"]', benchTrendData.length);
+        expectBenchElement(container, '[data-ak-line-terminal="true"]', "line chart");
+      },
+    );
   });
 
   bench("donut chart segment and list scan", async () => {
@@ -114,17 +120,23 @@ describe("tier3 mounted subsystem benches", () => {
   });
 
   bench("progress meter mounted value scan", async () => {
-    await runMountedBench(<ProgressMeter label="SLO" animate max={100} value={81} />, (container) => {
-      expectBenchElement(container, '[role="meter"]', "progress meter");
-      expectBenchElement(container, '[data-slot="progress-meter-value"]', "progress meter");
-    });
+    await runMountedBench(
+      <ProgressMeter label="SLO" animate max={100} value={81} />,
+      (container) => {
+        expectBenchElement(container, '[role="meter"]', "progress meter");
+        expectBenchElement(container, '[data-slot="progress-meter-value"]', "progress meter");
+      },
+    );
   });
 
   bench("radial gauge mounted dial scan", async () => {
-    await runMountedBench(<RadialGauge label="Fill rate" animate value={68} max={100} />, (container) => {
-      expectBenchElement(container, '[data-slot="radial-gauge-dial"]', "radial gauge");
-      expectBenchElement(container, '[data-slot="radial-gauge-ring"]', "radial gauge");
-    });
+    await runMountedBench(
+      <RadialGauge label="Fill rate" animate value={68} max={100} />,
+      (container) => {
+        expectBenchElement(container, '[data-slot="radial-gauge-dial"]', "radial gauge");
+        expectBenchElement(container, '[data-slot="radial-gauge-ring"]', "radial gauge");
+      },
+    );
   });
 
   bench("sparkline mounted dot scan", async () => {
@@ -141,7 +153,11 @@ describe("tier3 mounted subsystem benches", () => {
     await runMountedBench(
       <StackedBarChart label="Delivery mix" animate data={benchStackedRows} />,
       (container) => {
-        expectBenchCount(container, '[data-slot="stacked-bar-chart-item"]', benchStackedRows.length);
+        expectBenchCount(
+          container,
+          '[data-slot="stacked-bar-chart-item"]',
+          benchStackedRows.length,
+        );
         expectBenchCount(container, '[data-slot="stacked-bar-chart-segment"]', 24);
       },
     );

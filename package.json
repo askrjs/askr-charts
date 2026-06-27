@@ -51,6 +51,7 @@
     "./default/flame-graph.css": "./src/charts/default/styles/display/flame-graph.css",
     "./default/heatmap.css": "./src/charts/default/styles/display/heatmap.css",
     "./default/line-chart.css": "./src/charts/default/styles/display/line-chart.css",
+    "./default/pie-chart.css": "./src/charts/default/styles/display/pie-chart.css",
     "./default/progress-meter.css": "./src/charts/default/styles/display/progress-meter.css",
     "./default/radial-gauge.css": "./src/charts/default/styles/display/radial-gauge.css",
     "./default/sparkline.css": "./src/charts/default/styles/display/sparkline.css",
