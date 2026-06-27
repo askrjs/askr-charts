@@ -298,9 +298,12 @@ describe("chart components", () => {
 
     expect(html).toContain('data-slot="pie-chart"');
     expect(html).toContain("--ak-chart-pie-stops:");
+    expect(html).toContain("--ak-chart-pie-gap-color:");
     expect(html).toContain("deg");
     expect(html).toContain('data-slot="pie-chart-disc"');
     expect(html).toContain('data-slot="pie-chart-segment"');
+    expect(html).toContain("ak-pie-chart-segment-tooltip");
+    expect(html).toContain('aria-describedby="pie-chart-segment-tooltip-traffic-share-direct-0"');
     expect(html).toContain("Scale max is 100%");
   });
 
@@ -329,8 +332,8 @@ describe("chart components", () => {
             label: "renderApp",
             value: 100,
             children: [
-              { label: "loadRoute", value: 40 },
-              { label: "renderPage", value: 60 },
+              { label: "loadRoute", value: 4 },
+              { label: "renderPage", value: 96 },
             ],
           },
         ],
@@ -341,6 +344,7 @@ describe("chart components", () => {
     expect(html).toContain('data-ak-animation="grow"');
     expect(html).toContain("--ak-chart-item-offset:0%");
     expect(html).toContain("--ak-chart-item-value:100%");
+    expect(html).toContain('data-ak-flame-frame-size="tiny"');
     expect(html).toContain('data-slot="flame-graph-cell"');
   });
 
@@ -423,6 +427,7 @@ describe("chart components", () => {
     const pieCss = readFileSync(join(displayRoot, "pie-chart.css"), "utf8");
     const flameGraphCss = readFileSync(join(displayRoot, "flame-graph.css"), "utf8");
     const heatmapCss = readFileSync(join(displayRoot, "heatmap.css"), "utf8");
+    const timelineCss = readFileSync(join(displayRoot, "timeline.css"), "utf8");
     const animationsCss = readFileSync(
       join(__dirname, "..", "src", "charts", "default", "styles", "base", "animations.css"),
       "utf8",
@@ -441,6 +446,8 @@ describe("chart components", () => {
     expect(stackedBarCss).toContain("background: var(--ak-chart-item-color");
     expect(stackedBarCss).toContain("filter: saturate(1.08)");
     expect(stackedBarCss).toContain("--ak-chart-row-value");
+    expect(stackedBarCss).toContain("selector(:has(*))");
+    expect(stackedBarCss).toContain("overflow: visible");
     expect(progressCss).toContain("background: var(--ak-chart-item-color");
     expect(areaCss).toContain("34%, transparent");
     expect(areaCss).toContain("repeating-linear-gradient");
@@ -456,11 +463,18 @@ describe("chart components", () => {
     expect(donutCss).toContain("block-size: 0.3rem");
     expect(pieCss).toContain("selector(:has(*))");
     expect(pieCss).toContain("box-shadow: 0 0 0 1px");
+    expect(pieCss).toContain("drop-shadow(");
+    expect(pieCss).toContain("opacity: 0.32");
+    expect(pieCss).toContain("filter: saturate(0.74) brightness(0.96)");
+    expect(pieCss).toContain("ak-pie-chart-segment-tooltip");
+    expect(pieCss).toContain("block-size: 0.3rem");
     expect(flameGraphCss).toContain("background-size: 25% 100%");
     expect(flameGraphCss).toContain("outline: none");
     expect(heatmapCss).toContain("aspect-ratio: 1");
     expect(heatmapCss).toContain("saturate(1.08)");
     expect(heatmapCss).toContain("outline: 2px solid");
+    expect(timelineCss).toContain("transform: scale(1.12)");
+    expect(timelineCss).toContain("box-shadow: inset 0 0 0 1px");
     expect(tooltipCss).toContain("--ak-chart-tooltip-anchor-x");
     expect(tooltipCss).toContain("inset-inline-start: var(--ak-chart-tooltip-anchor-x");
   });

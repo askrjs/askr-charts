@@ -28,9 +28,10 @@
 }
 
 :where(.ak-stacked-bar-chart-track, [data-slot="stacked-bar-chart-track"]) {
+  position: relative;
   display: block;
   min-height: var(--ak-chart-track-thickness, 0.6875rem);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--ak-chart-track-border);
   border-radius: 999px;
   background: var(--ak-chart-track-bg, var(--ak-chart-color-muted));
@@ -38,10 +39,21 @@
 }
 
 :where(.ak-stacked-bar-chart-stack, [data-slot="stacked-bar-chart-stack"]) {
+  position: relative;
   display: flex;
   inline-size: var(--ak-chart-row-value, 0%);
   min-block-size: calc(var(--ak-chart-track-thickness, 0.6875rem) - 2px);
+  overflow: hidden;
   border-radius: inherit;
+}
+
+@supports selector(:has(*)) {
+  :where(.ak-stacked-bar-chart-stack, [data-slot="stacked-bar-chart-stack"]):has(
+    :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):hover,
+    :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):focus-within
+  ) {
+    overflow: visible;
+  }
 }
 
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]) {
@@ -60,10 +72,25 @@
     opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
 }
 
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):first-child {
+  border-start-start-radius: inherit;
+  border-end-start-radius: inherit;
+}
+
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):last-child {
+  border-start-end-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):hover,
 :where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):focus-within {
   filter: saturate(1.08);
   z-index: 1;
+}
+
+:where(.ak-stacked-bar-chart-segment, [data-slot="stacked-bar-chart-segment"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ak-chart-focus-ring) 68%, transparent);
+  outline-offset: 2px;
 }
 
 :where(.ak-stacked-bar-chart-value, [data-slot="stacked-bar-chart-value"]) {

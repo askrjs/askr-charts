@@ -114,6 +114,14 @@ function groupFlameGraphRows(data: readonly FlattenedFlameGraphDatum[]) {
     .map(([depth, frames]) => ({ depth, frames }));
 }
 
+function getFlameGraphFrameSize(widthFraction: number): "tiny" | "small" | "medium" | "large" {
+  if (widthFraction < 0.065) return "tiny";
+  if (widthFraction < 0.12) return "small";
+  if (widthFraction < 0.2) return "medium";
+
+  return "large";
+}
+
 export function FlameGraph({
   animate,
   animation,
@@ -183,6 +191,7 @@ export function FlameGraph({
                   key={`${frame.path}-${frame.itemIndex}`}
                   data-ak-chart-item="true"
                   data-ak-chart-tooltip-trigger="true"
+                  data-ak-flame-frame-size={getFlameGraphFrameSize(frame.widthFraction)}
                   data-slot="flame-graph-cell"
                   className="ak-flame-graph-cell"
                   aria-label={`${frame.path}: ${frame.formattedValue}`}
