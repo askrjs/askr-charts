@@ -17,6 +17,8 @@ import {
 } from "../_internal/chart-helpers";
 import type { DonutChartProps } from "./donut-chart.types";
 
+const DONUT_INNER_RADIUS = 31;
+
 function toDonutPoint(angle: number, radius: number) {
   const radians = ((angle - 90) * Math.PI) / 180;
   const x = 50 + Math.cos(radians) * radius;
@@ -39,7 +41,7 @@ function buildDonutSegmentClipPath(start: number, end: number) {
 
   for (let index = segments; index >= 0; index -= 1) {
     const angle = start + (sweep * index) / segments;
-    innerPoints.push(toDonutPoint(angle, 28));
+    innerPoints.push(toDonutPoint(angle, DONUT_INNER_RADIUS));
   }
 
   return `polygon(${[...outerPoints, ...innerPoints].join(", ")})`;
@@ -104,7 +106,7 @@ export function DonutChart({
       }
 
       if (gap > 0) {
-        donutStops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
+        donutStops.push(`var(--ak-chart-donut-gap-color) ${segmentEnd}deg ${end}deg`);
       }
 
       if (datum.value > 0) {
@@ -132,7 +134,11 @@ export function DonutChart({
       data-slot="donut-chart"
       className={cx("ak-chart", "ak-donut-chart", className)}
       style={mergeChartStyles(
-        { "--ak-chart-donut-stops": donutStopsValue, ...animationStyle },
+        {
+          "--ak-chart-donut-gap-color": "var(--ak-chart-color-surface)",
+          "--ak-chart-donut-stops": donutStopsValue,
+          ...animationStyle,
+        },
         style,
       )}
     >
@@ -203,6 +209,7 @@ export function DonutChart({
               style={mergeChartStyles({
                 "--ak-chart-item-color": getChartSeriesColor(index(), datum.color),
                 "--ak-chart-item-index": index(),
+                "--ak-chart-item-value": `${datum.fraction * 100}%`,
               })}
             >
               <span

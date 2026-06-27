@@ -329,6 +329,7 @@ describe("browser chart rendering", () => {
     const donutRingVisual = container.querySelector(
       '[data-slot="donut-chart-ring"]',
     ) as HTMLElement;
+    const donutCenter = container.querySelector('[data-slot="donut-chart-center"]') as HTMLElement;
     const donutSegment = container.querySelector(
       '[data-slot="donut-chart-segment"]',
     ) as HTMLElement;
@@ -348,6 +349,8 @@ describe("browser chart rendering", () => {
     expect(parseFloat(getComputedStyle(donutRing).inlineSize)).toBeLessThanOrEqual(232);
     expect(parseFloat(getComputedStyle(pieDisc).inlineSize)).toBeLessThanOrEqual(232);
     expect(parseFloat(getComputedStyle(radialDial).inlineSize)).toBeLessThanOrEqual(232);
+    expect(getComputedStyle(donutCenter).borderRadius).toBe("999px");
+    expect(getComputedStyle(donutCenter).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
     expect(getComputedStyle(donutRingVisual).pointerEvents).toBe("none");
     expect(parseFloat(getComputedStyle(donutSegment).zIndex)).toBeGreaterThan(
       parseFloat(getComputedStyle(donutRingVisual).zIndex),
@@ -484,12 +487,14 @@ describe("browser chart rendering", () => {
     const ring = container.querySelector('[data-slot="donut-chart-ring"]');
     const ringSegments = [...container.querySelectorAll('[data-slot="donut-chart-segment"]')];
     const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
+    const firstItem = container.querySelector('[data-slot="donut-chart-item"]') as HTMLElement;
     const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
     const tooltipTitle = container.querySelector(".chart-tooltip-title");
 
     expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(root?.getAttribute("style")).toContain("--ak-chart-donut-stops:");
+    expect(root?.getAttribute("style")).toContain("--ak-chart-donut-gap-color:");
     expect(normalizeStyle(ring?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(ringSegments).toHaveLength(3);
     expect(ringSegments[0]?.getAttribute("tabindex")).toBe("0");
@@ -501,6 +506,9 @@ describe("browser chart rendering", () => {
     expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain(
       "--ak-chart-item-color:tomato",
     );
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:44%");
+    expect(getComputedStyle(firstItem, "::after").gridArea).toBe("rail");
+    expect(getComputedStyle(firstItem, "::after").backgroundImage).toContain("linear-gradient");
     expect(totalValue?.textContent).toBe("100");
     expect(tooltipTitle?.textContent).toBe("Direct");
   });

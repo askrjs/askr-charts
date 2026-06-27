@@ -193,8 +193,10 @@ Purpose: show part-to-whole composition in a compact circular form.
 Real-world comparison: Stripe payment-method mix cards and GitHub language
 composition widgets.
 
-Visual grammar: segmented circular ring, consistent ring thickness, center
-void, and readable total or center value. Segment labels are secondary.
+Visual grammar: segmented circular ring, consistent ring thickness, surface
+colored separators that do not read as data, a clear center total badge, and
+legend rows with compact share rails. Segment labels are secondary but must be
+readable without opening tooltips.
 
 Data shape: accepts object or tuple segment inputs with `label`, `value`,
 optional color, and optional `description`. Supports `labelDensity`, `summary`,
