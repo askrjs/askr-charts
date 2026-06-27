@@ -69,7 +69,7 @@ export function mergeChartStyles(base: ChartStyle, incoming?: ChartStyleInput): 
 const CHART_TOOLTIP_TRIGGER_SELECTOR = '[data-ak-chart-tooltip-trigger="true"]';
 const CHART_TOOLTIP_ANCHOR_X_VAR = "--ak-chart-tooltip-anchor-x";
 const CHART_TOOLTIP_ANCHOR_Y_VAR = "--ak-chart-tooltip-anchor-y";
-const EXTERNAL_TOOLTIP_SLOTS = new Set(["donut-chart-segment"]);
+const EXTERNAL_TOOLTIP_SLOTS = new Set(["donut-chart-segment", "pie-chart-segment"]);
 
 function getChartTooltipTrigger(event: Event): HTMLElement | null {
   if (!(event.target instanceof HTMLElement)) {

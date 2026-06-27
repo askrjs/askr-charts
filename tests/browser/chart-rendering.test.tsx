@@ -243,14 +243,15 @@ describe("browser chart rendering", () => {
     container = mount(
       <FlameGraph
         label="Call stack"
+        labelDensity="compact"
         animate
         data={[
           {
             label: "renderApp",
             value: 100,
             children: [
-              { label: "loadRoute", value: 40 },
-              { label: "renderPage", value: 60 },
+              { label: "loadRoute", value: 4 },
+              { label: "renderPage", value: 96 },
             ],
           },
         ]}
@@ -260,14 +261,24 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="flame-graph"]');
     const cells = [...container.querySelectorAll('[data-slot="flame-graph-cell"]')];
+    const tinyCell = cells[1] as HTMLElement;
     const table = container.querySelector('[data-slot="chart-table"]') as HTMLElement;
 
     expect(root?.getAttribute("data-ak-animation")).toBe("grow");
     expect(cells).toHaveLength(3);
     expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-offset:0%");
     expect(normalizeStyle(cells[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:100%");
-    expect(normalizeStyle(cells[1]?.getAttribute("style"))).toContain("--ak-chart-item-value:40%");
-    expect(normalizeStyle(cells[2]?.getAttribute("style"))).toContain("--ak-chart-item-offset:40%");
+    expect(normalizeStyle(tinyCell.getAttribute("style"))).toContain("--ak-chart-item-value:4%");
+    expect(tinyCell.getAttribute("data-ak-flame-frame-size")).toBe("tiny");
+    expect(
+      getComputedStyle(tinyCell.querySelector('[data-slot="flame-graph-label"]') as HTMLElement)
+        .display,
+    ).toBe("none");
+    expect(
+      getComputedStyle(tinyCell.querySelector('[data-slot="flame-graph-value"]') as HTMLElement)
+        .display,
+    ).toBe("none");
+    expect(normalizeStyle(cells[2]?.getAttribute("style"))).toContain("--ak-chart-item-offset:4%");
     expect(container.querySelector('[data-slot="chart-table"] caption')?.textContent).toBe(
       "Call stack",
     );
@@ -385,6 +396,12 @@ describe("browser chart rendering", () => {
     expect(segments).toHaveLength(2);
     expect(normalizeStyle(stack.getAttribute("style"))).toContain("--ak-chart-row-value:100%");
     expect(parseFloat(getComputedStyle(track).minHeight)).toBeLessThanOrEqual(12);
+    expect(getComputedStyle(track).overflow).toBe("visible");
+    expect(getComputedStyle(stack).overflow).toBe("hidden");
+
+    (segments[0] as HTMLElement).focus();
+
+    expect(getComputedStyle(stack).overflow).toBe("visible");
   });
 
   it("should render sparkline and progress meter surfaces compactly", async () => {
@@ -568,23 +585,65 @@ describe("browser chart rendering", () => {
     await flushUpdates();
 
     const root = container.querySelector('[data-slot="pie-chart"]');
+    const discWrap = container.querySelector('[data-slot="pie-chart-disc-wrap"]') as HTMLElement;
     const disc = container.querySelector('[data-slot="pie-chart-disc"]');
+    const segmentWrap = container.querySelector(
+      '[data-slot="pie-chart-segment-wrap"]',
+    ) as HTMLElement;
     const segments = [...container.querySelectorAll('[data-slot="pie-chart-segment"]')];
+    const firstSegment = segments[0] as HTMLElement;
     const items = [...container.querySelectorAll('[data-slot="pie-chart-item"]')];
+    const firstItem = container.querySelector('[data-slot="pie-chart-item"]') as HTMLElement;
+    const segmentTooltip = container.querySelector(".ak-pie-chart-segment-tooltip") as HTMLElement;
     const tooltipTitle = container.querySelector(".chart-tooltip-title");
 
     expect(root?.getAttribute("data-ak-animation")).toBe("sweep");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(root?.getAttribute("style")).toContain("--ak-chart-pie-stops:");
+    expect(root?.getAttribute("style")).toContain("--ak-chart-pie-gap-color:");
     expect(normalizeStyle(disc?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(segments).toHaveLength(3);
-    expect(segments[0]?.getAttribute("tabindex")).toBe("0");
-    expect(normalizeStyle(segments[0]?.getAttribute("style"))).toContain(
+    expect(firstSegment.getAttribute("tabindex")).toBe("0");
+    expect(firstSegment.getAttribute("aria-describedby")).toBe(segmentTooltip.id);
+    expect(normalizeStyle(firstSegment.getAttribute("style"))).toContain(
       "--ak-chart-item-color:tomato",
     );
+    expect(segmentWrap.parentElement).toBe(discWrap);
+    expect(firstSegment.parentElement).toBe(segmentWrap);
+    expect(segmentTooltip.parentElement).toBe(segmentWrap);
+    expect(firstSegment.contains(segmentTooltip)).toBe(false);
     expect(items).toHaveLength(3);
     expect(items[0]?.getAttribute("tabindex")).toBe("0");
+    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-value:42%");
+    expect(getComputedStyle(firstItem, "::after").gridArea).toBe("rail");
+    expect(getComputedStyle(firstItem, "::after").backgroundImage).toContain("linear-gradient");
     expect(tooltipTitle?.textContent).toBe("Direct");
+
+    Object.defineProperty(firstSegment, "getBoundingClientRect", {
+      value: () => ({
+        bottom: 120,
+        height: 100,
+        left: 10,
+        right: 110,
+        top: 20,
+        width: 100,
+        x: 10,
+        y: 20,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const event = new Event("pointermove", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clientX", { value: 55 });
+    Object.defineProperty(event, "clientY", { value: 70 });
+    firstSegment.dispatchEvent(event);
+
+    expect(normalizeStyle(segmentWrap.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-x:45px",
+    );
+    expect(normalizeStyle(segmentWrap.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-y:50px",
+    );
   });
 
   it("should render timelines with slide animation and tooltip-ready milestones", async () => {
@@ -603,18 +662,22 @@ describe("browser chart rendering", () => {
 
     const root = container.querySelector('[data-slot="timeline"]');
     const items = [...container.querySelectorAll('[data-slot="timeline-item"]')];
+    const firstItem = items[0] as HTMLElement;
     const list = container.querySelector('[data-slot="timeline-list"]') as HTMLElement;
-    const firstMarker = container.querySelector('[data-slot="timeline-marker"]');
+    const firstMarker = container.querySelector('[data-slot="timeline-marker"]') as HTMLElement;
     const tooltipTitle = container.querySelector(".chart-tooltip-title");
     const tooltipValue = container.querySelector(".chart-tooltip-value");
 
     expect(root?.getAttribute("data-ak-animation")).toBe("slide");
     expect(root?.getAttribute("data-ak-label-density")).toBe("compact");
     expect(items).toHaveLength(2);
-    expect(items[0]?.getAttribute("tabindex")).toBe("0");
-    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-color:gold");
-    expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
+    expect(firstItem.getAttribute("tabindex")).toBe("0");
+    expect(normalizeStyle(firstItem.getAttribute("style"))).toContain("--ak-chart-item-color:gold");
+    expect(normalizeStyle(firstItem.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(firstMarker).toBeTruthy();
+    expect(getComputedStyle(firstMarker).transform).toBe("none");
+    firstItem.focus();
+    expect(getComputedStyle(firstMarker).transform).not.toBe("none");
     expect(tooltipTitle?.textContent).toBe("Alpha");
     expect(container.querySelector('[data-slot="timeline-value"]')).toBeTruthy();
     expect(tooltipValue).toBeTruthy();

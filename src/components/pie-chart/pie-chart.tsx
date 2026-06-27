@@ -92,7 +92,7 @@ export function PieChart({
       }
 
       if (gap > 0) {
-        pieStops.push(`var(--ak-chart-color-muted) ${segmentEnd}deg ${end}deg`);
+        pieStops.push(`var(--ak-chart-pie-gap-color) ${segmentEnd}deg ${end}deg`);
       }
 
       if (datum.value > 0) {
@@ -119,7 +119,14 @@ export function PieChart({
       data-ak-label-density={labelDensity}
       data-slot="pie-chart"
       className={cx("ak-chart", "ak-pie-chart", className)}
-      style={mergeChartStyles({ "--ak-chart-pie-stops": pieStopsValue, ...animationStyle }, style)}
+      style={mergeChartStyles(
+        {
+          "--ak-chart-pie-gap-color": "var(--ak-chart-color-surface)",
+          "--ak-chart-pie-stops": pieStopsValue,
+          ...animationStyle,
+        },
+        style,
+      )}
     >
       <div
         data-slot="chart-graphic"
@@ -138,31 +145,46 @@ export function PieChart({
           />
 
           <For each={pieSegments} by={(segment) => `${segment.datum.label}-${segment.index}`}>
-            {(segment) => (
-              <button
-                type="button"
-                data-ak-chart-item="true"
-                data-ak-chart-tooltip-trigger="true"
-                data-slot="pie-chart-segment"
-                className="ak-pie-chart-segment"
-                aria-label={`${segment.datum.label}: ${segment.datum.formattedValue}`}
-                tabIndex={0}
-                style={mergeChartStyles({
-                  "--ak-chart-item-color": segment.color,
-                  "--ak-chart-item-index": segment.index,
-                  "--ak-pie-segment-clip-path": segment.clipPath ?? "none",
-                })}
-              >
-                <span className="ak-chart-sr-only">
-                  {segment.datum.label}: {segment.datum.formattedValue}
+            {(segment) => {
+              const tooltipId = createChartId(
+                "pie-chart-segment-tooltip",
+                `${id ?? label}-${segment.datum.label}-${segment.index}`,
+              );
+
+              return (
+                <span data-slot="pie-chart-segment-wrap" className="ak-pie-chart-segment-wrap">
+                  <button
+                    type="button"
+                    data-ak-chart-item="true"
+                    data-ak-chart-tooltip-trigger="true"
+                    data-slot="pie-chart-segment"
+                    className="ak-pie-chart-segment"
+                    aria-label={`${segment.datum.label}: ${segment.datum.formattedValue}`}
+                    aria-describedby={tooltipId}
+                    tabIndex={0}
+                    style={mergeChartStyles({
+                      "--ak-chart-item-color": segment.color,
+                      "--ak-chart-item-index": segment.index,
+                      "--ak-pie-segment-clip-path": segment.clipPath ?? "none",
+                    })}
+                  >
+                    <span className="ak-chart-sr-only">
+                      {segment.datum.label}: {segment.datum.formattedValue}
+                    </span>
+                  </button>
+                  <span
+                    id={tooltipId}
+                    data-slot="tooltip-content"
+                    className="ak-pie-chart-segment-tooltip chart-tooltip"
+                    role="tooltip"
+                  >
+                    <span className="chart-tooltip-title">{segment.datum.label}</span>
+                    <span className="chart-tooltip-value">{segment.datum.formattedValue}</span>
+                    {segment.datum.description ? <span>{segment.datum.description}</span> : null}
+                  </span>
                 </span>
-                <span data-slot="tooltip-content" className="chart-tooltip" role="tooltip">
-                  <span className="chart-tooltip-title">{segment.datum.label}</span>
-                  <span className="chart-tooltip-value">{segment.datum.formattedValue}</span>
-                  {segment.datum.description ? <span>{segment.datum.description}</span> : null}
-                </span>
-              </button>
-            )}
+              );
+            }}
           </For>
         </div>
       </div>
@@ -179,6 +201,7 @@ export function PieChart({
               style={mergeChartStyles({
                 "--ak-chart-item-color": getChartSeriesColor(index(), datum.color),
                 "--ak-chart-item-index": index(),
+                "--ak-chart-item-value": `${datum.fraction * 100}%`,
               })}
             >
               <span
