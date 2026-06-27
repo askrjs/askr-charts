@@ -484,10 +484,18 @@ describe("browser chart rendering", () => {
     await flushUpdates();
 
     const root = container.querySelector('[data-slot="donut-chart"]');
+    const ringWrap = container.querySelector('[data-slot="donut-chart-ring-wrap"]') as HTMLElement;
     const ring = container.querySelector('[data-slot="donut-chart-ring"]');
+    const segmentWrap = container.querySelector(
+      '[data-slot="donut-chart-segment-wrap"]',
+    ) as HTMLElement;
     const ringSegments = [...container.querySelectorAll('[data-slot="donut-chart-segment"]')];
+    const firstSegment = ringSegments[0] as HTMLElement;
     const items = [...container.querySelectorAll('[data-slot="donut-chart-item"]')];
     const firstItem = container.querySelector('[data-slot="donut-chart-item"]') as HTMLElement;
+    const segmentTooltip = container.querySelector(
+      ".ak-donut-chart-segment-tooltip",
+    ) as HTMLElement;
     const totalValue = container.querySelector('[data-slot="donut-chart-total-value"]');
     const tooltipTitle = container.querySelector(".chart-tooltip-title");
 
@@ -497,10 +505,15 @@ describe("browser chart rendering", () => {
     expect(root?.getAttribute("style")).toContain("--ak-chart-donut-gap-color:");
     expect(normalizeStyle(ring?.getAttribute("style"))).toContain("--ak-chart-item-index:0");
     expect(ringSegments).toHaveLength(3);
-    expect(ringSegments[0]?.getAttribute("tabindex")).toBe("0");
-    expect(normalizeStyle(ringSegments[0]?.getAttribute("style"))).toContain(
+    expect(firstSegment.getAttribute("tabindex")).toBe("0");
+    expect(firstSegment.getAttribute("aria-describedby")).toBe(segmentTooltip.id);
+    expect(normalizeStyle(firstSegment.getAttribute("style"))).toContain(
       "--ak-chart-item-color:tomato",
     );
+    expect(segmentWrap.parentElement).toBe(ringWrap);
+    expect(firstSegment.parentElement).toBe(segmentWrap);
+    expect(segmentTooltip.parentElement).toBe(segmentWrap);
+    expect(firstSegment.contains(segmentTooltip)).toBe(false);
     expect(items).toHaveLength(3);
     expect(items[0]?.getAttribute("tabindex")).toBe("0");
     expect(normalizeStyle(items[0]?.getAttribute("style"))).toContain(
@@ -511,6 +524,32 @@ describe("browser chart rendering", () => {
     expect(getComputedStyle(firstItem, "::after").backgroundImage).toContain("linear-gradient");
     expect(totalValue?.textContent).toBe("100");
     expect(tooltipTitle?.textContent).toBe("Direct");
+
+    Object.defineProperty(firstSegment, "getBoundingClientRect", {
+      value: () => ({
+        bottom: 120,
+        height: 100,
+        left: 10,
+        right: 110,
+        top: 20,
+        width: 100,
+        x: 10,
+        y: 20,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const event = new Event("pointermove", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clientX", { value: 55 });
+    Object.defineProperty(event, "clientY", { value: 70 });
+    firstSegment.dispatchEvent(event);
+
+    expect(normalizeStyle(segmentWrap.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-x:45px",
+    );
+    expect(normalizeStyle(segmentWrap.getAttribute("style"))).toContain(
+      "--ak-chart-tooltip-anchor-y:50px",
+    );
   });
 
   it("should render pie charts with tooltip-ready solid segments", async () => {

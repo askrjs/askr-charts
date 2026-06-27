@@ -263,6 +263,8 @@ describe("chart components", () => {
     expect(html).toContain('data-slot="donut-chart"');
     expect(html).toContain("--ak-chart-donut-stops:");
     expect(html).toContain("deg");
+    expect(html).toContain("ak-donut-chart-segment-tooltip");
+    expect(html).toContain('aria-describedby="donut-chart-segment-tooltip-traffic-split-direct-0"');
     expect(html).toContain('class="ak-donut-chart-total-value">100%</strong>');
     expect(html).toContain("Scale max is 100%");
   });
@@ -447,6 +449,11 @@ describe("chart components", () => {
     expect(lineCss).toContain('data-ak-show-grid="true"');
     expect(donutCss).toContain("selector(:has(*))");
     expect(donutCss).toContain("box-shadow: 0 0 0 1px");
+    expect(donutCss).toContain("drop-shadow(");
+    expect(donutCss).toContain("opacity: 0.36");
+    expect(donutCss).toContain("filter: saturate(0.72) brightness(0.96)");
+    expect(donutCss).toContain("ak-donut-chart-segment-tooltip");
+    expect(donutCss).toContain("block-size: 0.3rem");
     expect(pieCss).toContain("selector(:has(*))");
     expect(pieCss).toContain("box-shadow: 0 0 0 1px");
     expect(flameGraphCss).toContain("background-size: 25% 100%");

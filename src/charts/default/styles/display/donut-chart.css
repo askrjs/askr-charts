@@ -29,10 +29,12 @@
 
 :where(.ak-donut-chart-ring-wrap, [data-slot="donut-chart-ring-wrap"]) {
   position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
   inline-size: min(var(--ak-chart-donut-size, 12.25rem), 100%);
   aspect-ratio: 1;
+  overflow: visible;
   border-radius: 999px;
 }
 
@@ -40,6 +42,7 @@
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   border-radius: 999px;
   background: var(--ak-chart-track-bg, var(--ak-chart-color-muted));
   mask: radial-gradient(
@@ -48,11 +51,13 @@
     black calc(var(--ak-chart-donut-hole-size, 61%) + 1%) 100%
   );
   opacity: 0.82;
+  pointer-events: none;
+  transition: opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
 }
 
 :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
   position: relative;
-  z-index: 0;
+  z-index: 1;
   inline-size: 100%;
   block-size: 100%;
   border-radius: 999px;
@@ -65,7 +70,7 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-border) 72%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
-    transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+    opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
   pointer-events: none;
 }
 
@@ -80,7 +85,7 @@
   border: 0;
   border-radius: 999px;
   clip-path: var(--ak-donut-segment-clip-path, none);
-  background: rgb(255 255 255 / 0.001);
+  background: transparent;
   mask: radial-gradient(
     circle,
     transparent 0 var(--ak-chart-donut-hole-size, 61%),
@@ -89,14 +94,37 @@
   appearance: none;
   cursor: pointer;
   outline: none;
-  transition:
-    background var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
-    filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+  pointer-events: auto;
+}
+
+:where(.ak-donut-chart-segment-wrap, [data-slot="donut-chart-segment-wrap"]) {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
 }
 
 .ak-donut-chart-ring-wrap > .ak-donut-chart-segment,
-[data-slot="donut-chart-ring-wrap"] > [data-slot="donut-chart-segment"] {
+.ak-donut-chart-segment-wrap > .ak-donut-chart-segment,
+[data-slot="donut-chart-ring-wrap"] > [data-slot="donut-chart-segment"],
+[data-slot="donut-chart-segment-wrap"] > [data-slot="donut-chart-segment"] {
   position: absolute;
+}
+
+:where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  opacity: 0;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
+    opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
+    transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+  pointer-events: none;
 }
 
 :where(.ak-donut-chart-segment:focus-visible, [data-slot="donut-chart-segment"]:focus-visible) {
@@ -104,14 +132,41 @@
   outline-offset: 3px;
 }
 
-:where(.ak-donut-chart-segment:hover, [data-slot="donut-chart-segment"]:hover),
-:where(.ak-donut-chart-segment:focus-visible, [data-slot="donut-chart-segment"]:focus-visible) {
-  background: color-mix(
-    in srgb,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 26%,
-    transparent
-  );
-  filter: saturate(1.08);
+:where(.ak-donut-chart-segment:hover, [data-slot="donut-chart-segment"]:hover)::before,
+:where(
+  .ak-donut-chart-segment:focus-visible,
+  [data-slot="donut-chart-segment"]:focus-visible
+)::before {
+  opacity: 0.36;
+  filter: brightness(1.12) saturate(1.2)
+    drop-shadow(
+      0 0 0.55rem
+        color-mix(
+          in srgb,
+          var(--ak-chart-item-color, var(--ak-chart-color-primary)) 42%,
+          transparent
+        )
+    );
+  transform: scale(1.025);
+}
+
+.ak-donut-chart-segment-tooltip.chart-tooltip {
+  inset-inline-start: 50%;
+  z-index: var(--ak-chart-z-tooltip, 20);
+  inline-size: max-content;
+  max-inline-size: min(14rem, calc(100vw - 2rem));
+}
+
+.ak-donut-chart-segment:hover + .ak-donut-chart-segment-tooltip.chart-tooltip,
+.ak-donut-chart-segment:focus-visible + .ak-donut-chart-segment-tooltip.chart-tooltip,
+[data-slot="donut-chart-segment"]:hover + .ak-donut-chart-segment-tooltip.chart-tooltip,
+[data-slot="donut-chart-segment"]:focus-visible + .ak-donut-chart-segment-tooltip.chart-tooltip {
+  display: grid;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, calc(-100% - 0.5rem)) scale(1);
+  animation: ak-tooltip-in var(--ak-chart-duration-fast, 120ms)
+    var(--ak-chart-ease-standard, ease-out);
 }
 
 @supports selector(:has(*)) {
@@ -120,14 +175,22 @@
       :where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"]):focus-visible
     )
     :where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"]) {
-    filter: saturate(1.08);
-    transform: scale(1.012);
+    filter: saturate(0.72) brightness(0.96);
+    opacity: 0.82;
+  }
+
+  :where(.ak-donut-chart-ring-wrap, [data-slot="donut-chart-ring-wrap"]):has(
+      :where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"]):hover,
+      :where(.ak-donut-chart-segment, [data-slot="donut-chart-segment"]):focus-visible
+    )::before {
+    opacity: 0.92;
   }
 }
 
 :where(.ak-donut-chart-center, [data-slot="donut-chart-center"]) {
   position: absolute;
   inset: 50% auto auto 50%;
+  z-index: 3;
   display: grid;
   align-content: center;
   justify-items: center;
@@ -194,9 +257,11 @@
 :where(.ak-donut-chart-item, [data-slot="donut-chart-item"]):focus-within {
   background: color-mix(
     in srgb,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 8%,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 12%,
     transparent
   );
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%, transparent);
 }
 
 :where(.ak-donut-chart-item, [data-slot="donut-chart-item"])::after {
@@ -211,6 +276,27 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary)) 0 var(--ak-chart-item-value, 0%),
     var(--ak-chart-color-muted) var(--ak-chart-item-value, 0%) 100%
   );
+  transition:
+    background var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
+    block-size var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
+    box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+}
+
+:where(.ak-donut-chart-item, [data-slot="donut-chart-item"]):hover::after,
+:where(.ak-donut-chart-item, [data-slot="donut-chart-item"]):focus-within::after {
+  block-size: 0.3rem;
+  background: linear-gradient(
+    90deg,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 0 var(--ak-chart-item-value, 0%),
+    color-mix(
+        in srgb,
+        var(--ak-chart-item-color, var(--ak-chart-color-primary)) 12%,
+        var(--ak-chart-color-muted)
+      )
+      var(--ak-chart-item-value, 0%) 100%
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 12%, transparent);
 }
 
 :where(.ak-donut-chart-item, [data-slot="donut-chart-item"]):focus-visible {
