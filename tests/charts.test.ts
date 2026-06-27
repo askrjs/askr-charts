@@ -410,7 +410,7 @@ describe("chart components", () => {
     expect(html).toContain("--ak-chart-item-color:var(--ak-chart-color-info)");
   });
 
-  it("should keeps the phase 3 visual polish hooks in the default chart styles", () => {
+  it("should keeps the Askr default visual contract in the default chart styles", () => {
     const displayRoot = join(__dirname, "..", "src", "charts", "default", "styles", "display");
     const barCss = readFileSync(join(displayRoot, "bar-chart.css"), "utf8");
     const stackedBarCss = readFileSync(join(displayRoot, "stacked-bar-chart.css"), "utf8");
@@ -430,26 +430,29 @@ describe("chart components", () => {
       "utf8",
     );
 
-    expect(barCss).toContain("linear-gradient(");
-    expect(barCss).toContain("brightness(1.08)");
+    expect(barCss).toContain("background: var(--ak-chart-item-color");
+    expect(barCss).toContain("filter: saturate(1.08)");
     expect(barCss).toContain("repeating-linear-gradient(");
     expect(barCss).toContain("border-inline-start");
     expect(barCss).toContain('data-ak-chart-variant="histogram"');
     expect(animationsCss).toContain("ak-chart-grow-y");
-    expect(stackedBarCss).toContain("linear-gradient(");
-    expect(stackedBarCss).toContain("brightness(1.1)");
+    expect(stackedBarCss).toContain("background: var(--ak-chart-item-color");
+    expect(stackedBarCss).toContain("filter: saturate(1.08)");
     expect(stackedBarCss).toContain("--ak-chart-row-value");
-    expect(progressCss).toContain("linear-gradient(");
-    expect(areaCss).toContain("52%, transparent");
+    expect(progressCss).toContain("background: var(--ak-chart-item-color");
+    expect(areaCss).toContain("34%, transparent");
     expect(areaCss).toContain("repeating-linear-gradient");
     expect(lineCss).toContain("line-chart-stroke-wrap");
-    expect(lineCss).toContain("filter: blur(0.55rem)");
+    expect(lineCss).toContain("background: var(--ak-chart-color-primary)");
     expect(lineCss).toContain('data-ak-show-grid="true"');
     expect(donutCss).toContain("selector(:has(*))");
+    expect(donutCss).toContain("box-shadow: 0 0 0 1px");
     expect(pieCss).toContain("selector(:has(*))");
+    expect(pieCss).toContain("box-shadow: 0 0 0 1px");
     expect(flameGraphCss).toContain("background-size: 25% 100%");
     expect(flameGraphCss).toContain("outline: none");
-    expect(heatmapCss).toContain("saturate(1.1)");
+    expect(heatmapCss).toContain("aspect-ratio: 1");
+    expect(heatmapCss).toContain("saturate(1.08)");
     expect(heatmapCss).toContain("outline: 2px solid");
     expect(tooltipCss).toContain("--ak-chart-tooltip-anchor-x");
     expect(tooltipCss).toContain("inset-inline-start: var(--ak-chart-tooltip-anchor-x");
@@ -511,7 +514,9 @@ describe("chart components", () => {
     }
 
     const tokensCss = readFileSync(join(root, "src", "charts", "default", "tokens.css"), "utf8");
-    expect(tokensCss).toContain("var(--ak-color-chart-primary, var(--ak-chart-series-1, #2563eb))");
+    expect(tokensCss).toContain("var(--ak-color-chart-primary, var(--ak-chart-series-1))");
+    expect(tokensCss).toContain("var(--ak-color-surface-muted");
+    expect(tokensCss).toContain("var(--ak-color-surface-raised");
     expect(tokensCss).toContain("--ak-chart-focus-ring");
     expect(tokensCss).toContain("--ak-chart-tooltip-border");
   });

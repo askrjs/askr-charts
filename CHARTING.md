@@ -126,6 +126,8 @@ Responsive rules:
 Purpose: show a filled trend over ordered points when the exact values matter
 less than the overall movement.
 
+Real-world comparison: Vercel usage cards and Stripe balance trend panels.
+
 Visual grammar: a continuous filled series with connected points, a quiet
 baseline, and enough horizontal rhythm to read as time or sequence. It must not
 read as a histogram or a row of independent blocks.
@@ -144,6 +146,9 @@ area mode.
 ### BarChart
 
 Purpose: compare discrete categories through horizontal bars.
+
+Real-world comparison: Stripe breakdown rows and GitHub repository language
+bars.
 
 Visual grammar: one bar per category, stable tracks, visible labels, and clear
 relative length. The default `bar` variant is horizontal; `histogram` renders
@@ -166,6 +171,8 @@ histograms.
 Purpose: show trend movement across ordered points with the line as the primary
 mark.
 
+Real-world comparison: Vercel analytics trend cards and GitHub traffic graphs.
+
 Visual grammar: connected points and sloped segments across a quiet plotting
 area. The chart must read as a line first, without area fill or bar-like stems.
 
@@ -182,6 +189,9 @@ scientific time-series rendering.
 ### DonutChart
 
 Purpose: show part-to-whole composition in a compact circular form.
+
+Real-world comparison: Stripe payment-method mix cards and GitHub language
+composition widgets.
 
 Visual grammar: segmented circular ring, consistent ring thickness, center
 void, and readable total or center value. Segment labels are secondary.
@@ -201,6 +211,9 @@ that depend on tooltip-only understanding.
 Purpose: show part-to-whole composition as a solid circular disc when the center
 value treatment of a donut would add visual noise.
 
+Real-world comparison: dashboard issue share, work-state, and incident share
+widgets.
+
 Visual grammar: segmented circular disc, consistent slice boundaries, and a
 legend-style list for labels and values. It must read as a solid share chart,
 not as a radial gauge or a donut with a missing center label.
@@ -218,6 +231,9 @@ tiny segments that depend on tooltip-only understanding.
 ### StackedBarChart
 
 Purpose: compare totals while preserving each bar's internal composition.
+
+Real-world comparison: Linear issue status breakdowns and GitHub project status
+bars.
 
 Visual grammar: one horizontal track per category, split into proportional
 segments with stable boundaries and concise labels.
@@ -237,6 +253,9 @@ spreadsheet-style table replacement.
 
 Purpose: show a tiny trend inside dense product UI.
 
+Real-world comparison: GitHub repository insight sparklines and Stripe metric
+delta cards.
+
 Visual grammar: minimal inline trend with small points or columns, no axes, no
 legend, and no surrounding chart chrome.
 
@@ -253,6 +272,9 @@ axis treatment.
 ### Heatmap
 
 Purpose: show intensity across two categorical dimensions.
+
+Real-world comparison: GitHub contribution grids and operational activity
+heatmaps.
 
 Visual grammar: dense grid of equally sized cells where color intensity carries
 the value. Missing combinations render as zero-value cells.
@@ -271,6 +293,8 @@ no axis measurement engine.
 
 Purpose: show an ordered sequence of events or intervals.
 
+Real-world comparison: Linear activity timelines and deployment event timelines.
+
 Visual grammar: compact vertical or inline sequence with markers, short labels,
 and bounded item rhythm. It must not look like an oversized bulleted list.
 
@@ -287,6 +311,9 @@ long-form event feed.
 ### FlameGraph
 
 Purpose: show hierarchical cost or time distribution.
+
+Real-world comparison: Chrome DevTools profiler flame charts and Sentry
+performance traces.
 
 Visual grammar: stacked rows of proportional rectangles where depth maps to
 hierarchy and width maps to cost. Layout should resize stably without chaotic
@@ -306,6 +333,9 @@ large-trace renderer.
 
 Purpose: show scalar progress against a max value.
 
+Real-world comparison: quota usage bars, rollout completion meters, and
+deployment progress indicators.
+
 Visual grammar: bounded linear track, proportional fill, clear value text, and
 compact description when supplied.
 
@@ -320,6 +350,8 @@ Non-goals: no stacked progress, no trend history, no circular gauge behavior.
 ### RadialGauge
 
 Purpose: show one scalar value as circular progress.
+
+Real-world comparison: uptime/SLO gauge cards and quota utilization rings.
 
 Visual grammar: compact circular dial, consistent ring thickness, bounded arc,
 and center value. It should read as a scalar gauge, not a donut breakdown.

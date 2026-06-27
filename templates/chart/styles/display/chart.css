@@ -33,16 +33,8 @@
   padding: var(--ak-chart-graphic-padding, 1rem);
   border-radius: var(--ak-chart-radius);
   border: 1px solid var(--ak-chart-color-border);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ak-chart-color-surface) 92%, white 8%),
-      transparent 70%
-    ),
-    var(--ak-chart-plot-bg, var(--ak-chart-color-surface));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 54%, transparent),
-    var(--ak-chart-shadow-soft);
+  background: var(--ak-chart-plot-bg, var(--ak-chart-color-surface));
+  box-shadow: none;
 }
 
 :where(.ak-chart-graphic, [data-slot="chart-graphic"])::before {
@@ -54,24 +46,22 @@
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--ak-chart-grid) 42%, transparent) 0 1px,
+    color-mix(in srgb, var(--ak-chart-grid) 34%, transparent) 0 1px,
     transparent 1px 33.333%
   );
   background-size: 100% 33.333%;
-  opacity: 0.45;
+  opacity: 0.38;
 }
 
 :where(.chart-empty-state, [data-slot="chart-empty-state"]) {
+  display: grid;
+  gap: 0.45rem;
   place-content: center;
   text-align: center;
-  padding: 1.5rem;
-  border: 1px dashed var(--ak-chart-color-border);
+  padding: var(--ak-chart-padding);
+  border: 1px solid var(--ak-chart-color-border);
   border-radius: var(--ak-chart-radius);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-color-surface) 92%, var(--ak-chart-color-muted) 8%),
-    var(--ak-chart-color-surface)
-  );
+  background: var(--ak-chart-surface-muted);
 }
 
 :where(.chart-empty-state-content, [data-slot="chart-empty-state-content"]) {

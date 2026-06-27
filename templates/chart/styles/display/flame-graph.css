@@ -27,12 +27,8 @@
   inset: 0;
   border-radius: var(--ak-chart-radius-sm);
   background:
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--ak-chart-grid) 36%, transparent) 0 1px,
-      transparent 1px 25%
-    ),
-    color-mix(in srgb, var(--ak-chart-color-muted) 34%, transparent);
+    linear-gradient(90deg, var(--ak-chart-grid) 0 1px, transparent 1px 25%),
+    color-mix(in srgb, var(--ak-chart-color-muted) 42%, transparent);
   background-size: 25% 100%;
 }
 
@@ -51,26 +47,21 @@
   border: 1px solid
     color-mix(
       in srgb,
-      var(--ak-chart-item-color, var(--ak-chart-color-primary)) 40%,
+      var(--ak-chart-item-color, var(--ak-chart-color-primary)) 34%,
       var(--ak-chart-color-border)
     );
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0)),
-    color-mix(
-      in srgb,
-      var(--ak-chart-item-color, var(--ak-chart-color-primary)) 22%,
-      var(--ak-chart-color-surface)
-    );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 1px 2px color-mix(in srgb, var(--ak-chart-color-text) 8%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%,
+    var(--ak-chart-color-surface)
+  );
+  box-shadow: none;
   cursor: default;
   outline: none;
   transition:
     border-color var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
-    filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
-    transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
+    filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
 }
 
 .ak-flame-graph-cell[data-ak-chart-tooltip-trigger="true"],
@@ -78,48 +69,24 @@
   position: absolute;
 }
 
-:where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"])::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 9%, transparent)
-  );
-  opacity: 0;
-  transition: opacity var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
-}
-
 :where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]):hover,
 :where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]):focus-within {
   z-index: 2;
-  filter: saturate(1.1) brightness(1.05);
-  transform: translateY(-1px);
+  filter: saturate(1.08);
   border-color: color-mix(
     in srgb,
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 52%,
+    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 48%,
     var(--ak-chart-color-border)
   );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 6px 16px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent),
-    0 1px 3px color-mix(in srgb, var(--ak-chart-color-text) 10%, transparent);
-}
-
-:where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]):hover::after,
-:where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]):focus-within::after {
-  opacity: 1;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 14%, transparent);
 }
 
 :where(.ak-flame-graph-cell, [data-slot="flame-graph-cell"]):focus-visible {
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--ak-chart-focus-ring) 68%, transparent),
-    0 6px 16px
-      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 16%, transparent);
+    0 0 0 4px
+      color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 12%, transparent);
 }
 
 :where(.ak-flame-graph-label, [data-slot="flame-graph-label"]) {

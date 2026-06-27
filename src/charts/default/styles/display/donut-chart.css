@@ -45,28 +45,10 @@
   border-radius: 999px;
   background: conic-gradient(var(--ak-chart-donut-stops));
   mask: radial-gradient(circle, transparent 0 57%, black 58% 100%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 20%, transparent),
-    0 10px 24px color-mix(in srgb, var(--ak-chart-color-primary) 12%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-border) 72%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
-  pointer-events: none;
-}
-
-:where(.ak-donut-chart-ring, [data-slot="donut-chart-ring"])::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      transparent 0 57%,
-      rgba(255, 255, 255, 0.22) 58% 60%,
-      transparent 61%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 48%);
   pointer-events: none;
 }
 
@@ -108,7 +90,7 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%,
     transparent
   );
-  filter: saturate(1.18) brightness(1.08);
+  filter: saturate(1.08);
 }
 
 @supports selector(:has(*)) {
@@ -192,14 +174,8 @@
   inline-size: 0.72rem;
   block-size: 0.72rem;
   border-radius: calc(var(--ak-chart-radius-sm) - 0.125rem);
-  background: radial-gradient(
-    circle at 34% 28%,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 78%, white 22%),
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 74%
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 26%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--ak-chart-color-text) 12%, transparent);
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-text) 12%, transparent);
   transition:
     box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);

@@ -1,10 +1,6 @@
 @media (min-width: 48rem) {
-  :where(.chart-shell, [data-slot="chart-shell"]) {
-    padding: calc(var(--ak-chart-padding) + 0.25rem);
-  }
-
   :where(.chart-panel, [data-slot="chart-panel"]) {
-    padding: 1.125rem;
+    padding: var(--ak-layout-panel-padding, var(--ak-chart-padding));
   }
 }
 

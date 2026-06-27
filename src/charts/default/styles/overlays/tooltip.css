@@ -33,11 +33,7 @@
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--ak-chart-tooltip-border);
   border-radius: var(--ak-chart-radius);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-tooltip-bg) 92%, white 8%),
-    var(--ak-chart-tooltip-bg)
-  );
+  background: var(--ak-chart-tooltip-bg);
   color: var(--ak-chart-tooltip-fg);
   font-size: var(--ak-chart-font-size-sm);
   line-height: 1.35;

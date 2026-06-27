@@ -20,12 +20,8 @@
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--ak-chart-color-border);
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ak-chart-color-surface) 94%, white 6%),
-    var(--ak-chart-color-surface)
-  );
-  box-shadow: var(--ak-chart-shadow-soft);
+  background: var(--ak-chart-color-surface);
+  box-shadow: none;
   line-height: 1.2;
 }
 
@@ -34,11 +30,7 @@
   height: 0.7rem;
   border-radius: 999px;
   flex: none;
-  background: radial-gradient(
-    circle at 32% 28%,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%, white 28%),
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%
-  );
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-text) 14%, transparent);
 }
 

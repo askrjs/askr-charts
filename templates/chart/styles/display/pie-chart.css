@@ -38,23 +38,10 @@
   block-size: 100%;
   border-radius: 999px;
   background: conic-gradient(var(--ak-chart-pie-stops));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 20%, transparent),
-    0 10px 24px color-mix(in srgb, var(--ak-chart-color-primary) 12%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-border) 72%, transparent);
   transition:
     filter var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
     transform var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out);
-  pointer-events: none;
-}
-
-:where(.ak-pie-chart-disc, [data-slot="pie-chart-disc"])::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at 40% 32%, rgba(255, 255, 255, 0.22), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 50%);
   pointer-events: none;
 }
 
@@ -95,7 +82,7 @@
     var(--ak-chart-item-color, var(--ak-chart-color-primary)) 18%,
     transparent
   );
-  filter: saturate(1.18) brightness(1.08);
+  filter: saturate(1.08);
 }
 
 @supports selector(:has(*)) {
@@ -149,11 +136,7 @@
   inline-size: 0.65rem;
   block-size: 0.65rem;
   border-radius: 999px;
-  background: radial-gradient(
-    circle at 32% 28%,
-    color-mix(in srgb, var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%, white 28%),
-    var(--ak-chart-item-color, var(--ak-chart-color-primary)) 72%
-  );
+  background: var(--ak-chart-item-color, var(--ak-chart-color-primary));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ak-chart-color-text) 12%, transparent);
   transition:
     box-shadow var(--ak-chart-duration-fast, 120ms) var(--ak-chart-ease-standard, ease-out),
