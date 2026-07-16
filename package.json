@@ -1,7 +1,7 @@
 {
   "name": "@askrjs/charts",
   "version": "0.0.3",
-  "description": "CSS-first chart primitives that pair with askr themes.",
+  "description": "CSS-first chart primitives that pair with Askr themes.",
   "keywords": [
     "askr",
     "charts",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/askrjs/askr-charts.git"
+    "url": "git+https://github.com/askrjs/askr-charts.git"
   },
   "files": [
     "dist",
@@ -66,7 +66,8 @@
     "./default/legend.css": "./src/charts/default/styles/display/legend.css",
     "./default/series.css": "./src/charts/default/styles/data/series.css",
     "./default/tooltip.css": "./src/charts/default/styles/overlays/tooltip.css",
-    "./templates/*": "./templates/*"
+    "./templates/*": "./templates/*",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
@@ -86,26 +87,32 @@
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
     "test:browser": "vp test run -c vitest.test.browser.config.ts",
+    "test:publint": "publint",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
     "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots && npm run verify:chart-contract-docs",
-    "prepublishOnly": "npm run build",
+    "pack:check": "npm pack --ignore-scripts --dry-run --json",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:publint && npm run pack:check",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run check",
     "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": ">=0.0.30 <0.1.0",
-    "@askrjs/vite": ">=0.0.2 <0.1.0",
+    "@askrjs/askr": "file:../askr",
+    "@askrjs/vite": "file:../askr-vite",
     "@tsdown/css": "0.22.2",
     "@types/node": "^25.9.2",
+    "@vitest/browser-playwright": "4.1.10",
     "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
+    "publint": "^0.3.21",
     "typescript": "^6.0.3",
-    "vite-plus": "^0.1.24"
+    "vite-plus": "^0.2.4"
   },
   "peerDependencies": {
-    "@askrjs/askr": ">=0.0.30 <0.1.0"
+    "@askrjs/askr": ">=0.0.53 <0.1.0"
   },
   "engines": {
     "node": ">=18"
