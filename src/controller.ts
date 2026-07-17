@@ -898,7 +898,7 @@ function zoomAt<Row>(
   pauseFollowing(state);
   const current = state.transientView ?? currentDomainView(state.scene);
   const next: PlotView = { ...current };
-  const scales = { ...(current.scales ?? {}) };
+  const scales = { ...current.scales };
   for (const axis of ["x", "y"] as const) {
     if (!interaction.axes.includes(axis)) continue;
     for (const name of axisScaleNames(state.scene, axis)) {
@@ -955,7 +955,7 @@ function panTo<Row>(state: ControllerState<Row>, drag: DragState, x: number, y: 
   if (!interaction || !hasContinuousZoomAxis(state)) return;
   pauseFollowing(state);
   const next: PlotView = { ...drag.startView };
-  const scales = { ...(drag.startView.scales ?? {}) };
+  const scales = { ...drag.startView.scales };
   for (const axis of ["x", "y"] as const) {
     if (!interaction.axes.includes(axis)) continue;
     for (const name of axisScaleNames(state.scene, axis)) {
