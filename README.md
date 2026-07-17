@@ -82,7 +82,7 @@ Add explicit scale, axis, grid, legend, or tooltip children when the composition
 - Signed finite numbers stay signed; negative values are not clamped to zero.
 - `null`, `undefined`, invalid dates, and non-finite numbers are missing values, not zero.
 - Log scales omit zero and negative values.
-- `diagnostics` reports omitted values during development, and `summary` receives `omittedRowCount` for accessible reporting.
+- `diagnostics` opts into omitted-value warnings, and `summary` receives `omittedRowCount` for accessible reporting.
 - Stable row keys drive selection retention, transitions, and live updates.
 - Use `constant("...")` for a literal string channel. Bare strings identify row fields.
 
