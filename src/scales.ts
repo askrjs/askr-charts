@@ -498,10 +498,18 @@ function parseRgbChannel(value: string): number | undefined {
   const trimmed = value.trim();
   if (trimmed.endsWith("%")) {
     const percent = Number.parseFloat(trimmed);
-    return Number.isFinite(percent) ? (percent / 100) * 255 : undefined;
+    return Number.isFinite(percent) ? Math.min(255, Math.max(0, (percent / 100) * 255)) : undefined;
   }
   const channel = Number.parseFloat(trimmed);
-  return Number.isFinite(channel) ? channel : undefined;
+  return Number.isFinite(channel) ? Math.min(255, Math.max(0, channel)) : undefined;
+}
+
+function parseAlphaChannel(value: string): number | undefined {
+  const trimmed = value.trim();
+  const parsed = Number.parseFloat(trimmed);
+  if (!Number.isFinite(parsed)) return undefined;
+  const alpha = trimmed.endsWith("%") ? parsed / 100 : parsed;
+  return Math.min(1, Math.max(0, alpha));
 }
 
 function parseRgbColor(value: string): readonly [number, number, number, number] | undefined {
@@ -515,8 +523,8 @@ function parseRgbColor(value: string): readonly [number, number, number, number]
   const red = parseRgbChannel(parts[0]!);
   const green = parseRgbChannel(parts[1]!);
   const blue = parseRgbChannel(parts[2]!);
-  const alpha = parts[3] == null ? 1 : Number.parseFloat(parts[3]!);
-  if (red == null || green == null || blue == null || !Number.isFinite(alpha)) return undefined;
+  const alpha = parts[3] == null ? 1 : parseAlphaChannel(parts[3]!);
+  if (red == null || green == null || blue == null || alpha == null) return undefined;
   return [red, green, blue, alpha];
 }
 
@@ -530,21 +538,32 @@ function formatInterpolatedColor(
   fraction: number,
 ): string {
   const channel = (index: 0 | 1 | 2) =>
-    Math.round(left[index] + (right[index] - left[index]) * fraction);
-  const alpha = left[3] + (right[3] - left[3]) * fraction;
+    Math.min(255, Math.max(0, Math.round(left[index] + (right[index] - left[index]) * fraction)));
+  const alpha = Math.min(1, Math.max(0, left[3] + (right[3] - left[3]) * fraction));
   if (Math.abs(alpha - 1) < 1e-9) {
     return `rgb(${channel(0)}, ${channel(1)}, ${channel(2)})`;
   }
   return `rgba(${channel(0)}, ${channel(1)}, ${channel(2)}, ${Number(alpha.toFixed(3))})`;
 }
 
-function interpolateColorRange(range: readonly string[], value: number): string {
+function interpolateColorRange(
+  range: readonly string[],
+  value: number,
+  clampValue: boolean,
+): string {
   if (range.length === 0) return DEFAULT_CONTINUOUS_COLORS[0];
-  if (range.length === 1 || value <= 0) return range[0]!;
-  if (value >= 1) return range[range.length - 1]!;
+  if (range.length === 1) return range[0]!;
+  const resolved = clampValue ? clamp01(value) : value;
+  if (resolved === 0) return range[0]!;
+  if (resolved === 1) return range[range.length - 1]!;
 
-  const scaled = value * (range.length - 1);
-  const index = Math.min(range.length - 2, Math.floor(scaled));
+  const scaled = resolved * (range.length - 1);
+  const index =
+    resolved < 0
+      ? 0
+      : resolved > 1
+        ? range.length - 2
+        : Math.min(range.length - 2, Math.floor(scaled));
   const fraction = scaled - index;
   const leftText = range[index]!;
   const rightText = range[index + 1]!;
@@ -595,6 +614,15 @@ function createCategoricalScale(
   options: CreateScaleOptions,
   type: "band" | "point" | "ordinal-color",
 ): ResolvedScale {
+  for (const [name, value] of [
+    ["padding", options.padding],
+    ["paddingInner", options.paddingInner],
+    ["paddingOuter", options.paddingOuter],
+  ] as const) {
+    if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+      throw new RangeError(`${name} must be a finite non-negative number.`);
+    }
+  }
   const source = options.domain ?? options.values ?? [];
   const { domain, omitted } = categoricalDomain(source);
   const actualRange =
@@ -906,7 +934,7 @@ function createContinuousColorScale(options: CreateScaleOptions): ResolvedScale 
         value instanceof Date ? value.getTime() : typeof value === "number" ? value : NaN;
       if (!Number.isFinite(numeric)) return unknownValue;
       const raw = delta === 0 ? 0.5 : (numeric - start) / delta;
-      return interpolateColorRange(colors, shouldClamp ? clamp01(raw) : raw);
+      return interpolateColorRange(colors, raw, shouldClamp);
     },
     ticks(tickCount = 5) {
       return dateValues
@@ -922,6 +950,27 @@ function createNumericScale(
   options: CreateScaleOptions,
   type: "linear" | "power" | "log" | "symlog",
 ): ResolvedScale {
+  if (
+    type === "log" &&
+    options.base !== undefined &&
+    (!Number.isFinite(options.base) || options.base <= 0 || options.base === 1)
+  ) {
+    throw new RangeError("Log scale base must be finite, positive, and different from one.");
+  }
+  if (
+    type === "power" &&
+    options.exponent !== undefined &&
+    (!Number.isFinite(options.exponent) || options.exponent <= 0)
+  ) {
+    throw new RangeError("Power scale exponent must be a finite positive number.");
+  }
+  if (
+    type === "symlog" &&
+    options.constant !== undefined &&
+    (!Number.isFinite(options.constant) || options.constant <= 0)
+  ) {
+    throw new RangeError("Symlog scale constant must be a finite positive number.");
+  }
   const explicit = options.domain != null;
   const source = options.domain ?? options.values ?? [];
   let resolvedDomain = explicit

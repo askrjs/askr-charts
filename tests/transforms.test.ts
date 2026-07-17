@@ -24,6 +24,7 @@ describe("bins and aggregates", () => {
     ]);
     expect(Object.isFrozen(bins)).toBe(true);
     expect(Object.isFrozen(bins[0]?.indices)).toBe(true);
+    expect(createBins(values, { domain: [-5, 5], thresholds: [0, 0] })).toEqual(bins);
   });
 
   it("should use calendar timestamps and interval boundaries given dates when binning", () => {
@@ -38,6 +39,17 @@ describe("bins and aggregates", () => {
       { x0: 0, x1: 1_000, indices: [0] },
       { x0: 1_000, x1: 2_000, indices: [1, 3] },
     ]);
+  });
+
+  it("should reject ambiguous or malformed options given runtime bin configuration", () => {
+    expect(() => createBins([1, 2], { interval: 1, thresholds: 2 })).toThrow(TypeError);
+    expect(() => createBins([1, 2], { interval: 0 })).toThrow(RangeError);
+    expect(() => createBins([1, 2], { thresholds: Number.NaN })).toThrow(RangeError);
+    expect(() => createBins([1, 2], { thresholds: [Number.POSITIVE_INFINITY] })).toThrow(TypeError);
+    expect(() => createBins([1, 2], { domain: [0, Number.NaN] })).toThrow(TypeError);
+    expect(() =>
+      createBins([1, 2], { domain: [0] as unknown as readonly [number, number] }),
+    ).toThrow(/exactly two finite values/i);
   });
 
   it("should count rows but omit missing numeric inputs given grouped aggregates when reducing", () => {
@@ -57,6 +69,7 @@ describe("bins and aggregates", () => {
       ["a", 1.5],
       ["b", 7],
     ]);
+    expect(() => aggregateBy(values, keys, "invalid" as "sum")).toThrow(TypeError);
   });
 });
 
@@ -91,6 +104,11 @@ describe("stacking", () => {
     expect(stacked[1]).toMatchObject({ y0: 0.6, y1: 1 });
     expect(stacked[2]).toMatchObject({ y0: 0, y1: -0.2 });
     expect(stacked[3]).toMatchObject({ y0: -0.2, y1: -1 });
+  });
+
+  it("should reject unsupported runtime options given malformed stack configuration", () => {
+    expect(() => stackValues(data, { offset: "invalid" as "zero" })).toThrow(TypeError);
+    expect(() => stackValues(data, { order: "invalid" as "none" })).toThrow(TypeError);
   });
 
   it("should accumulate signed values sequentially given the zero offset when stacking", () => {
@@ -133,6 +151,12 @@ describe("moving windows and regression", () => {
       4,
     ]);
     expect(movingWindowValues(values, { window: 2, operation: "sum" })).toEqual([1, 1, 3, 8, 5]);
+    expect(() => movingWindowValues(values, { window: 0 })).toThrow(RangeError);
+    expect(() => movingWindowValues(values, { window: 0.5 })).toThrow(RangeError);
+    expect(() => movingWindowValues(values, { window: Number.NaN })).toThrow(RangeError);
+    expect(() => movingWindowValues(values, { window: 2, operation: "invalid" as "mean" })).toThrow(
+      TypeError,
+    );
   });
 
   it("should evaluate a typed moving expression given row fields when computing channels", () => {
@@ -257,5 +281,36 @@ describe("hierarchy partitioning", () => {
         { id: "id", parentId: "parentId", value: "value" },
       ),
     ).toThrow(/Partition cycle detected/);
+
+    expect(() =>
+      partitionRows([{ id: "orphan", parentId: "missing", value: 1 }], {
+        id: "id",
+        parentId: "parentId",
+        value: "value",
+      }),
+    ).toThrow(/unknown parent missing/i);
+
+    expect(() =>
+      partitionRows([{ id: Number.NaN, parentId: null, value: 1 }], {
+        id: "id",
+        parentId: "parentId",
+        value: "value",
+      }),
+    ).toThrow(/finite/i);
+    expect(() =>
+      partitionRows([{ id: "root", parentId: null, value: 1 }], {
+        id: "id",
+        parentId: "parentId",
+        value: "value",
+        padding: -1,
+      }),
+    ).toThrow(RangeError);
+    expect(() =>
+      partitionRows([{ id: "root", children: "invalid", value: 1 }], {
+        id: "id",
+        children: "children",
+        value: "value",
+      }),
+    ).toThrow(/children must be an array/i);
   });
 });

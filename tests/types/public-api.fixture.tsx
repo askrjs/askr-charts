@@ -21,14 +21,28 @@ interface LatencyRow {
 
 const rows = [] as readonly LatencyRow[];
 const Latency = createPlot<LatencyRow>();
-const apiRef = { current: null as PlotApi<LatencyRow> | null };
+let api: PlotApi<LatencyRow> | null = null;
 const namedView: PlotView = {
   x: [new Date(0), new Date(1_000)],
   scales: { latency: [0, 100] },
 };
 
 const validPlot = (
-  <Latency.Root data={rows} rowKey="id" label="Latency" apiRef={apiRef} defaultView={namedView}>
+  <Latency.Root
+    data={rows}
+    rowKey="id"
+    label="Latency"
+    onApiChange={(nextApi) => {
+      api = nextApi;
+    }}
+    defaultView={namedView}
+  >
+    <Latency.Scale
+      name="active-color"
+      channel="color"
+      type="ordinal-color"
+      domain={[true, false]}
+    />
     <Latency.Bar
       x={bin("latency", { thresholds: 20 })}
       y={count()}
@@ -50,6 +64,18 @@ const validPlot = (
 );
 
 void validPlot;
+void api;
+
+// @ts-expect-error interactive view domains do not accept boolean values
+const invalidBooleanView: PlotView = { x: [true, false] };
+
+// @ts-expect-error React-style className is not part of the Askr root contract
+const legacyClassName = <Latency.Root data={rows} rowKey="id" label="Latency" className="legacy" />;
+
+const legacyApiRef = (
+  // @ts-expect-error imperative object refs are replaced by the semantic callback
+  <Latency.Root data={rows} rowKey="id" label="Latency" apiRef={{ current: null }} />
+);
 
 // @ts-expect-error unknown row fields are not valid channels
 const wrongField = <Latency.Line x="missing" y="latency" />;
@@ -89,6 +115,9 @@ void unsupportedPointAggregate;
 void unsupportedArcAggregate;
 void ambiguousConstantColor;
 void wrongRowKey;
+void invalidBooleanView;
+void legacyClassName;
+void legacyApiRef;
 
 // Factory identity is intentionally enforced while compiling descriptors at runtime. Askr's
 // JSXElement type erases the component that created an element, so declarations cannot claim

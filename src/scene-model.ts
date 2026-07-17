@@ -181,8 +181,7 @@ export interface SceneLegend {
 export interface SceneInteractions {
   readonly tooltip: boolean;
   readonly tooltipChannels?: readonly string[] | null;
-  readonly tooltipFormat?:
-    ((record: Readonly<Record<string, unknown>>) => string) | null;
+  readonly tooltipFormat?: ((record: Readonly<Record<string, unknown>>) => string) | null;
   readonly crosshair: "x" | "y" | "xy" | null;
   readonly zoom: {
     readonly axes: "x" | "y" | "xy";

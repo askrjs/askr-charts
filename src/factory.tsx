@@ -10,7 +10,7 @@ import {
 import { collectPlotDescriptors, createDescriptorComponent } from "./descriptors";
 import type { FollowLatest, PlotFactory, PlotKey, RootProps } from "./model";
 import { trimPlotRows } from "./rows";
-import type { SceneExportRow, SceneLegend } from "./scene-model";
+import type { PlotScene, SceneExportRow, SceneLegend } from "./scene-model";
 
 interface RootHolder<Row> {
   config: PlotRuntimeConfig<Row> | null;
@@ -61,6 +61,7 @@ function renderRoot<Row>(
   props: RootProps<Row>,
   context?: PlotExecutionContext,
 ): JSXElement {
+  validateRootProps(props);
   const tableOpen = state(false);
   const holder = state<RootHolder<Row>>(createRootHolder<Row>())();
   const sourceRows = resolveData(props.data);
@@ -90,16 +91,18 @@ function renderRoot<Row>(
   const summaryId = `${slug}-summary`;
   const instructionsId = `${slug}-instructions`;
   const tooltipId = `${slug}-tooltip`;
+  const emptyId = `${slug}-empty`;
   const frameDescription = [
     props.title ? titleId : null,
     props.description ? descriptionId : null,
+    semanticScene.empty ? emptyId : null,
     summaryId,
     instructionsId,
     tooltipId,
   ]
     .filter(Boolean)
     .join(" ");
-  const rootClass = ["ak-plot-root", props.class, props.className].filter(Boolean).join(" ");
+  const rootClass = ["ak-plot-root", props.class].filter(Boolean).join(" ");
   const frameStyle = props.height == null ? undefined : { "--ak-chart-height": `${height}px` };
   const columns = tableOpen() ? tableColumns(semanticScene.transformedRows, sourceRows) : [];
   const tableRows = tableOpen()
@@ -107,27 +110,26 @@ function renderRoot<Row>(
       ? semanticScene.transformedRows
       : sourceFallbackRows(sourceRows, props.rowKey)
     : [];
-  const capturesGestures = Boolean(
-    semanticScene.interactions.zoom || semanticScene.interactions.brush,
+  const capturesTouchGestures = Boolean(
+    semanticScene.interactions.zoom?.pinch ||
+    semanticScene.interactions.zoom?.pan ||
+    semanticScene.interactions.brush?.modifier === "none",
   );
+  const inspectable = semanticScene.hits.length > 0;
   const meter = props.meter;
 
   return (
     <section
       id={props.id}
       data-slot="plot-root"
-      data-interactive={capturesGestures ? "true" : "false"}
+      data-interactive={capturesTouchGestures ? "true" : "false"}
       className={rootClass}
       style={props.style}
       aria-labelledby={props.title ? titleId : undefined}
     >
       {props.title || props.description ? (
         <header data-slot="plot-header" className="ak-plot-header">
-          {props.title ? (
-            <h2 id={titleId} data-slot="plot-title" className="ak-plot-title">
-              {props.title}
-            </h2>
-          ) : null}
+          {props.title ? renderHeading(props.title, titleId, props.headingLevel ?? 2) : null}
           {props.description ? (
             <p id={descriptionId} data-slot="plot-description" className="ak-plot-description">
               {props.description}
@@ -139,35 +141,36 @@ function renderRoot<Row>(
       <div data-slot="plot-body" className="ak-plot-body">
         {renderLegendRegion(semanticScene.legends, "top", props.label, holder)}
         {renderLegendRegion(semanticScene.legends, "left", props.label, holder)}
-        <div
-          ref={holder.ref}
-          data-slot="plot-frame"
-          className="ak-plot-frame"
-          style={frameStyle}
-          role={meter?.role ?? "img"}
-          tabIndex={0}
-          aria-label={props.label}
-          aria-describedby={frameDescription}
-          aria-valuemin={meter?.min}
-          aria-valuemax={meter?.max}
-          aria-valuenow={meter?.value}
-          aria-valuetext={meter?.valueText}
-        >
-          <canvas
-            data-slot="plot-canvas-base"
-            className="ak-plot-canvas ak-plot-canvas-base"
-            width={sceneWidth}
-            height={sceneHeight}
-            aria-hidden="true"
-          />
-          <canvas
-            data-slot="plot-canvas-overlay"
-            className="ak-plot-canvas ak-plot-canvas-overlay"
-            width={sceneWidth}
-            height={sceneHeight}
-            aria-hidden="true"
-          />
+        <div ref={holder.ref} data-slot="plot-frame" className="ak-plot-frame" style={frameStyle}>
           <div
+            data-slot="plot-graphic"
+            className="ak-plot-graphic"
+            role={meter?.role ?? (inspectable ? "group" : "img")}
+            tabIndex={inspectable ? 0 : undefined}
+            aria-label={props.label}
+            aria-describedby={frameDescription}
+            aria-valuemin={meter?.min}
+            aria-valuemax={meter?.max}
+            aria-valuenow={meter?.value}
+            aria-valuetext={meter?.valueText}
+          >
+            <canvas
+              data-slot="plot-canvas-base"
+              className="ak-plot-canvas ak-plot-canvas-base"
+              width={sceneWidth}
+              height={sceneHeight}
+              aria-hidden="true"
+            />
+            <canvas
+              data-slot="plot-canvas-overlay"
+              className="ak-plot-canvas ak-plot-canvas-overlay"
+              width={sceneWidth}
+              height={sceneHeight}
+              aria-hidden="true"
+            />
+          </div>
+          <div
+            id={emptyId}
             data-slot="plot-empty-state"
             className="ak-plot-empty-state"
             hidden={!semanticScene.empty}
@@ -197,8 +200,7 @@ function renderRoot<Row>(
         data-plot-visually-hidden="true"
         className="ak-plot-instructions ak-plot-sr-only"
       >
-        Use the arrow keys to inspect marks. Press Enter to activate a focused mark. Use the View
-        data control for a table.
+        {plotInstructions(semanticScene, Boolean(props.onActivate))}
       </p>
       {props.followLatest ? (
         <p
@@ -279,6 +281,87 @@ function renderRoot<Row>(
   );
 }
 
+function renderHeading(
+  title: string,
+  id: string,
+  level: NonNullable<RootProps<unknown>["headingLevel"]>,
+) {
+  const attributes = { id, "data-slot": "plot-title", className: "ak-plot-title" };
+  switch (level) {
+    case 1:
+      return <h1 {...attributes}>{title}</h1>;
+    case 2:
+      return <h2 {...attributes}>{title}</h2>;
+    case 3:
+      return <h3 {...attributes}>{title}</h3>;
+    case 4:
+      return <h4 {...attributes}>{title}</h4>;
+    case 5:
+      return <h5 {...attributes}>{title}</h5>;
+    case 6:
+      return <h6 {...attributes}>{title}</h6>;
+  }
+}
+
+function plotInstructions<Row>(scene: PlotScene<Row>, canActivate: boolean): string {
+  const instructions: string[] = [];
+  if (scene.hits.length > 0) {
+    instructions.push("Use the arrow keys to inspect marks.");
+    if (canActivate) {
+      instructions.push("Press Enter or Space to activate a focused mark.");
+    }
+    if (scene.interactions.brush) {
+      instructions.push("Press Shift+Space to add or remove a focused mark from the selection.");
+    }
+    if (scene.interactions.zoom) {
+      instructions.push("Use the plus and minus keys to zoom and Home to reset the view.");
+      if (scene.interactions.zoom.pan) {
+        instructions.push("Use Shift plus the arrow keys to pan.");
+      }
+    }
+  }
+  instructions.push("Use the View data control for a table.");
+  return instructions.join(" ");
+}
+
+function validateRootProps<Row>(props: RootProps<Row>): void {
+  if (typeof props.label !== "string" || props.label.trim() === "") {
+    throw new TypeError("Plot.Root label must be a non-blank string.");
+  }
+  if (
+    props.id !== undefined &&
+    (typeof props.id !== "string" || props.id.trim() === "" || /\s/.test(props.id))
+  ) {
+    throw new TypeError("Plot.Root id must be non-blank and must not contain whitespace.");
+  }
+  if (
+    props.headingLevel !== undefined &&
+    (!Number.isInteger(props.headingLevel) || props.headingLevel < 1 || props.headingLevel > 6)
+  ) {
+    throw new RangeError("Plot.Root headingLevel must be an integer from 1 through 6.");
+  }
+  for (const [name, value] of [
+    ["width", props.width],
+    ["height", props.height],
+  ] as const) {
+    if (value !== undefined && (!Number.isFinite(value) || value <= 0)) {
+      throw new RangeError(`Plot.Root ${name} must be a finite positive number.`);
+    }
+  }
+  if (props.meter) {
+    const { min, max, value } = props.meter;
+    if (![min, max, value].every(Number.isFinite)) {
+      throw new RangeError("Plot.Root meter values must be finite numbers.");
+    }
+    if (max <= min) {
+      throw new RangeError("Plot.Root meter max must be greater than min.");
+    }
+    if (value < min || value > max) {
+      throw new RangeError("Plot.Root meter value must be within min and max.");
+    }
+  }
+}
+
 function renderLegendRegion<Row>(
   legends: readonly SceneLegend[],
   position: SceneLegend["position"],
@@ -293,10 +376,11 @@ function renderLegendRegion<Row>(
   return (
     <div data-slot="plot-legends" data-plot-legend-position={position} className="ak-plot-legends">
       {positioned.map(({ legend, index }) => (
-        <nav
+        <div
           key={`${legend.scale}-${index}`}
           data-slot="plot-legend"
           className="ak-plot-legend"
+          role="group"
           aria-label={legend.label ?? `${plotLabel} legend`}
         >
           {legend.label ? (
@@ -338,7 +422,7 @@ function renderLegendRegion<Row>(
               </li>
             ))}
           </ul>
-        </nav>
+        </div>
       ))}
     </div>
   );

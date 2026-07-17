@@ -127,53 +127,22 @@ const timelineRows: readonly TimelineRow[] = [
   },
 ];
 
-const progressRows: readonly MeterRow[] = [
-  { id: "migration", label: "Migration", value: 64 },
-];
-const gaugeRows: readonly MeterRow[] = [
-  { id: "storage", label: "Storage", value: 72 },
-];
+const progressRows: readonly MeterRow[] = [{ id: "migration", label: "Migration", value: 64 }];
+const gaugeRows: readonly MeterRow[] = [{ id: "storage", label: "Storage", value: 72 }];
 
 export function MarkFamilies() {
   return (
     <>
-      <CartesianPlot.Root
-        data={cartesianRows}
-        rowKey="id"
-        label="Cartesian mark families"
-      >
-        <CartesianPlot.Bar
-          x="timestamp"
-          y="value"
-          fill="category"
-          opacity={0.32}
-        />
-        <CartesianPlot.Area
-          x="timestamp"
-          y="high"
-          y2="low"
-          fill={constant("#2563eb")}
-        />
-        <CartesianPlot.Line
-          x="timestamp"
-          y="value"
-          stroke={constant("#7c3aed")}
-        />
-        <CartesianPlot.Point
-          x="timestamp"
-          y="value"
-          r="weight"
-          shape="diamond"
-        />
+      <CartesianPlot.Root data={cartesianRows} rowKey="id" label="Cartesian mark families">
+        <CartesianPlot.Bar x="timestamp" y="value" fill="category" opacity={0.32} />
+        <CartesianPlot.Area x="timestamp" y="high" y2="low" fill={constant("#2563eb")} />
+        <CartesianPlot.Line x="timestamp" y="value" stroke={constant("#7c3aed")} />
+        <CartesianPlot.Point x="timestamp" y="value" r="weight" shape="diamond" />
         <CartesianPlot.Legend interactive />
         <CartesianPlot.Tooltip />
       </CartesianPlot.Root>
 
-      <SharePlot.Root
-        data={shareRows}
-        rowKey="id"
-        label="Subsystem event share"
-      >
+      <SharePlot.Root data={shareRows} rowKey="id" label="Subsystem event share">
         <SharePlot.Arc
           value="value"
           category="category"
@@ -206,17 +175,8 @@ export function MarkFamilies() {
         <TracePlot.Tooltip channels={["label", "durationMs"]} />
       </TracePlot.Root>
 
-      <TimelinePlot.Root
-        data={timelineRows}
-        rowKey="id"
-        label="Release timeline"
-      >
-        <TimelinePlot.Rule
-          x="startedAt"
-          x2="finishedAt"
-          y="lane"
-          strokeWidth={4}
-        />
+      <TimelinePlot.Root data={timelineRows} rowKey="id" label="Release timeline">
+        <TimelinePlot.Rule x="startedAt" x2="finishedAt" y="lane" strokeWidth={4} />
         <TimelinePlot.Point x="startedAt" y="lane" />
         <TimelinePlot.Text x="startedAt" y="lane" text="label" align="left" />
         <TimelinePlot.Tooltip channels={["label", "startedAt", "finishedAt"]} />
@@ -228,13 +188,7 @@ export function MarkFamilies() {
         label="Migration progress"
         meter={{ role: "meter", min: 0, max: 100, value: 64, valueText: "64%" }}
       >
-        <ProgressPlot.Bar
-          x="label"
-          y="value"
-          min={0}
-          max={100}
-          orientation="horizontal"
-        />
+        <ProgressPlot.Bar x="label" y="value" min={0} max={100} orientation="horizontal" />
       </ProgressPlot.Root>
 
       <GaugePlot.Root

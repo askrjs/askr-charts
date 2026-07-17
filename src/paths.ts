@@ -54,8 +54,7 @@ function monotonePath(points: readonly Pick<ScenePoint, "x" | "y">[]): string {
   for (let index = 0; index < points.length - 1; index += 1) {
     const left = points[index]!;
     const right = points[index + 1]!;
-    slopes[index] =
-      right.x === left.x ? 0 : (right.y - left.y) / (right.x - left.x);
+    slopes[index] = right.x === left.x ? 0 : (right.y - left.y) / (right.x - left.x);
   }
   tangents[0] = slopes[0] ?? 0;
   tangents[points.length - 1] = slopes[slopes.length - 1] ?? 0;
@@ -120,10 +119,7 @@ export function arcPath(options: {
   let startAngle = options.startAngle;
   let endAngle = options.endAngle;
   const full = Math.PI * 2;
-  const span = Math.min(
-    full - 1e-6,
-    Math.max(-full + 1e-6, endAngle - startAngle),
-  );
+  const span = Math.min(full - 1e-6, Math.max(-full + 1e-6, endAngle - startAngle));
   endAngle = startAngle + span;
   const absoluteSpan = Math.abs(span);
   if (outerRadius === 0 || absoluteSpan <= 1e-9) return "";
@@ -134,9 +130,7 @@ export function arcPath(options: {
       ? Math.min(innerRadius, outerRadius) * absoluteSpan * 0.5
       : outerRadius * absoluteSpan * 0.5;
   const cornerRadius =
-    absoluteSpan >= full - 1e-4
-      ? 0
-      : Math.min(requestedCorner, thickness * 0.5, angularLimit);
+    absoluteSpan >= full - 1e-4 ? 0 : Math.min(requestedCorner, thickness * 0.5, angularLimit);
 
   if (cornerRadius > 1e-6) {
     return roundedArcPath({
@@ -204,31 +198,13 @@ function roundedArcPath(options: {
   endAngle: number;
   cornerRadius: number;
 }): string {
-  const {
-    cx,
-    cy,
-    innerRadius,
-    outerRadius,
-    startAngle,
-    endAngle,
-    cornerRadius,
-  } = options;
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, cornerRadius } = options;
   const span = endAngle - startAngle;
   const direction = span >= 0 ? 1 : -1;
   const sweep = direction > 0 ? 1 : 0;
   const outerOffset = Math.min(Math.abs(span) / 2, cornerRadius / outerRadius);
-  const outerArcStart = polar(
-    cx,
-    cy,
-    outerRadius,
-    startAngle + direction * outerOffset,
-  );
-  const outerArcEnd = polar(
-    cx,
-    cy,
-    outerRadius,
-    endAngle - direction * outerOffset,
-  );
+  const outerArcStart = polar(cx, cy, outerRadius, startAngle + direction * outerOffset);
+  const outerArcEnd = polar(cx, cy, outerRadius, endAngle - direction * outerOffset);
   const outerEdgeStart = polar(cx, cy, outerRadius - cornerRadius, startAngle);
   const outerEdgeEnd = polar(cx, cy, outerRadius - cornerRadius, endAngle);
   const outerCornerStart = polar(cx, cy, outerRadius, startAngle);
@@ -248,19 +224,9 @@ function roundedArcPath(options: {
 
   const innerOffset = Math.min(Math.abs(span) / 2, cornerRadius / innerRadius);
   const innerEdgeEnd = polar(cx, cy, innerRadius + cornerRadius, endAngle);
-  const innerArcEnd = polar(
-    cx,
-    cy,
-    innerRadius,
-    endAngle - direction * innerOffset,
-  );
+  const innerArcEnd = polar(cx, cy, innerRadius, endAngle - direction * innerOffset);
   const innerCornerEnd = polar(cx, cy, innerRadius, endAngle);
-  const innerArcStart = polar(
-    cx,
-    cy,
-    innerRadius,
-    startAngle + direction * innerOffset,
-  );
+  const innerArcStart = polar(cx, cy, innerRadius, startAngle + direction * innerOffset);
   const innerCornerStart = polar(cx, cy, innerRadius, startAngle);
   const innerEdgeStart = polar(cx, cy, innerRadius + cornerRadius, startAngle);
   const roundedInnerSpan = Math.max(0, Math.abs(span) - innerOffset * 2);
@@ -277,10 +243,7 @@ function roundedArcPath(options: {
   ].join("");
 }
 
-function quadratic(
-  control: { x: number; y: number },
-  end: { x: number; y: number },
-): string {
+function quadratic(control: { x: number; y: number }, end: { x: number; y: number }): string {
   return `Q${formatNumber(control.x)},${formatNumber(control.y)} ${formatNumber(end.x)},${formatNumber(end.y)}`;
 }
 
@@ -311,10 +274,7 @@ export function roundedRectPath(
   height: number,
   radius: number,
 ): string {
-  const r = Math.max(
-    0,
-    Math.min(Math.abs(width) / 2, Math.abs(height) / 2, radius),
-  );
+  const r = Math.max(0, Math.min(Math.abs(width) / 2, Math.abs(height) / 2, radius));
   if (r === 0) {
     return `M${formatNumber(x)},${formatNumber(y)}h${formatNumber(width)}v${formatNumber(height)}h${formatNumber(-width)}Z`;
   }
@@ -343,30 +303,37 @@ export function downsamplePixelEnvelope<Point extends { x: number; y: number }>(
     return Object.freeze(immutablePoints);
   const buckets = new Map<
     number,
-    { first: Point; last: Point; min: Point; max: Point }
+    {
+      first: { point: Point; index: number };
+      last: { point: Point; index: number };
+      min: { point: Point; index: number };
+      max: { point: Point; index: number };
+    }
   >();
-  for (const point of immutablePoints) {
+  for (let index = 0; index < immutablePoints.length; index += 1) {
+    const point = immutablePoints[index]!;
+    const entry = { point, index };
     const bucket = Math.floor(point.x);
     const current = buckets.get(bucket);
     if (!current) {
       buckets.set(bucket, {
-        first: point,
-        last: point,
-        min: point,
-        max: point,
+        first: entry,
+        last: entry,
+        min: entry,
+        max: entry,
       });
     } else {
-      current.last = point;
-      if (point.y < current.min.y) current.min = point;
-      if (point.y > current.max.y) current.max = point;
+      current.last = entry;
+      if (point.y < current.min.point.y) current.min = entry;
+      if (point.y > current.max.point.y) current.max = entry;
     }
   }
   const result: Point[] = [];
   for (const bucket of buckets.values()) {
     const candidates = [bucket.first, bucket.min, bucket.max, bucket.last].sort(
-      (left, right) => left.x - right.x,
+      (left, right) => left.index - right.index,
     );
-    for (const point of candidates) {
+    for (const { point } of candidates) {
       if (result[result.length - 1] !== point) result.push(point);
     }
   }

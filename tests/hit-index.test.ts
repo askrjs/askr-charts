@@ -114,47 +114,23 @@ describe("spatial hit index", () => {
   });
 
   it("should return topmost-first matches given overlapping regions when querying a point", () => {
-    const bottom = region(
-      "bottom",
-      { kind: "rect", x: 10, y: 10, width: 20, height: 20 },
-      1,
-    );
+    const bottom = region("bottom", { kind: "rect", x: 10, y: 10, width: 20, height: 20 }, 1);
     const top = region("top", { kind: "circle", x: 20, y: 20, radius: 10 }, 9);
-    const middle = region(
-      "middle",
-      { kind: "rect", x: 15, y: 15, width: 10, height: 10 },
-      4,
-    );
+    const middle = region("middle", { kind: "rect", x: 15, y: 15, width: 10, height: 10 }, 4);
     const index = createHitIndex([top, bottom, middle], {
       width: 50,
       height: 50,
     });
 
     expect(index.query(20, 20)?.id).toBe("top");
-    expect(index.queryAll(20, 20).map(({ id }) => id)).toEqual([
-      "top",
-      "middle",
-      "bottom",
-    ]);
+    expect(index.queryAll(20, 20).map(({ id }) => id)).toEqual(["top", "middle", "bottom"]);
     expect(Object.isFrozen(index.queryAll(20, 20))).toBe(true);
   });
 
   it("should deduplicate and return scene order given reversed bounds when querying a rectangle", () => {
-    const first = region(
-      "first",
-      { kind: "rect", x: 5, y: 5, width: 30, height: 30 },
-      1,
-    );
-    const second = region(
-      "second",
-      { kind: "circle", x: 40, y: 40, radius: 8 },
-      2,
-    );
-    const outside = region(
-      "outside",
-      { kind: "rect", x: 80, y: 80, width: 5, height: 5 },
-      3,
-    );
+    const first = region("first", { kind: "rect", x: 5, y: 5, width: 30, height: 30 }, 1);
+    const second = region("second", { kind: "circle", x: 40, y: 40, radius: 8 }, 2);
+    const outside = region("outside", { kind: "rect", x: 80, y: 80, width: 5, height: 5 }, 3);
     const index = createHitIndex([outside, second, first], {
       width: 100,
       height: 100,
@@ -168,16 +144,22 @@ describe("spatial hit index", () => {
   });
 
   it("should return empty matches given non-finite coordinates when querying a point", () => {
-    const index = createHitIndex(
-      [region("only", { kind: "circle", x: 10, y: 10, radius: 2 })],
-      {
-        width: 20,
-        height: 20,
-      },
-    );
+    const index = createHitIndex([region("only", { kind: "circle", x: 10, y: 10, radius: 2 })], {
+      width: 20,
+      height: 20,
+    });
 
     expect(index.query(Number.NaN, 10)).toBeNull();
     expect(index.queryAll(10, Number.POSITIVE_INFINITY)).toEqual([]);
+    expect(index.queryRect(0, 0, Number.NaN, 10)).toEqual([]);
+  });
+
+  it("should reject invalid dimensions given a malformed index configuration", () => {
+    expect(() => createHitIndex([], { width: Number.NaN, height: 20 })).toThrow(RangeError);
+    expect(() => createHitIndex([], { width: 20, height: 0 })).toThrow(RangeError);
+    expect(() =>
+      createHitIndex([], { width: 20, height: 20, cellSize: Number.POSITIVE_INFINITY }),
+    ).toThrow(RangeError);
   });
 
   it("should keep localized queries bounded given one hundred thousand regions when inspecting points", () => {
@@ -202,9 +184,7 @@ describe("spatial hit index", () => {
 
     for (let iteration = 0; iteration < 2_000; iteration += 1) {
       const value = (iteration * 7_919) % regions.length;
-      expect(index.query(value % 1_000, Math.floor(value / 1_000))?.id).toBe(
-        String(value),
-      );
+      expect(index.query(value % 1_000, Math.floor(value / 1_000))?.id).toBe(String(value));
     }
 
     expect(index.size).toBe(100_000);

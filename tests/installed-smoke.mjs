@@ -1,12 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,15 +89,17 @@ assert.equal(constant("#2563eb").kind, "constant");
 const require = createRequire(import.meta.url);
 const stylesPath = require.resolve("@askrjs/charts/styles");
 const styles = readFileSync(stylesPath, "utf8");
-assert.match(styles, /--ak-chart-background:/);
+assert.match(styles, /--ak-chart-bg:/);
 assert.match(styles, /\\.ak-plot-root/);
+assert.match(styles, /touch-action: pan-x pan-y/);
 `,
   );
   run(process.execPath, ["runtime-smoke.mjs"], consumerDirectory);
 
   writeFileSync(
     join(consumerDirectory, "type-smoke.tsx"),
-    `import { constant, createPlot, movingAverage, type PlotApi } from "@askrjs/charts";
+    `import "@askrjs/charts/styles";
+import { constant, createPlot, movingAverage, type PlotApi } from "@askrjs/charts";
 
 interface Row {
   id: string;
@@ -114,10 +110,15 @@ interface Row {
 
 const Plot = createPlot<Row>();
 const rows = [] as readonly Row[];
-const apiRef = { current: null as PlotApi<Row> | null };
+let api: PlotApi<Row> | null = null;
 
 const plot = (
-  <Plot.Root data={rows} rowKey="id" label="Installed declaration smoke" apiRef={apiRef}>
+  <Plot.Root
+    data={rows}
+    rowKey="id"
+    label="Installed declaration smoke"
+    onApiChange={(nextApi) => { api = nextApi; }}
+  >
     <Plot.Line
       x="timestamp"
       y={movingAverage("latency", { window: 3 })}
@@ -128,6 +129,7 @@ const plot = (
 );
 
 void plot;
+void api;
 `,
   );
   writeFileSync(
@@ -143,6 +145,7 @@ void plot;
           jsxImportSource: "@askrjs/askr",
           strict: true,
           skipLibCheck: false,
+          noUncheckedSideEffectImports: true,
           noEmit: true,
         },
         include: ["type-smoke.tsx"],
@@ -151,13 +154,30 @@ void plot;
       2,
     )}\n`,
   );
-  run(process.execPath, [typescriptCli, "-p", "tsconfig.json", "--pretty", "false"], consumerDirectory);
+  run(
+    process.execPath,
+    [typescriptCli, "-p", "tsconfig.json", "--pretty", "false"],
+    consumerDirectory,
+  );
 
   const packedManifest = packResult[0];
   assert.equal(packedManifest.version, "0.1.0");
   assert.match(packedManifest.filename, /askrjs-charts-0\.1\.0\.tgz$/);
   assert.equal(packedManifest.size > 0, true);
   assert.equal(packedManifest.unpackedSize > 0, true);
+  const packedFiles = new Set(packedManifest.files.map(({ path }) => path));
+  for (const requiredPath of [
+    "dist/styles.css",
+    "dist/styles.d.ts",
+    "CHARTING.md",
+    "docs/overview.md",
+    "docs/usage.md",
+    "examples/live-interactions-export.tsx",
+    "examples/mark-families.tsx",
+    "examples/mixed-histogram-trend.tsx",
+  ]) {
+    assert.equal(packedFiles.has(requiredPath), true, `${requiredPath} should be packed`);
+  }
   console.log(`installed tarball smoke passed: ${packedManifest.filename}`);
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });

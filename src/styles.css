@@ -40,16 +40,6 @@
   --ak-chart-series-8: var(--ak-color-chart-series-8, #ea580c);
   --ak-chart-series-9: var(--ak-color-chart-series-9, #0f766e);
   --ak-chart-series-10: var(--ak-color-chart-series-10, #4f46e5);
-  --ak-chart-color-primary: var(--ak-chart-series-1);
-  --ak-chart-background: var(--ak-chart-bg);
-  --ak-chart-plot-bg: var(--ak-chart-surface);
-  --ak-chart-color-surface: var(--ak-chart-surface);
-  --ak-chart-color-muted: var(--ak-chart-surface-muted);
-  --ak-chart-color-border: var(--ak-chart-border);
-  --ak-chart-color-text: var(--ak-chart-text);
-  --ak-chart-color-text-muted: var(--ak-chart-text-muted);
-  --ak-chart-brush-fill: var(--ak-chart-selection);
-  --ak-chart-brush-stroke: var(--ak-chart-selection-border);
 }
 
 :root,
@@ -160,10 +150,16 @@
   outline-offset: -1px;
 }
 
-:where(.ak-plot-frame, [data-slot="plot-frame"]):focus-visible,
-:where(.ak-plot-canvas-overlay, [data-slot="plot-canvas-overlay"]):focus-visible {
+:where(.ak-plot-graphic, [data-slot="plot-graphic"]):focus-visible {
   outline: 2px solid var(--ak-chart-focus-ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
+}
+
+:where(.ak-plot-graphic, [data-slot="plot-graphic"]) {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  border-radius: inherit;
 }
 
 :where(.ak-plot-canvas, [data-slot="plot-canvas"]),
@@ -185,7 +181,7 @@
   z-index: 1;
   cursor: crosshair;
   outline: none;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
 }
 
 :where(.ak-plot-root, [data-slot="plot-root"])[data-interactive="true"]
@@ -198,8 +194,7 @@
   cursor: grabbing;
 }
 
-:where(.ak-plot-empty-state, [data-slot="plot-empty-state"]),
-:where(.ak-plot-loading, [data-slot="plot-loading"]) {
+:where(.ak-plot-empty-state, [data-slot="plot-empty-state"]) {
   position: absolute;
   z-index: 2;
   inset: 0;
@@ -210,24 +205,6 @@
   color: var(--ak-chart-text-muted);
   text-align: center;
   background: var(--ak-chart-surface);
-}
-
-:where(.ak-plot-loading, [data-slot="plot-loading"]) {
-  background: transparent;
-  pointer-events: none;
-}
-
-:where(.ak-plot-empty-title, [data-slot="plot-empty-title"]) {
-  margin: 0;
-  color: var(--ak-chart-text);
-  font-weight: 650;
-}
-
-:where(.ak-plot-empty-description, [data-slot="plot-empty-description"]) {
-  max-inline-size: 34rem;
-  margin: 0;
-  color: var(--ak-chart-text-muted);
-  font-size: var(--ak-chart-font-size-small);
 }
 
 :where(.ak-plot-legend, [data-slot="plot-legend"]) {
@@ -319,9 +296,11 @@ button:where(.ak-plot-legend-item, [data-slot="plot-legend-item"]) {
   outline-offset: 2px;
 }
 
-:where(.ak-plot-legend-item, [data-slot="plot-legend-item"])[aria-pressed="false"],
-:where(.ak-plot-legend-item, [data-slot="plot-legend-item"])[data-filtered="true"] {
-  opacity: 0.48;
+:where(.ak-plot-legend-item, [data-slot="plot-legend-item"])[aria-pressed="false"]
+  :where(.ak-plot-legend-swatch, [data-slot="plot-legend-swatch"]),
+:where(.ak-plot-legend-item, [data-slot="plot-legend-item"])[data-filtered="true"]
+  :where(.ak-plot-legend-swatch, [data-slot="plot-legend-swatch"]) {
+  opacity: 0.4;
 }
 
 :where(.ak-plot-legend-swatch, [data-slot="plot-legend-swatch"]) {
@@ -331,19 +310,6 @@ button:where(.ak-plot-legend-item, [data-slot="plot-legend-item"]) {
   border: 1px solid var(--ak-chart-border);
   border-radius: 999px;
   background: var(--ak-chart-series-color, currentcolor);
-}
-
-:where(.ak-plot-legend-label, [data-slot="plot-legend-label"]) {
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-:where(.ak-plot-legend-value, [data-slot="plot-legend-value"]) {
-  color: var(--ak-chart-text);
-  font-family: var(--ak-chart-font-family-mono);
-  font-variant-numeric: tabular-nums;
 }
 
 :where(.ak-plot-tooltip, [data-slot="plot-tooltip"]) {
@@ -372,49 +338,6 @@ button:where(.ak-plot-legend-item, [data-slot="plot-legend-item"]) {
 :where(.ak-plot-tooltip, [data-slot="plot-tooltip"])[aria-hidden="false"] {
   opacity: 1;
   transform: translate(-50%, calc(-100% - 0.25rem));
-}
-
-:where(.ak-plot-tooltip-title, [data-slot="plot-tooltip-title"]) {
-  margin: 0 0 0.25rem;
-  color: inherit;
-  font-weight: 650;
-}
-
-:where(.ak-plot-tooltip-list, [data-slot="plot-tooltip-list"]) {
-  display: grid;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-:where(.ak-plot-tooltip-item, [data-slot="plot-tooltip-item"]) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--ak-chart-gap-small);
-}
-
-:where(.ak-plot-tooltip-value, [data-slot="plot-tooltip-value"]) {
-  font-family: var(--ak-chart-font-family-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-:where(.ak-plot-crosshair, [data-slot="plot-crosshair"]),
-:where(.ak-plot-brush, [data-slot="plot-brush"]) {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-}
-
-:where(.ak-plot-crosshair, [data-slot="plot-crosshair"]) {
-  border-color: var(--ak-chart-crosshair);
-  border-style: dashed;
-  border-width: 0 0 1px 1px;
-}
-
-:where(.ak-plot-brush, [data-slot="plot-brush"]) {
-  border: 1px solid var(--ak-chart-selection-border);
-  background: var(--ak-chart-selection);
 }
 
 :where(.ak-plot-controls, [data-slot="plot-controls"]) {
@@ -507,6 +430,10 @@ button:where(.ak-plot-legend-item, [data-slot="plot-legend-item"]) {
   white-space: nowrap;
 }
 
+:where(.ak-plot-data-table, [data-slot="plot-data-table"]) tbody td {
+  font-family: var(--ak-chart-font-family-mono);
+}
+
 :where(.ak-plot-data-table, [data-slot="plot-data-table"]) thead th {
   position: sticky;
   z-index: 1;
@@ -551,7 +478,6 @@ button:where(.ak-plot-legend-item, [data-slot="plot-legend-item"]) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
-
 
   :where(.ak-plot-frame, [data-slot="plot-frame"]),
   :where(.ak-plot-legends, [data-slot="plot-legends"]) {

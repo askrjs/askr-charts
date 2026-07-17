@@ -26,9 +26,7 @@ function descriptor(
 function compile<Row extends { readonly id: string }>(
   rows: readonly Row[],
   descriptors: readonly PlotDescriptor[],
-  options: Partial<
-    Omit<CompilePlotOptions<Row>, "rows" | "rowKey" | "descriptors">
-  > = {},
+  options: Partial<Omit<CompilePlotOptions<Row>, "rows" | "rowKey" | "descriptors">> = {},
 ) {
   return compilePlotScene({
     rows,
@@ -161,9 +159,7 @@ describe("mixed plot compilation", () => {
     expect(scene.scales["latency-x"]?.domain).toEqual([-5, 5]);
     expect(scene.scales["time-x"]?.type).toBe("utc");
     expect(scene.scales["p95-y"]?.type).toBe("symlog");
-    expect(
-      scene.axes.map(({ scale, orientation }) => [scale, orientation]),
-    ).toEqual([
+    expect(scene.axes.map(({ scale, orientation }) => [scale, orientation])).toEqual([
       ["latency-x", "bottom"],
       ["time-x", "top"],
       ["count-y", "left"],
@@ -172,16 +168,14 @@ describe("mixed plot compilation", () => {
     expect(scene.plotArea).toMatchObject({ x: 56, y: 44 });
     expect(scene.width - (scene.plotArea.x + scene.plotArea.width)).toBe(56);
     expect(
-      scene.axes
-        .find(({ scale }) => scale === "time-x")
-        ?.ticks.map(({ label }) => label),
+      scene.axes.find(({ scale }) => scale === "time-x")?.ticks.map(({ label }) => label),
     ).toEqual(expect.arrayContaining(["12:00", "12:04"]));
     expect(scene.marks.filter(({ kind }) => kind === "bar")).toHaveLength(4);
     expect(scene.marks.filter(({ kind }) => kind === "line")).toHaveLength(1);
     expect(scene.marks.filter(({ kind }) => kind === "point")).toHaveLength(5);
     expect(scene.legends[0]?.items.map(({ value }) => value)).toEqual([
-      "ok",
-      "error",
+      "string:ok",
+      "string:error",
     ]);
     expect(scene.interactions).toMatchObject({
       tooltip: true,
@@ -210,21 +204,15 @@ describe("scale and diagnostic defaults", () => {
       Object.freeze({ id: "null", category: "c", value: null }),
       Object.freeze({ id: "nan", category: "d", value: Number.NaN }),
     ]);
-    const scene = compile(
-      rows,
-      [descriptor("Bar", { x: "category", y: "value" })],
-      {
-        label: "Signed values",
-      },
-    );
+    const scene = compile(rows, [descriptor("Bar", { x: "category", y: "value" })], {
+      label: "Signed values",
+    });
 
     expect(scene.scales.x?.type).toBe("band");
     expect(scene.scales.x?.domain).toEqual(["a", "b"]);
     expect(scene.scales.y?.type).toBe("linear");
     expect(scene.scales.y?.domain).toEqual([-4, 8]);
-    expect(
-      scene.axes.map(({ scale, orientation }) => [scale, orientation]),
-    ).toEqual([
+    expect(scene.axes.map(({ scale, orientation }) => [scale, orientation])).toEqual([
       ["x", "bottom"],
       ["y", "left"],
     ]);
@@ -251,9 +239,7 @@ describe("scale and diagnostic defaults", () => {
       descriptor("Zoom", { axes: "xy" }),
     ]);
 
-    expect(
-      scene.axes.map(({ scale, orientation }) => [scale, orientation]),
-    ).toEqual([
+    expect(scene.axes.map(({ scale, orientation }) => [scale, orientation])).toEqual([
       ["time", "bottom"],
       ["value", "left"],
     ]);
@@ -283,9 +269,7 @@ describe("scale and diagnostic defaults", () => {
 
     expect(scene.scales.y?.type).toBe("band");
     expect(rects).toHaveLength(2);
-    expect(
-      rects.every((rect) => rect.kind === "rect" && rect.height > 1),
-    ).toBe(true);
+    expect(rects.every((rect) => rect.kind === "rect" && rect.height > 1)).toBe(true);
     expect(scene.omittedRowCount).toBe(0);
   });
 
@@ -361,14 +345,11 @@ describe("aggregate and stack expressions", () => {
         fill: "series",
       }),
     ]);
-    const positive = scene.marks.find(
-      (mark) => mark.kind === "bar" && mark.key === "positive",
-    );
+    const positive = scene.marks.find((mark) => mark.kind === "bar" && mark.key === "positive");
 
     expect(scene.scales.y?.domain).toEqual([0, 5]);
     expect(positive?.kind).toBe("bar");
-    if (positive?.kind === "bar")
-      expect(positive.y).toBeCloseTo(scene.plotArea.y);
+    if (positive?.kind === "bar") expect(positive.y).toBeCloseTo(scene.plotArea.y);
   });
 
   it("should omit every contributing row given an all-missing sum when compiling an aggregate", () => {
@@ -376,9 +357,7 @@ describe("aggregate and stack expressions", () => {
       { id: "missing", category: "same", value: null },
       { id: "not-finite", category: "same", value: Number.NaN },
     ]);
-    const scene = compile(rows, [
-      descriptor("Bar", { x: "category", y: sum("value") }),
-    ]);
+    const scene = compile(rows, [descriptor("Bar", { x: "category", y: sum("value") })]);
 
     expect(scene.marks).toHaveLength(0);
     expect(scene.transformedRows).toHaveLength(0);
@@ -413,12 +392,8 @@ describe("partition transform sequencing", () => {
         ],
       }),
     ]);
-    const large = scene.marks.find(
-      (mark) => mark.kind === "rect" && mark.key === "large",
-    );
-    const small = scene.marks.find(
-      (mark) => mark.kind === "rect" && mark.key === "small",
-    );
+    const large = scene.marks.find((mark) => mark.kind === "rect" && mark.key === "large");
+    const small = scene.marks.find((mark) => mark.kind === "rect" && mark.key === "small");
 
     expect(scene.marks.some((mark) => mark.key === "hidden")).toBe(false);
     expect(large?.kind).toBe("rect");
@@ -571,17 +546,7 @@ describe("mark family compilation", () => {
     const scene = compile(Object.freeze([familyRow]), familyDescriptors());
 
     expect(scene.marks.map(({ kind }) => kind).sort()).toEqual(
-      [
-        "bar",
-        "line",
-        "area",
-        "point",
-        "arc",
-        "cell",
-        "rect",
-        "rule",
-        "text",
-      ].sort(),
+      ["bar", "line", "area", "point", "arc", "cell", "rect", "rule", "text"].sort(),
     );
     expect(scene.hits).toHaveLength(9);
     expect(scene.legends[0]).toMatchObject({ scale: "heat", label: "Value" });
@@ -589,12 +554,8 @@ describe("mark family compilation", () => {
 
   it("should produce a deeply immutable scene given every mark family when compilation completes", () => {
     const scene = compile(Object.freeze([familyRow]), familyDescriptors());
-    const line = scene.marks.find(
-      (mark): mark is SceneLineMark<FamilyRow> => mark.kind === "line",
-    );
-    const area = scene.marks.find(
-      (mark): mark is SceneAreaMark<FamilyRow> => mark.kind === "area",
-    );
+    const line = scene.marks.find((mark): mark is SceneLineMark<FamilyRow> => mark.kind === "line");
+    const area = scene.marks.find((mark): mark is SceneAreaMark<FamilyRow> => mark.kind === "area");
 
     expect(Object.isFrozen(scene)).toBe(true);
     expect(Object.isFrozen(scene.plotArea)).toBe(true);
@@ -604,11 +565,9 @@ describe("mark family compilation", () => {
     expect(Object.isFrozen(scene.marks)).toBe(true);
     expect(scene.marks.every(Object.isFrozen)).toBe(true);
     expect(Object.isFrozen(scene.hits)).toBe(true);
-    expect(
-      scene.hits.every(
-        (hit) => Object.isFrozen(hit) && Object.isFrozen(hit.shape),
-      ),
-    ).toBe(true);
+    expect(scene.hits.every((hit) => Object.isFrozen(hit) && Object.isFrozen(hit.shape))).toBe(
+      true,
+    );
     expect(Object.isFrozen(scene.legends)).toBe(true);
     expect(Object.isFrozen(scene.interactions)).toBe(true);
     expect(Object.isFrozen(scene.sourceRows)).toBe(true);
@@ -627,9 +586,7 @@ describe("mark family compilation", () => {
 
 describe("bounded marks", () => {
   it("should clamp an overflowing progress value given bounded horizontal Bar props when compiling", () => {
-    const rows = Object.freeze([
-      { id: "progress", label: "Migration", value: 150 },
-    ]);
+    const rows = Object.freeze([{ id: "progress", label: "Migration", value: 150 }]);
     const scene = compile(rows, [
       descriptor("Bar", {
         x: "label",
@@ -644,9 +601,7 @@ describe("bounded marks", () => {
     expect(scene.scales.x?.domain).toEqual([0, 100]);
     expect(bar?.kind).toBe("bar");
     if (bar?.kind === "bar") {
-      expect(bar.x + bar.width).toBeCloseTo(
-        scene.plotArea.x + scene.plotArea.width,
-      );
+      expect(bar.x + bar.width).toBeCloseTo(scene.plotArea.x + scene.plotArea.width);
     }
   });
 
@@ -698,9 +653,7 @@ describe("bounded marks", () => {
       { id: "negative", value: -1 },
       { id: "positive", value: 3 },
     ]);
-    const scene = compile(rows, [
-      descriptor("Arc", { value: "value", padAngle: 0 }),
-    ]);
+    const scene = compile(rows, [descriptor("Arc", { value: "value", padAngle: 0 })]);
 
     expect(scene.marks.filter((mark) => mark.kind === "arc")).toHaveLength(1);
     expect(scene.marks[0]?.key).toBe("positive");
@@ -752,15 +705,12 @@ describe("large scene reduction", () => {
       height: 120,
     });
     const line = scene.marks.find(
-      (mark): mark is SceneLineMark<(typeof rows)[number]> =>
-        mark.kind === "line",
+      (mark): mark is SceneLineMark<(typeof rows)[number]> => mark.kind === "line",
     );
 
     expect(line).toBeDefined();
     expect(line?.points.length).toBeLessThan(rows.length);
-    expect(line?.points.length).toBeLessThanOrEqual(
-      scene.plotArea.width * 4 + 4,
-    );
+    expect(line?.points.length).toBeLessThanOrEqual(scene.plotArea.width * 4 + 4);
     expect(scene.hits).toHaveLength(line?.points.length ?? 0);
   });
 
@@ -785,16 +735,13 @@ describe("large scene reduction", () => {
       { width: 200, height: 120 },
     );
     const line = scene.marks.find(
-      (mark): mark is SceneLineMark<(typeof rows)[number]> =>
-        mark.kind === "line",
+      (mark): mark is SceneLineMark<(typeof rows)[number]> => mark.kind === "line",
     );
 
     expect(line?.segments).toHaveLength(2);
-    expect(
-      line?.segments
-        .map((segment) => segment.length)
-        .every((length) => length > 0),
-    ).toBe(true);
+    expect(line?.segments.map((segment) => segment.length).every((length) => length > 0)).toBe(
+      true,
+    );
     expect(line?.points).toHaveLength(
       (line?.segments[0]?.length ?? 0) + (line?.segments[1]?.length ?? 0),
     );
@@ -822,11 +769,281 @@ describe("large scene reduction", () => {
     expect(bars.length).toBeGreaterThan(0);
     expect(bars.length).toBeLessThan(20);
     expect(
-      bars.every(
-        (bar) =>
-          bar.kind !== "bar" ||
-          bar.x <= scene.plotArea.x + scene.plotArea.width,
-      ),
+      bars.every((bar) => bar.kind !== "bar" || bar.x <= scene.plotArea.x + scene.plotArea.width),
     ).toBe(true);
+  });
+});
+
+describe("runtime contract hardening", () => {
+  it("should align horizontal bars to the start of their categorical band when compiling", () => {
+    const scene = compile(
+      Object.freeze([
+        { id: "first", category: "a", value: 4 },
+        { id: "second", category: "b", value: 8 },
+      ]),
+      [
+        descriptor("Scale", { name: "amount", channel: "x", type: "linear", domain: [0, 10] }),
+        descriptor("Bar", {
+          x: "category",
+          y: "value",
+          orientation: "horizontal",
+          xScale: "amount",
+        }),
+      ],
+    );
+    const scale = scene.scales.y;
+    const bar = scene.marks.find((mark) => mark.kind === "bar" && mark.key === "first");
+
+    expect(scale?.type).toBe("band");
+    expect(bar?.kind).toBe("bar");
+    if (bar?.kind === "bar") {
+      expect(bar.y).toBeCloseTo(Number(scale?.map("a")));
+      expect(bar.height).toBeCloseTo(scale?.bandwidth ?? 0);
+    }
+  });
+
+  it("should span categorical rect bounds exactly through the ending band when compiling", () => {
+    const scene = compile(Object.freeze([{ id: "range", start: "a", end: "b", lane: 1 }]), [
+      descriptor("Scale", {
+        name: "category",
+        channel: "x",
+        type: "band",
+        domain: ["a", "b", "c"],
+      }),
+      descriptor("Rect", { x: "start", x2: "end", y: "lane", xScale: "category" }),
+    ]);
+    const scale = scene.scales.category;
+    const rect = scene.marks.find((mark) => mark.kind === "rect");
+    const start = Number(scale?.map("a"));
+    const end = Number(scale?.map("b")) + (scale?.bandwidth ?? 0);
+
+    expect(rect?.kind).toBe("rect");
+    if (rect?.kind === "rect") {
+      expect(rect.x).toBeCloseTo(start);
+      expect(rect.width).toBeCloseTo(end - start);
+    }
+  });
+
+  it("should use one typed identity for boolean colors and their legend entries when compiling", () => {
+    const scene = compile(
+      Object.freeze([
+        { id: "enabled", x: 1, y: 1, enabled: true },
+        { id: "disabled", x: 2, y: 2, enabled: false },
+      ]),
+      [
+        descriptor("Scale", {
+          name: "status",
+          channel: "color",
+          type: "ordinal-color",
+          domain: [true, false],
+          range: ["#00aa00", "#aa0000"],
+        }),
+        descriptor("Point", { x: "x", y: "y", fill: "enabled", colorScale: "status" }),
+        descriptor("Legend", { scale: "status", interactive: true }),
+      ],
+    );
+    const enabled = scene.marks.find((mark) => mark.key === "enabled");
+    const disabled = scene.marks.find((mark) => mark.key === "disabled");
+
+    expect(enabled?.fill).toBe(scene.scales.status?.map(true));
+    expect(disabled?.fill).toBe(scene.scales.status?.map(false));
+    expect(scene.legends[0]?.items.map(({ label }) => label)).toEqual(["true", "false"]);
+    expect(new Set(scene.legends[0]?.items.map(({ value }) => value)).size).toBe(2);
+  });
+
+  it("should retain a data-driven stroke scale given a constant fill when compiling", () => {
+    const scene = compile(
+      Object.freeze([
+        { id: "api", x: 1, y: 1, series: "api" },
+        { id: "worker", x: 2, y: 2, series: "worker" },
+      ]),
+      [
+        descriptor("Point", {
+          x: "x",
+          y: "y",
+          fill: constant("#ffffff"),
+          stroke: "series",
+        }),
+      ],
+    );
+
+    expect(scene.scales.color?.type).toBe("ordinal-color");
+    expect(scene.marks.map(({ stroke }) => stroke)).toEqual([
+      scene.scales.color?.map("api"),
+      scene.scales.color?.map("worker"),
+    ]);
+  });
+
+  it("should keep legends passive unless interaction is explicitly requested when compiling", () => {
+    const scene = compile(Object.freeze([{ id: "point", x: 1, y: 1, series: "api" }]), [
+      descriptor("Point", { x: "x", y: "y", fill: "series" }),
+      descriptor("Legend"),
+    ]);
+
+    expect(scene.legends[0]?.interactive).toBe(false);
+  });
+
+  it("should keep delimiter-bearing aggregate groups distinct when compiling", () => {
+    const scene = compile(
+      Object.freeze([
+        { id: "first", category: "a", series: "b:c" },
+        { id: "second", category: "a:b", series: "c" },
+      ]),
+      [descriptor("Bar", { x: "category", y: count(), fill: "series" })],
+    );
+
+    expect(scene.marks.filter(({ kind }) => kind === "bar")).toHaveLength(2);
+    expect(scene.transformedRows).toHaveLength(2);
+  });
+
+  it("should reject partition transforms outside the final Rect transform position when compiling", () => {
+    const rows = Object.freeze([{ id: "root", parent: null, value: 1 }]);
+    const partitionTransform = partition<(typeof rows)[number]>({
+      id: "id",
+      parentId: "parent",
+      value: "value",
+    });
+
+    expect(() =>
+      compile(rows, [
+        descriptor("Rect", {
+          transform: [partitionTransform, filterRows(() => true)],
+        }),
+      ]),
+    ).toThrow(/partition transform must be last/i);
+    expect(() =>
+      compile(rows, [
+        descriptor("Point", { x: "value", y: "value", transform: partitionTransform }),
+      ]),
+    ).toThrow(/only Rect/i);
+  });
+
+  it("should omit text marks with missing text channels when compiling", () => {
+    const scene = compile(Object.freeze([{ id: "missing", x: 1, y: 1, label: null }]), [
+      descriptor("Text", { x: "x", y: "y", text: "label" }),
+    ]);
+
+    expect(scene.marks).toHaveLength(0);
+    expect(scene.omittedRowCount).toBe(1);
+  });
+
+  it("should reject ambiguous multi-row bounded arcs when compiling", () => {
+    expect(() =>
+      compile(
+        Object.freeze([
+          { id: "first", value: 60 },
+          { id: "second", value: 60 },
+        ]),
+        [descriptor("Arc", { value: "value", min: 0, max: 100 })],
+      ),
+    ).toThrow(/bounded Arc requires exactly one/i);
+  });
+
+  it("should reject invalid descriptor references and zoom extents when compiling", () => {
+    const rows = Object.freeze([{ id: "point", x: 1, y: 1 }]);
+
+    expect(() =>
+      compile(rows, [
+        descriptor("Point", { x: "x", y: "y" }),
+        descriptor("Axis", { scale: "missing" }),
+      ]),
+    ).toThrow(/unknown scale missing/i);
+    expect(() =>
+      compile(rows, [
+        descriptor("Scale", { name: "x", channel: "x" }),
+        descriptor("Scale", { name: "x", channel: "x" }),
+        descriptor("Point", { x: "x", y: "y" }),
+      ]),
+    ).toThrow(/duplicate scale x/i);
+    expect(() =>
+      compile(rows, [
+        descriptor("Point", { x: "x", y: "y" }),
+        descriptor("Zoom", { min: 8, max: 2 }),
+      ]),
+    ).toThrow(/maximum.*minimum/i);
+  });
+
+  it("should preserve named coordinate directions and reject incompatible scales when compiling", () => {
+    const rows = Object.freeze([{ id: "point", time: 1, latency: 4, status: "ok" }]);
+    const scene = compile(rows, [
+      descriptor("Scale", { name: "time", channel: "x", type: "linear" }),
+      descriptor("Scale", { name: "latency", channel: "y", type: "linear" }),
+      descriptor("Point", { x: "time", y: "latency", xScale: "time", yScale: "latency" }),
+      descriptor("Axis", { scale: "latency" }),
+      descriptor("Grid", { scale: "time" }),
+    ]);
+
+    expect(scene.axes[0]).toMatchObject({ scale: "latency", orientation: "left" });
+    expect(scene.grids[0]).toMatchObject({ scale: "time", axis: "x" });
+    expect(() =>
+      compile(rows, [
+        descriptor("Scale", { name: "status", channel: "color", type: "linear" }),
+        descriptor("Point", {
+          x: "time",
+          y: "latency",
+          fill: "status",
+          colorScale: "status",
+        }),
+      ]),
+    ).toThrow(/incompatible.*color channel/i);
+  });
+
+  it("should remove invalid samples before stacking and keep typed series distinct when compiling", () => {
+    const stacked = compile(
+      Object.freeze([
+        { id: "missing", category: "a", value: Number.NaN, series: "missing" },
+        { id: "string", category: "a", value: 2, series: "1" as string | number },
+        { id: "number", category: "a", value: 3, series: 1 as string | number },
+      ]),
+      [descriptor("Bar", { x: "category", y: "value", fill: "series", stack: "series" })],
+    );
+
+    expect(stacked.marks.filter(({ kind }) => kind === "bar")).toHaveLength(2);
+    expect(stacked.scales.y?.domain).toEqual([0, 5]);
+    expect(stacked.omittedRowCount).toBe(1);
+    expect(new Set(stacked.marks.map(({ series }) => series))).toEqual(
+      new Set(["string:1", "number:1"]),
+    );
+    expect(new Set(stacked.legends[0]?.items.map(({ value }) => value))).toEqual(
+      new Set(["string:1", "number:1"]),
+    );
+  });
+
+  it("should retain viewport crossings and paired area samples given dense scenes when compiling", () => {
+    const crossing = compile(
+      Object.freeze([
+        { id: "left", x: 0, y: 1 },
+        { id: "right", x: 10, y: 2 },
+      ]),
+      [descriptor("Line", { x: "x", y: "y" })],
+      { view: { x: [4, 6] } },
+    );
+    const line = crossing.marks.find((mark) => mark.kind === "line");
+    expect(line?.kind).toBe("line");
+    if (line?.kind === "line") {
+      expect(line.points.map(({ x }) => x)).toEqual([
+        crossing.plotArea.x,
+        crossing.plotArea.x + crossing.plotArea.width,
+      ]);
+    }
+
+    const denseRows = Object.freeze(
+      Array.from({ length: 5_000 }, (_, index) => ({
+        id: `area-${index}`,
+        x: index,
+        y: Math.sin(index / 7) * 10 + 20,
+        low: Math.cos(index / 11) * 2,
+      })),
+    );
+    const dense = compile(denseRows, [descriptor("Area", { x: "x", y: "y", y2: "low" })], {
+      width: 180,
+    });
+    const area = dense.marks.find((mark) => mark.kind === "area");
+    expect(area?.kind).toBe("area");
+    if (area?.kind === "area") {
+      expect(area.points.length).toBeLessThan(denseRows.length);
+      expect(area.baseline).toHaveLength(area.points.length);
+      expect(area.baseline.map(({ x }) => x)).toEqual(area.points.map(({ x }) => x));
+    }
   });
 });

@@ -5,12 +5,7 @@ import type { PlotDescriptor } from "../src/descriptors";
 import { serializePlotData, serializePlotSvg } from "../src/export";
 import { bin, count, filterRows, sum } from "../src/expressions";
 import type { PrimitiveKind } from "../src/model";
-import type {
-  PlotScene,
-  SceneMark,
-  SceneMarkBase,
-  ScenePoint,
-} from "../src/scene-model";
+import type { PlotScene, SceneMark, SceneMarkBase, ScenePoint } from "../src/scene-model";
 
 interface Row {
   readonly id: string;
@@ -44,11 +39,7 @@ const rows: readonly Row[] = Object.freeze([
   }),
 ]);
 
-function base(
-  id: string,
-  title = id,
-  series: string | null = null,
-): SceneMarkBase<Row> {
+function base(id: string, title = id, series: string | null = null): SceneMarkBase<Row> {
   return {
     id,
     key: id,
@@ -68,16 +59,8 @@ function point(x: number, y: number, sourceIndex: number): ScenePoint {
 }
 
 function everyMark(): readonly SceneMark<Row>[] {
-  const points = Object.freeze([
-    point(10, 30, 0),
-    point(20, 20, 1),
-    point(30, 25, 2),
-  ]);
-  const baseline = Object.freeze([
-    point(10, 45, 0),
-    point(20, 45, 1),
-    point(30, 45, 2),
-  ]);
+  const points = Object.freeze([point(10, 30, 0), point(20, 20, 1), point(30, 25, 2)]);
+  const baseline = Object.freeze([point(10, 45, 0), point(20, 45, 1), point(30, 45, 2)]);
   return Object.freeze([
     {
       ...base("bar", "<bar>&"),
@@ -187,9 +170,7 @@ function scene(marks: readonly SceneMark<Row>[] = everyMark()): PlotScene<Row> {
         scale: "x",
         orientation: "bottom",
         label: null,
-        ticks: Object.freeze([
-          Object.freeze({ value: 0, position: 10, label: "<zero> & one" }),
-        ]),
+        ticks: Object.freeze([Object.freeze({ value: 0, position: 10, label: "<zero> & one" })]),
         grid: true,
       }),
     ]),
@@ -275,28 +256,18 @@ describe("SVG scene serialization", () => {
   it("should serialize every mark family given a hand-built scene when exporting SVG", () => {
     const svg = serializePlotSvg(scene());
 
-    expect(
-      svg.startsWith(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"',
-      ),
-    ).toBe(true);
-    for (const mark of [
-      "bar",
-      "cell",
-      "rect",
-      "line",
-      "area",
-      "arc",
-      "rule",
-      "text",
-    ]) {
+    expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"')).toBe(
+      true,
+    );
+    for (const mark of ["bar", "cell", "rect", "line", "area", "arc", "rule", "text"]) {
       expect(svg).toContain(`data-mark="${mark}"`);
     }
     expect(svg.match(/data-mark="point"/g)).toHaveLength(3);
     expect(svg).toContain('<circle data-mark="point"');
     expect(svg).toContain('<rect data-mark="point"');
     expect(svg).toContain('<polygon data-mark="point"');
-    expect(svg).toContain('<g clip-path="url(#plot-clip)">');
+    expect(svg).toContain('<svg x="5" y="5" width="90" height="60"');
+    expect(svg).not.toContain("clipPath");
     expect(svg).toContain('stroke-dasharray="4 2"');
   });
 
@@ -317,16 +288,10 @@ describe("SVG scene serialization", () => {
       background: '#fff" onload="alert(1)',
     });
 
-    expect(svg).toContain(
-      "<title>Revenue &lt;Q1&gt; &amp; &quot;best&quot;</title>",
-    );
+    expect(svg).toContain("<title>Revenue &lt;Q1&gt; &amp; &quot;best&quot;</title>");
     expect(svg).toContain("&lt;zero&gt; &amp; one");
-    expect(svg).toContain(
-      "&lt;script&gt;alert(&quot;title&quot;)&lt;/script&gt;",
-    );
-    expect(svg).toContain(
-      "&lt;script&gt;alert(&quot;text&quot;)&lt;/script&gt;",
-    );
+    expect(svg).toContain("&lt;script&gt;alert(&quot;title&quot;)&lt;/script&gt;");
+    expect(svg).toContain("&lt;script&gt;alert(&quot;text&quot;)&lt;/script&gt;");
     expect(svg).toContain(
       'fill="#fff&quot;/&gt;&lt;script&gt;alert(&quot;paint&quot;)&lt;/script&gt;"',
     );
@@ -363,9 +328,7 @@ describe("SVG scene serialization", () => {
     expect(plain).toContain('data-selected="true"');
     expect(withOverlays).toContain('data-plot-overlays="true"');
     expect(withOverlays).toContain('stroke-dasharray="3 3"');
-    expect(withOverlays).toContain(
-      '<rect x="10" y="12" width="30" height="24"',
-    );
+    expect(withOverlays).toContain('<rect x="10" y="12" width="30" height="24"');
     expect(withOverlays).toContain('<circle cx="24" cy="30" r="7"');
   });
 
@@ -423,6 +386,14 @@ describe("SVG scene serialization", () => {
     expect(arcPathData).not.toContain("NaN");
     expect(arcScene.marks[0]).toMatchObject({ padAngle: 0.1, cornerRadius: 8 });
   });
+
+  it("should serialize deterministically and support transparent backgrounds given repeated exports", () => {
+    const first = serializePlotSvg(scene(), { background: null });
+    const second = serializePlotSvg(scene(), { background: null });
+
+    expect(second).toBe(first);
+    expect(first).not.toContain('<rect width="100%" height="100%"');
+  });
 });
 
 describe("plot data serialization", () => {
@@ -438,6 +409,36 @@ describe("plot data serialization", () => {
     expect(csv).toContain("2026-01-01T00:00:00.000Z");
     expect(csv).toContain('"{""ok"":true}"');
     expect(csv).toContain("c,Missing number,,2026-01-03T00:00:00.000Z");
+  });
+
+  it("should neutralize spreadsheet formulas given untrusted cells when exporting CSV", () => {
+    const formulaRows = Object.freeze([
+      Object.freeze({ id: "formula", value: '=HYPERLINK("https://example.invalid")' }),
+      Object.freeze({ id: "command", value: "+cmd|' /C calc'!A0" }),
+      Object.freeze({ id: "whitespace", value: "\n@SUM(A1:A2)" }),
+      Object.freeze({ id: "safe", value: "ordinary" }),
+    ]);
+    const formulaScene = compilePlotScene({
+      rows: formulaRows,
+      rowKey: "id",
+      label: "Formula safety",
+      descriptors: [
+        descriptor("Text", {
+          x: (_row: unknown, index: number) => index,
+          y: () => 1,
+          text: "value",
+        }),
+      ],
+      width: 320,
+      height: 180,
+    });
+
+    const csv = serializePlotData(formulaScene, { format: "csv" });
+
+    expect(csv).toContain("'=HYPERLINK");
+    expect(csv).toContain("'+cmd");
+    expect(csv).toContain("'\n@SUM");
+    expect(csv).toContain("ordinary");
   });
 
   it("should distinguish all visible and selected scopes given transformed records when exporting JSON", () => {
@@ -576,12 +577,7 @@ describe("plot data serialization", () => {
       ),
     ) as readonly HistogramRow[];
 
-    expect(all.map(({ id }) => id)).toEqual([
-      "one",
-      "two",
-      "missing",
-      "filtered",
-    ]);
+    expect(all.map(({ id }) => id)).toEqual(["one", "two", "missing", "filtered"]);
     expect(visible.map(({ id }) => id)).toEqual(["one", "two"]);
     expect(selectedAggregate.map(({ id }) => id)).toEqual(["one", "two"]);
     expect(selectedUnused.map(({ id }) => id)).toEqual(["filtered"]);
@@ -627,12 +623,7 @@ describe("plot data serialization", () => {
       }),
     ) as readonly Record<string, unknown>[];
 
-    expect(sourceAll.map(({ id }) => id)).toEqual([
-      "a-1",
-      "a-2",
-      "a-missing",
-      "b-missing",
-    ]);
+    expect(sourceAll.map(({ id }) => id)).toEqual(["a-1", "a-2", "a-missing", "b-missing"]);
     expect(sourceVisible.map(({ id }) => id)).toEqual(["a-1", "a-2"]);
     expect(transformed).toHaveLength(1);
     expect(transformed[0]).toMatchObject({ id: "a-1", x: "a", y: 3 });
