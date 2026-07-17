@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +27,20 @@ function run(executable, arguments_, cwd) {
 }
 
 try {
+  const productionJavaScript = readdirSync(join(repositoryRoot, "dist"), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".js"))
+    .map((entry) => readFileSync(join(repositoryRoot, "dist", entry.name), "utf8"))
+    .join("\n");
+  for (const forbiddenText of ["import.meta.env", "__ASKR_CHARTS", "vitest", "benches/"]) {
+    assert.equal(
+      productionJavaScript.includes(forbiddenText),
+      false,
+      `production JavaScript should not contain ${forbiddenText}`,
+    );
+  }
+
   const packDirectory = join(temporaryRoot, "pack");
   const consumerDirectory = join(temporaryRoot, "consumer");
   mkdirSync(packDirectory);

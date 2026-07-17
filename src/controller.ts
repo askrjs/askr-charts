@@ -471,8 +471,7 @@ function installSceneAndPaint<Row>(
   paintOverlay(state);
   if (state.hiddenSeries.size > 0) updateLegendButtons(state);
   updateLiveStatus(state);
-  const development = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
-  reportDiagnostics(state, state.config.props.diagnostics ?? development);
+  reportDiagnostics(state, state.config.props.diagnostics === true);
 }
 
 function reportDiagnostics<Row>(state: ControllerState<Row>, enabled: boolean): void {
