@@ -1,12 +1,9 @@
 import { defineConfig } from "vite-plus";
 
-const externalPackagePattern = /^@askrjs\/askr(?:\/.*)?$/;
-
 export default defineConfig({
   pack: {
     entry: {
-      "components/index": "src/components/index.ts",
-      "core/index": "src/core/index.ts",
+      index: "src/index.ts",
     },
     format: ["esm"],
     outDir: "dist",
@@ -14,32 +11,15 @@ export default defineConfig({
     tsconfig: "tsconfig.pack.json",
     dts: true,
     sourcemap: true,
+    clean: true,
     unbundle: true,
+    copy: {
+      from: "src/styles.css",
+      to: "dist",
+      rename: "styles.css",
+    },
     deps: {
       neverBundle: [/^@askrjs\/askr(?:\/.*)?$/],
-    },
-  },
-  build: {
-    minify: false,
-    sourcemap: true,
-    lib: {
-      entry: {
-        "components/index": "src/components/index.ts",
-        "core/index": "src/core/index.ts",
-      },
-    },
-    rollupOptions: {
-      external: (id) => externalPackagePattern.test(id),
-      output: [
-        {
-          dir: "dist",
-          entryFileNames: "[name].js",
-          exports: "named",
-          format: "es",
-          preserveModules: true,
-          preserveModulesRoot: "src",
-        },
-      ],
     },
   },
 });

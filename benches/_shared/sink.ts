@@ -1,9 +1,9 @@
-let benchSink: unknown;
+let benchmarkSink: unknown;
 
 export function consume(value: unknown): void {
-  benchSink = value;
+  benchmarkSink = value;
 }
 
-export function readConsumedValue(): unknown {
-  return benchSink;
+export function consumedValue(): unknown {
+  return benchmarkSink;
 }

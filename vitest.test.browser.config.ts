@@ -3,7 +3,7 @@ import { playwright } from "vite-plus/test/browser-playwright";
 import { defineConfig } from "vite-plus";
 import { sharedVitestConfig } from "./vitest.test.shared";
 
-export default defineConfig({
+const browserConfig = {
   ...sharedVitestConfig,
   plugins: [askr()],
   test: {
@@ -24,4 +24,6 @@ export default defineConfig({
     },
     include: ["tests/browser/**/*.test.tsx"],
   },
-});
+} as unknown as Parameters<typeof defineConfig>[0];
+
+export default defineConfig(browserConfig);

@@ -1,296 +1,467 @@
-﻿# Usage
+# Usage
 
-Use this package on its own for compact visual summaries and simple trend
-approximations. It does not depend on `@askrjs/themes`; when theme styles are
-present, chart-owned tokens use compatible defaults so the visuals still feel
-like part of the same Askr design world.
+## Import the 0.1 surface
 
 ```tsx
 import {
-  AreaChart,
-  BarChart,
-  DonutChart,
-  FlameGraph,
-  Heatmap,
-  LineChart,
-  PieChart,
-  ProgressMeter,
-  RadialGauge,
-  Sparkline,
-  StackedBarChart,
-  Timeline,
-} from "@askrjs/charts/components";
-import { createHeatmapLegendItems, createValueChartLegendItems } from "@askrjs/charts/core";
-import "@askrjs/charts/default";
-
-export function AnalyticsPreview() {
-  return (
-    <div>
-      <BarChart
-        label="Monthly revenue"
-        animate
-        data={[
-          { label: "Jan", value: 42 },
-          { label: "Feb", value: 61 },
-          { label: "Mar", value: 38 },
-        ]}
-      />
-
-      <LineChart
-        label="Weekly signups"
-        animate
-        data={[
-          { label: "Mon", value: 12 },
-          { label: "Tue", value: 18 },
-          { label: "Wed", value: 14 },
-        ]}
-      />
-
-      <AreaChart
-        label="Weekly orders"
-        animate
-        data={[
-          { label: "Mon", value: 20 },
-          { label: "Tue", value: 26 },
-          { label: "Wed", value: 18 },
-        ]}
-      />
-
-      <DonutChart
-        label="Traffic split"
-        animation={{ type: "sweep", duration: 360, stagger: 24 }}
-        data={[
-          { label: "Direct", value: 44 },
-          { label: "Referral", value: 21 },
-          { label: "Social", value: 35 },
-        ]}
-      />
-
-      <PieChart
-        label="Traffic share"
-        animation={{ type: "sweep", duration: 360, stagger: 24 }}
-        data={[
-          { label: "Docs", value: 38 },
-          { label: "Trials", value: 27 },
-          { label: "Teams", value: 21 },
-        ]}
-      />
-
-      <FlameGraph
-        label="Request stack"
-        animate
-        data={[
-          {
-            label: "renderApp",
-            value: 120,
-            children: [
-              { label: "loadRoute", value: 44 },
-              {
-                label: "renderDashboard",
-                value: 76,
-                children: [
-                  { label: "renderWidgets", value: 52 },
-                  { label: "formatSummary", value: 24 },
-                ],
-              },
-            ],
-          },
-        ]}
-      />
-
-      <Heatmap
-        label="Weekly activity"
-        animation={{ type: "fade", duration: 200, stagger: 4 }}
-        data={[
-          { x: "Mon", y: "Week 1", value: 8 },
-          { x: "Tue", y: "Week 1", value: 4 },
-          { x: "Wed", y: "Week 1", value: 10 },
-        ]}
-      />
-
-      <ProgressMeter label="Quarterly quota" value={72} max={100} animate />
-
-      <RadialGauge label="Fill rate" value={68} max={100} animate />
-
-      <Sparkline
-        label="Support trend"
-        animation={{ type: "fade", duration: 180, stagger: 12 }}
-        data={[
-          { label: "Mon", value: 12 },
-          { label: "Tue", value: 8 },
-          { label: "Wed", value: 15 },
-        ]}
-      />
-
-      <StackedBarChart
-        label="Pipeline mix"
-        animate
-        data={[
-          {
-            label: "Q1",
-            segments: [
-              { label: "Open", value: 12 },
-              { label: "Won", value: 8 },
-              { label: "Lost", value: 4 },
-            ],
-          },
-        ]}
-      />
-
-      <Timeline
-        label="Release timeline"
-        animation={{ type: "slide", duration: 280, stagger: 40 }}
-        data={[
-          { label: "Alpha", value: "Jan", description: "Internal preview" },
-          { label: "Beta", value: "Feb", description: "Team rollout" },
-          { label: "GA", value: "Mar", description: "Public launch" },
-        ]}
-      />
-    </div>
-  );
-}
+  appendPlotRows,
+  bin,
+  constant,
+  count,
+  createPlot,
+  filterRows,
+  group,
+  mean,
+  movingAverage,
+  movingWindow,
+  normalize,
+  partition,
+  regression,
+  removePlotRows,
+  sortRows,
+  stack,
+  sum,
+  trimPlotRows,
+  upsertPlotRows,
+} from "@askrjs/charts";
 ```
 
-## Data Shapes And Scale Controls
+Load styles once in application CSS:
 
-`BarChart`, `LineChart`, `AreaChart`, `DonutChart`, `PieChart`, `Sparkline`, and `Heatmap`
-accept either object data or tuple data.
+```css
+@import "@askrjs/charts/styles";
+```
 
-`LineChart` and `AreaChart` are best viewed as discrete CSS trend snapshots, and
-`RadialGauge` is a compact single-value dial. They are intentionally useful
-approximations for simple visuals rather than a replacement for a full SVG or
-canvas charting engine.
+Do not create the plot factory during render:
 
 ```tsx
-<BarChart
-  label="Monthly revenue"
-  data={[
-    ["Jan", 20],
-    ["Feb", 40],
-  ]}
-  min={20}
-  max={40}
-  labelDensity="compact"
-/>
+type RequestRow = {
+  id: string;
+  timestamp: Date;
+  latencyMs: number | null;
+  outcome: "ok" | "error";
+};
 
-<BarChart
-  label="Latency distribution"
-  variant="histogram"
-  data={[
-    ["0-50ms", 18],
-    ["51-100ms", 34],
-    ["101-200ms", 29],
-  ]}
-/>
+const RequestPlot = createPlot<RequestRow>();
+```
 
-<Heatmap
-  label="Weekly activity"
-  data={[
-    ["Mon", "Week 1", 2],
-    ["Tue", "Week 1", 8],
-  ]}
-  min={2}
-  max={8}
-/>
+## Fields, accessors, and constants
 
-<LineChart
-  label="Weekly signups"
-  data={[
-    ["Mon", 12],
-    ["Tue", 18],
-  ]}
-  min={10}
-  max={20}
+Typed field names are the shortest channel form:
+
+```tsx
+<RequestPlot.Point x="timestamp" y="latencyMs" fill="outcome" />
+```
+
+Accessors are useful for units or derived labels. Return `null` or `undefined` to mark a value missing:
+
+```tsx
+<RequestPlot.Point
+  x={(row) => row.timestamp}
+  y={(row) => (row.latencyMs == null ? null : row.latencyMs / 1_000)}
+  title={(row) => `${row.outcome}: ${row.latencyMs ?? "missing"} ms`}
 />
 ```
 
-Values that are `null`, `undefined`, negative, or non-finite normalize to `0`.
-
-`labelDensity` is available on visual charts and currently supports:
-
-- `full`
-- `compact`
-- `minimal`
-
-Charts keep their accessible summary and fallback table regardless of the visible label density.
-
-## Legends And Tooltips
-
-Chart items now emit CSS-only hover and focus tooltips through the shared `chart-tooltip` slots.
-No client-side measurement or mount-time JavaScript is required.
-
-Legend items can be generated directly from normalized chart data:
+A bare string names a field. Use `constant(...)` for literal strings:
 
 ```tsx
-const revenueLegend = createValueChartLegendItems([
-  ["Direct", 30],
-  ["Referral", 70, "tomato"],
-]);
+<RequestPlot.Line x="timestamp" y="latencyMs" stroke={constant("#2563eb")} />
+```
 
-const activityLegend = createHeatmapLegendItems(
-  [
-    ["Mon", "Week 1", 2],
-    ["Tue", "Week 1", 8],
-  ],
-  { min: 2, max: 8, steps: 3 },
+This distinction prevents a field name such as `red` from being confused with a CSS color.
+
+## Channel expressions
+
+Expressions are immutable and can be kept near the plot definition:
+
+```tsx
+const latencyBin = bin("latencyMs", { thresholds: 20 });
+const rowCount = count();
+const totalLatency = sum("latencyMs");
+const meanLatency = mean("latencyMs");
+const outcomeGroup = group("outcome");
+const divergingLatency = stack("latencyMs", { offset: "diverging" });
+const normalizedLatency = normalize("latencyMs");
+const rollingMaximum = movingWindow("latencyMs", {
+  window: 12,
+  operation: "max",
+  partial: false,
+});
+const rollingMean = movingAverage("latencyMs", { window: 7 });
+const latencyTrend = regression("latencyMs", { x: "timestamp" });
+```
+
+Use them as typed channels:
+
+```tsx
+<RequestPlot.Root data={rows} rowKey="id" label="Request latency distribution">
+  <RequestPlot.Bar x={latencyBin} y={rowCount} fill="outcome" stack="outcome" />
+  <RequestPlot.Line x="timestamp" y={rollingMean} />
+  <RequestPlot.Line x="timestamp" y={latencyTrend} />
+</RequestPlot.Root>
+```
+
+Aggregation expressions operate within the active bin/group. `group(...)` declares a grouping channel; `count`, `sum`, and `mean` produce its numeric result. `stack(...)` accepts `offset: "zero" | "diverging" | "expand"` and a stable series order. `normalize(...)` produces proportional values.
+
+`movingWindow` supports `sum`, `mean`, `min`, and `max`. Set `partial: false` to leave the leading incomplete window missing. `movingAverage` fixes the operation to `mean`. Regression is linear in 0.1 and uses row index unless `x` is supplied.
+
+## Mark-local transforms
+
+Filter and sort one mark without rewriting the root's source rows:
+
+```tsx
+<RequestPlot.Line
+  transform={[
+    filterRows<RequestRow>((row) => row.outcome === "ok"),
+    sortRows<RequestRow>({ by: "timestamp", direction: "ascending" }),
+  ]}
+  x="timestamp"
+  y="latencyMs"
+/>
+```
+
+Partition accepts either flat `id`/`parentId` rows or nested `children` rows. `Rect` can consume its generated layout without explicit x/y channels:
+
+```tsx
+type FrameRow = {
+  id: string;
+  parentId: string | null;
+  label: string;
+  service: string;
+  durationMs: number;
+};
+
+const TracePlot = createPlot<FrameRow>();
+
+<TracePlot.Root data={frames} rowKey="id" label="Request trace">
+  <TracePlot.Rect
+    transform={partition<FrameRow>({
+      id: "id",
+      parentId: "parentId",
+      value: "durationMs",
+      padding: 0.004,
+    })}
+    fill="service"
+    title="label"
+  />
+  <TracePlot.Legend interactive label="Service" />
+  <TracePlot.Tooltip channels={["label", "durationMs"]} />
+</TracePlot.Root>;
+```
+
+## Automatic and explicit scales
+
+For a single Cartesian composition, inferred scales, axes, and tooltips are usually enough:
+
+```tsx
+<RequestPlot.Root data={rows} rowKey="id" label="P95 latency">
+  <RequestPlot.Line x="timestamp" y="latencyMs" />
+  <RequestPlot.Point x="timestamp" y="latencyMs" />
+</RequestPlot.Root>
+```
+
+Use explicit named scales when domains, time zones, or units differ:
+
+```tsx
+type ServiceRow = {
+  id: string;
+  timestamp: Date;
+  requests: number;
+  p95: number;
+};
+
+const ServicePlot = createPlot<ServiceRow>();
+
+<ServicePlot.Root data={serviceRows} rowKey="id" label="Requests and latency">
+  <ServicePlot.Scale name="time" channel="x" type="utc" />
+  <ServicePlot.Scale name="requests" channel="y" type="linear" nice />
+  <ServicePlot.Scale
+    name="latency"
+    channel="y"
+    type="symlog"
+    constant={10}
+    nice
+  />
+
+  <ServicePlot.Bar x="timestamp" y="requests" xScale="time" yScale="requests" />
+  <ServicePlot.Line x="timestamp" y="p95" xScale="time" yScale="latency" />
+  <ServicePlot.Point x="timestamp" y="p95" xScale="time" yScale="latency" />
+
+  <ServicePlot.Axis scale="time" orient="bottom" label="UTC time" />
+  <ServicePlot.Axis scale="requests" orient="left" label="Requests" />
+  <ServicePlot.Axis scale="latency" orient="right" label="P95 (ms)" />
+  <ServicePlot.Grid scale="latency" axis="y" />
+</ServicePlot.Root>;
+```
+
+Use `power` with `exponent`, `log` with `base`, and `symlog` with its linear-region `constant`. A log scale accepts strictly positive values only. `time` uses local calendar ticks; `utc` uses UTC calendar ticks.
+
+Color scales can be named too:
+
+```tsx
+<RequestPlot.Scale
+  name="outcomes"
+  channel="color"
+  type="ordinal-color"
+  domain={["ok", "error"]}
+/>
+<RequestPlot.Bar
+  x={bin("latencyMs", { interval: 50 })}
+  y={count()}
+  fill="outcome"
+  colorScale="outcomes"
+/>
+<RequestPlot.Legend scale="outcomes" interactive />
+```
+
+## Mark recipes
+
+### Cartesian
+
+```tsx
+<Plot.Bar x="category" y="value" orientation="vertical" radius={4} />
+<Plot.Line
+  x="timestamp"
+  y="value"
+  defined={(row) => row.value != null}
+  curve="monotone"
+  strokeWidth={2}
+/>
+<Plot.Area x="timestamp" y="high" y2="low" curve="monotone" />
+<Plot.Point x="timestamp" y="value" r="weight" shape="diamond" />
+```
+
+### Pie, donut, and gauge
+
+```tsx
+<SharePlot.Arc value="value" category="category" innerRadius={0} />
+<SharePlot.Arc
+  value="value"
+  category="category"
+  innerRadius={48}
+  padAngle={0.02}
+  cornerRadius={6}
+/>
+
+<GaugePlot.Root
+  data={gaugeRows}
+  rowKey="id"
+  label="Storage used"
+  meter={{ role: "meter", min: 0, max: 100, value: 72, valueText: "72%" }}
+>
+  <GaugePlot.Arc value="value" min={0} max={100} startAngle={-Math.PI} endAngle={0} />
+</GaugePlot.Root>
+```
+
+`Line.defined` starts a new path run after every false row, so Canvas painting, hit regions,
+downsampling, and SVG export all preserve the same discontinuities. `Arc.padAngle` separates
+adjacent sectors and `Arc.cornerRadius` rounds their radial corners.
+
+### Heatmap
+
+```tsx
+<HeatPlot.Cell x="day" y="hour" value="requests" inset={1} />
+```
+
+### Timeline
+
+```tsx
+<TimelinePlot.Rule x="startedAt" x2="finishedAt" y="lane" strokeWidth={3} />
+<TimelinePlot.Point x="startedAt" y="lane" />
+<TimelinePlot.Text x="startedAt" y="lane" text="label" align="left" />
+```
+
+### Progress
+
+```tsx
+<ProgressPlot.Root
+  data={progressRows}
+  rowKey="id"
+  label="Migration progress"
+  meter={{ role: "meter", min: 0, max: 100, value: 64, valueText: "64%" }}
+>
+  <ProgressPlot.Bar
+    x="label"
+    y="value"
+    min={0}
+    max={100}
+    orientation="horizontal"
+  />
+</ProgressPlot.Root>
+```
+
+See [mark-families.tsx](../examples/mark-families.tsx) for one typed source file containing every mark.
+
+## Tooltips, crosshair, legend, zoom, and brush
+
+```tsx
+<RequestPlot.Tooltip
+  channels={["timestamp", "latencyMs", "outcome"]}
+  format={(record) => `${record.outcome}: ${record.latencyMs} ms`}
+/>
+<RequestPlot.Crosshair axes="xy" />
+<RequestPlot.Legend scale="outcomes" interactive position="bottom" />
+<RequestPlot.Zoom axes="xy" wheel pinch pan min={1} max={64} />
+<RequestPlot.Brush axis="x" modifier="shift" />
+```
+
+Wheel and pinch zoom the enabled axes. Primary drag pans when enabled. Shift-drag brushing avoids taking ordinary drag gestures from the page. Keyboard inspection reads the same hit records as pointer inspection.
+
+Use `onActivate` for product drill-down:
+
+```tsx
+<RequestPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Request latency"
+  onActivate={(row, key) => openRequest(row.id, key)}
+>
+  <RequestPlot.Point x="timestamp" y="latencyMs" />
+</RequestPlot.Root>
+```
+
+## Controlled view and selection
+
+Use `defaultView` and `defaultSelection` for local plot state. Use controlled props when a route, URL, or shared owner must persist the state:
+
+```tsx
+const [view, setView] = state<PlotView>({});
+const [selection, setSelection] = state<PlotSelection>({ keys: [] });
+
+<RequestPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Request latency"
+  view={view()}
+  onViewChange={(next) => setView(next)}
+  selection={selection()}
+  onSelectionChange={(next) => setSelection(next)}
+>
+  <RequestPlot.Line x="timestamp" y="latencyMs" />
+  <RequestPlot.Zoom axes="xy" />
+  <RequestPlot.Brush axis="x" modifier="shift" />
+</RequestPlot.Root>;
+```
+
+Import `state` from `@askrjs/askr` and `PlotView`/`PlotSelection` as types from `@askrjs/charts` in a real component.
+
+## Live rows and follow-latest
+
+Update a readonly array through Askr state:
+
+```tsx
+setRows((current) =>
+  trimPlotRows(appendPlotRows(current, nextRow), {
+    durationMs: 5 * 60_000,
+    field: "timestamp",
+  }),
 );
 ```
 
-## Animation API
-
-Every v1 chart accepts `animate": boolean` and `animation": ChartAnimation`.
+Other immutable update forms:
 
 ```tsx
-<BarChart data={data} animate />
-
-<Heatmap
-  data={data}
-  animation={{
-    type: "fade",
-    duration: 200,
-    delay: 0,
-    stagger: 4,
-    easing: "ease-out",
-  }}
-/>
+setRows((current) => upsertPlotRows(current, changedRows, "id"));
+setRows((current) => removePlotRows(current, removedIds, "id"));
+setRows((current) => trimPlotRows(current, { rows: 1_000 }));
 ```
 
-Supported animation types:
+Pass the Askr state getter directly as plot data and configure a matching follow window:
 
-- `grow`
-- `fade`
-- `scale`
-- `sweep`
-- `slide`
-- `none`
+```tsx
+<RequestPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Live requests"
+  followLatest={{ durationMs: 5 * 60_000, field: "timestamp" }}
+  apiRef={(next) => {
+    api = next;
+  }}
+>
+  <RequestPlot.Line x="timestamp" y="latencyMs" />
+  <RequestPlot.Zoom axes="x" />
+</RequestPlot.Root>
+```
 
-Default chart animations:
+Pan or zoom pauses following. Resume only in response to explicit operator intent:
 
-- `AreaChart`: `grow`
-- `BarChart`: `grow`
-- `StackedBarChart`: `grow`
-- `DonutChart`: `sweep`
-- `PieChart`: `sweep`
-- `FlameGraph`: `grow`
-- `Heatmap`: `fade`
-- `LineChart`: `reveal`
-- `ProgressMeter`: `grow`
-- `RadialGauge`: `sweep`
-- `Timeline`: `slide`
-- `Sparkline`: `fade`
+```tsx
+<button type="button" onClick={() => api?.resumeLive()}>
+  Resume live
+</button>
+```
 
-Reduced-motion behavior:
+## Export
 
-- `prefers-reduced-motion: reduce` disables chart transitions and animations.
-- Charts remain readable before, during, and after animation because motion is decorative only.
+Capture the mounted API with `apiRef`:
 
-CSS variable contract:
+```tsx
+let api: PlotApi<RequestRow> | null = null;
 
-- `--ak-chart-animation-duration`
-- `--ak-chart-animation-delay`
-- `--ak-chart-animation-stagger`
-- `--ak-chart-animation-easing`
-- `--ak-chart-item-index`
+<RequestPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Request latency"
+  apiRef={(next) => {
+    api = next;
+  }}
+>
+  <RequestPlot.Line x="timestamp" y="latencyMs" />
+</RequestPlot.Root>;
+```
 
-SSR output includes `data-ak-animate`, `data-ak-animation`, and the animation
-CSS variables on the chart root so no mount-time JavaScript is required.
+Then export the same scene:
+
+```ts
+const png = await api?.exportPng({ view: "current", pixelRatio: 2 });
+const svg = api?.exportSvg({ view: "full", background: "#ffffff" });
+const csv = api?.exportData({
+  view: "current",
+  rows: "transformed",
+  scope: "selected",
+  format: "csv",
+});
+```
+
+PNG and SVG require mounted dimensions. Current/full view and optional background are supported. Transient overlays are excluded unless `includeOverlays` is true. Data export can choose current/full view, source/transformed rows, and all/visible/selected scope.
+
+## Empty, missing, signed, and log values
+
+```tsx
+<RequestPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Request latency"
+  empty="No request latency is available for this range."
+  diagnostics
+  summary={({ sourceRowCount, visibleRowCount, omittedRowCount }) =>
+    `${visibleRowCount} of ${sourceRowCount} rows visible; ${omittedRowCount} omitted.`
+  }
+>
+  <RequestPlot.Scale name="latency" channel="y" type="log" />
+  <RequestPlot.Point x="timestamp" y="latencyMs" yScale="latency" />
+</RequestPlot.Root>
+```
+
+Negative finite values are preserved. Missing and non-finite values are not converted to zero. Log scales omit zero and negative inputs and report the omission; choose `symlog` when those values are meaningful.
+
+## SSR and accessibility
+
+Always supply a useful `label`, and use `title`, `description`, or `summary` to explain the product question. SSR includes the reserved region and semantic content but not graphical marks. After hydration, canvas marks appear and the full transformed table is created only when “View data” is opened.
+
+Tooltips must not carry the only copy of an important value. Use root meter semantics for bounded progress and gauges. Keep route-owned loading and errors outside the plot; use `empty` only for a successfully loaded empty dataset.
+
+## Styling and sizing
+
+Use `width` and `height` for deterministic embedded or export dimensions. Otherwise let the root observe its container. Override chart tokens at an app boundary:
+
+```css
+.operations-plot {
+  --ak-chart-height: 24rem;
+  --ak-chart-series-1: var(--ak-color-accent);
+  --ak-chart-grid: color-mix(in srgb, currentcolor 14%, transparent);
+}
+```
+
+Prefer `--ak-chart-*` tokens and stable `data-slot="plot-*"` hooks. Do not style generated scene IDs or assume canvas geometry is DOM.
