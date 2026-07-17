@@ -1,8 +1,4 @@
-import type {
-  PlotDataExportOptions,
-  PlotKey,
-  PlotSvgExportOptions,
-} from "./model";
+import type { PlotDataExportOptions, PlotKey, PlotSvgExportOptions } from "./model";
 import {
   arcPath,
   areaPath,
@@ -19,8 +15,6 @@ import {
 } from "./render";
 import type { PlotScene, SceneMark } from "./scene-model";
 
-let svgClipCounter = 0;
-
 export function serializePlotSvg<Row>(
   scene: PlotScene<Row>,
   options: PlotSvgExportOptions & {
@@ -30,20 +24,18 @@ export function serializePlotSvg<Row>(
     overlays?: PlotInteractionOverlayState;
   } = {},
 ): string {
-  const clipId = svgClipCounter++ === 0 ? "plot-clip" : `plot-clip-${svgClipCounter}`;
   const theme = options.theme ?? defaultPlotTheme;
-  const background = options.background ?? theme.surface;
+  const background = options.background === undefined ? theme.surface : options.background;
   const content: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${formatNumber(scene.width)}" height="${formatNumber(scene.height)}" viewBox="0 0 ${formatNumber(scene.width)} ${formatNumber(scene.height)}" role="img">`,
     `<title>${escapeXml(scene.summary)}</title>`,
-    `<rect width="100%" height="100%" fill="${escapeXml(background)}"/>`,
-    `<defs><clipPath id="${clipId}"><rect x="${formatNumber(scene.plotArea.x)}" y="${formatNumber(scene.plotArea.y)}" width="${formatNumber(scene.plotArea.width)}" height="${formatNumber(scene.plotArea.height)}"/></clipPath></defs>`,
   ];
+  if (background !== null) {
+    content.push(`<rect width="100%" height="100%" fill="${escapeXml(background)}"/>`);
+  }
 
   if (scene.grids.length > 0) {
-    content.push(
-      `<g fill="none" stroke="${escapeXml(theme.grid)}" stroke-width="1">`,
-    );
+    content.push(`<g fill="none" stroke="${escapeXml(theme.grid)}" stroke-width="1">`);
     for (const grid of scene.grids) {
       for (const position of grid.positions) {
         content.push(
@@ -56,7 +48,9 @@ export function serializePlotSvg<Row>(
     content.push("</g>");
   }
 
-  content.push(`<g clip-path="url(#${clipId})">`);
+  content.push(
+    `<svg x="${formatNumber(scene.plotArea.x)}" y="${formatNumber(scene.plotArea.y)}" width="${formatNumber(scene.plotArea.width)}" height="${formatNumber(scene.plotArea.height)}" viewBox="${formatNumber(scene.plotArea.x)} ${formatNumber(scene.plotArea.y)} ${formatNumber(scene.plotArea.width)} ${formatNumber(scene.plotArea.height)}" overflow="hidden">`,
+  );
   for (const mark of scene.marks) {
     if (mark.series && options.hiddenSeries?.has(mark.series)) continue;
     content.push(
@@ -65,20 +59,19 @@ export function serializePlotSvg<Row>(
         theme,
         Boolean(
           options.selectedKeys &&
-            (options.selectedKeys.has(mark.key) ||
-              (mark.sourceKeys ?? []).some((key) => options.selectedKeys?.has(key))),
+          (options.selectedKeys.has(mark.key) ||
+            (mark.sourceKeys ?? []).some((key) => options.selectedKeys?.has(key))),
         ),
       ),
     );
   }
-  content.push("</g>");
+  content.push("</svg>");
 
   content.push(
     `<g fill="${escapeXml(theme.textMuted)}" stroke="${escapeXml(theme.axis)}" style="font:${escapeXml(theme.smallFont)}">`,
   );
   for (const axis of scene.axes) {
-    const horizontal =
-      axis.orientation === "top" || axis.orientation === "bottom";
+    const horizontal = axis.orientation === "top" || axis.orientation === "bottom";
     const edge =
       axis.orientation === "top"
         ? scene.plotArea.y
@@ -113,10 +106,7 @@ export function serializePlotSvg<Row>(
         const y =
           axis.orientation === "top"
             ? Math.max(8, scene.plotArea.y - 30)
-            : Math.min(
-                scene.height - 8,
-                scene.plotArea.y + scene.plotArea.height + 30,
-              );
+            : Math.min(scene.height - 8, scene.plotArea.y + scene.plotArea.height + 30);
         content.push(
           `<text stroke="none" text-anchor="middle" dominant-baseline="middle" x="${formatNumber(scene.plotArea.x + scene.plotArea.width / 2)}" y="${formatNumber(y)}">${escapeXml(axis.label)}</text>`,
         );
@@ -124,10 +114,7 @@ export function serializePlotSvg<Row>(
         const x =
           axis.orientation === "left"
             ? Math.max(8, scene.plotArea.x - 43)
-            : Math.min(
-                scene.width - 8,
-                scene.plotArea.x + scene.plotArea.width + 43,
-              );
+            : Math.min(scene.width - 8, scene.plotArea.x + scene.plotArea.width + 43);
         const y = scene.plotArea.y + scene.plotArea.height / 2;
         content.push(
           `<text stroke="none" text-anchor="middle" dominant-baseline="middle" transform="translate(${formatNumber(x)} ${formatNumber(y)}) rotate(${axis.orientation === "left" ? -90 : 90})">${escapeXml(axis.label)}</text>`,
@@ -143,15 +130,9 @@ export function serializePlotSvg<Row>(
   return content.join("");
 }
 
-function serializeMark<Row>(
-  mark: SceneMark<Row>,
-  theme: PlotTheme,
-  selected: boolean,
-): string {
+function serializeMark<Row>(mark: SceneMark<Row>, theme: PlotTheme, selected: boolean): string {
   const fill = escapeXml(resolvePaint(mark.fill, theme));
-  const stroke = escapeXml(
-    selected ? theme.selectionBorder : resolvePaint(mark.stroke, theme),
-  );
+  const stroke = escapeXml(selected ? theme.selectionBorder : resolvePaint(mark.stroke, theme));
   const selection = selected ? ' data-selected="true" stroke-width="2.5"' : "";
   const common = ` fill="${fill}" stroke="${stroke}" opacity="${formatNumber(mark.opacity)}"${selection}`;
   const title = mark.title ? `<title>${escapeXml(mark.title)}</title>` : "";
@@ -223,18 +204,13 @@ function serializeInteractionOverlay<Row>(
 }
 
 function svgTextAnchor(align: CanvasTextAlign): string {
-  return align === "center"
-    ? "middle"
-    : align === "right" || align === "end"
-      ? "end"
-      : "start";
+  return align === "center" ? "middle" : align === "right" || align === "end" ? "end" : "start";
 }
 
 function svgBaseline(baseline: CanvasTextBaseline): string {
   if (baseline === "middle") return "middle";
   if (baseline === "top" || baseline === "hanging") return "text-before-edge";
-  if (baseline === "bottom" || baseline === "ideographic")
-    return "text-after-edge";
+  if (baseline === "bottom" || baseline === "ideographic") return "text-after-edge";
   return "alphabetic";
 }
 
@@ -246,9 +222,7 @@ export function serializePlotData<Row>(
   const rowSource = options.rows ?? "source";
   const scope = options.scope ?? "all";
   const transformed = [
-    ...new Map(
-      scene.transformedRows.map((record) => [record.key, record]),
-    ).values(),
+    ...new Map(scene.transformedRows.map((record) => [record.key, record])).values(),
   ];
   const records =
     rowSource === "source"
@@ -256,7 +230,11 @@ export function serializePlotData<Row>(
       : transformed
           .filter((record) => {
             if (scope === "visible" && !record.visible) return false;
-    if (scope === "selected" && !selectedKeys.has(record.key) && !record.sourceKeys.some((key) => selectedKeys.has(key)))
+            if (
+              scope === "selected" &&
+              !selectedKeys.has(record.key) &&
+              !record.sourceKeys.some((key) => selectedKeys.has(key))
+            )
               return false;
             return true;
           })
@@ -282,8 +260,7 @@ function sourceExportRecords<Row>(
   return scene.sourceRowRecords
     .filter((record) => {
       if (scope === "visible" && !record.visible) return false;
-      if (scope === "selected" && !selectedSourceKeys.has(record.key))
-        return false;
+      if (scope === "selected" && !selectedSourceKeys.has(record.key)) return false;
       return true;
     })
     .map((record) => toRecord(record.row));
@@ -313,13 +290,26 @@ function toCsv(records: readonly Record<string, unknown>[]): string {
       }
     }
   }
-  const rows = [headers.map(csvCell).join(",")];
+  const rows = [
+    headers.map((header) => csvCell(neutralizeSpreadsheetFormula(header, header))).join(","),
+  ];
   for (const record of records) {
     rows.push(
-      headers.map((header) => csvCell(formatCell(record[header]))).join(","),
+      headers
+        .map((header) => {
+          const value = record[header];
+          return csvCell(neutralizeSpreadsheetFormula(value, formatCell(value)));
+        })
+        .join(","),
     );
   }
   return rows.join("\r\n");
+}
+
+function neutralizeSpreadsheetFormula(value: unknown, formatted: string): string {
+  return typeof value === "string" && /^[\t\r\n ]*[=+\-@]/.test(value)
+    ? `'${formatted}`
+    : formatted;
 }
 
 function formatCell(value: unknown): string {

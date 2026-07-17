@@ -1,7 +1,8 @@
 import { cleanupApp, createIsland } from "@askrjs/askr/boot";
+import { state } from "@askrjs/askr";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { constant, createPlot, type PlotApi } from "../src";
+import { constant, createPlot, type PlotApi, type RootProps } from "../src";
 
 interface Row {
   id: string;
@@ -17,7 +18,7 @@ const rows: readonly Row[] = [
   { id: "b", label: "Tue", value: 7, series: "worker" },
 ];
 
-function Example({ apiRef }: { apiRef?: (api: PlotApi<Row> | null) => void } = {}) {
+function Example({ onApiChange }: { onApiChange?: (api: PlotApi<Row> | null) => void } = {}) {
   return (
     <Plot.Root
       data={rows}
@@ -25,7 +26,7 @@ function Example({ apiRef }: { apiRef?: (api: PlotApi<Row> | null) => void } = {
       label="Requests"
       title="Request volume"
       description="Daily request totals"
-      apiRef={apiRef}
+      onApiChange={onApiChange}
     >
       <Plot.Line x="label" y="value" stroke={constant("#2563eb")} />
       <Plot.Point x="label" y="value" fill="series" />
@@ -105,8 +106,10 @@ describe("plot root", () => {
     expect(firstIds).toEqual(secondIds);
     expect(new Set(firstIds).size).toBe(firstIds.length);
     expect(firstIds.filter((id) => id.endsWith("-tooltip"))).toHaveLength(2);
-    for (const frame of firstDocument.querySelectorAll<HTMLElement>('[data-slot="plot-frame"]')) {
-      const describedIds = frame.getAttribute("aria-describedby")?.split(" ") ?? [];
+    for (const graphic of firstDocument.querySelectorAll<HTMLElement>(
+      '[data-slot="plot-graphic"]',
+    )) {
+      const describedIds = graphic.getAttribute("aria-describedby")?.split(" ") ?? [];
       expect(describedIds.some((id) => id.endsWith("-tooltip"))).toBe(true);
       expect(describedIds.every((id) => firstDocument.getElementById(id) !== null)).toBe(true);
     }
@@ -116,17 +119,20 @@ describe("plot root", () => {
     let api!: PlotApi<Row>;
     createIsland({
       root: container,
-      component: () => <Example apiRef={(value) => value && (api = value)} />,
+      component: () => <Example onApiChange={(value) => value && (api = value)} />,
     });
 
     expect(container.querySelectorAll("canvas")).toHaveLength(2);
-    expect(container.querySelector('[role="img"]')?.getAttribute("aria-label")).toBe("Requests");
+    expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe("Requests");
     const frame = container.querySelector<HTMLElement>('[data-slot="plot-frame"]');
+    const graphic = container.querySelector<HTMLElement>('[data-slot="plot-graphic"]');
     const tooltip = container.querySelector<HTMLElement>('[data-slot="plot-tooltip"]');
     expect(tooltip?.id).toMatch(/^plot-requests-\d+-tooltip$/);
     expect(tooltip?.getAttribute("aria-live")).toBe("polite");
     expect(tooltip?.getAttribute("aria-hidden")).toBe("true");
-    expect(frame?.getAttribute("aria-describedby")?.split(" ")).toContain(tooltip?.id);
+    expect(graphic?.getAttribute("aria-describedby")?.split(" ")).toContain(tooltip?.id);
+    expect(graphic?.contains(tooltip ?? null)).toBe(false);
+    expect(frame?.contains(tooltip ?? null)).toBe(true);
     expect(api).toBeDefined();
     expect(api.rows).toEqual(rows);
     expect(api.exportSvg()).toContain('data-mark="line"');
@@ -163,11 +169,11 @@ describe("plot root", () => {
     expect(table?.textContent).toContain("7");
   });
 
-  it("should clear the api ref and canvas buffers given deterministic root cleanup", () => {
+  it("should clear the api callback and canvas buffers given deterministic root cleanup", () => {
     const values: Array<PlotApi<Row> | null> = [];
     createIsland({
       root: container,
-      component: () => <Example apiRef={(api) => values.push(api)} />,
+      component: () => <Example onApiChange={(api) => values.push(api)} />,
     });
     expect(values[values.length - 1]).not.toBeNull();
 
@@ -202,6 +208,109 @@ describe("plot root", () => {
     expect(meter?.getAttribute("aria-valuemax")).toBe("10");
     expect(meter?.getAttribute("aria-valuenow")).toBe("4");
     expect(meter?.getAttribute("aria-valuetext")).toBe("40%");
+    expect(meter?.querySelector('[data-slot="plot-tooltip"]')).toBeNull();
+  });
+
+  it("should preserve cleanup given an api callback failure when unmounting", () => {
+    createIsland({
+      root: container,
+      component: () => (
+        <Example
+          onApiChange={(api) => {
+            if (api === null) throw new Error("callback cleanup failed");
+          }}
+        />
+      ),
+    });
+    const canvases = [...container.querySelectorAll("canvas")];
+
+    expect(() => cleanupApp(container)).not.toThrow();
+    expect(canvases.every((canvas) => canvas.width === 0 && canvas.height === 0)).toBe(true);
+  });
+
+  it("should settle an inline api callback given reactive api storage when rerendering", async () => {
+    const notifications: Array<PlotApi<Row> | null> = [];
+    let renders = 0;
+    function ReactiveApiOwner() {
+      renders += 1;
+      const api = state<PlotApi<Row> | null>(null);
+      void api();
+      return (
+        <Example
+          onApiChange={(next) => {
+            notifications.push(next);
+            api.set(next);
+          }}
+        />
+      );
+    }
+
+    createIsland({ root: container, component: ReactiveApiOwner });
+    await flushUpdates();
+
+    expect(renders).toBe(2);
+    expect(notifications).toHaveLength(2);
+    expect(notifications.every((api) => api !== null)).toBe(true);
+
+    cleanupApp(container);
+    expect(notifications.filter((api) => api === null)).toHaveLength(1);
+  });
+
+  it("should render the configured heading level given a titled plot", () => {
+    const html = renderToStringSync(() => (
+      <Plot.Root data={rows} rowKey="id" label="Requests" title="Request volume" headingLevel={4}>
+        <Plot.Point x="label" y="value" />
+      </Plot.Root>
+    ));
+
+    expect(html).toContain('<h4 id="plot-requests-1-title"');
+  });
+
+  it("should preserve page touch scrolling given a shift-only brush", () => {
+    const html = renderToStringSync(() => (
+      <Plot.Root data={rows} rowKey="id" label="Requests">
+        <Plot.Point x="label" y="value" />
+        <Plot.Brush axis="x" modifier="shift" />
+      </Plot.Root>
+    ));
+
+    expect(html).toContain('data-interactive="false"');
+  });
+
+  it("should omit keyboard inspection instructions given an empty non-focusable scene", () => {
+    const html = renderToStringSync(() => (
+      <Plot.Root data={[]} rowKey="id" label="Empty requests">
+        <Plot.Point x="label" y="value" />
+      </Plot.Root>
+    ));
+
+    expect(html).not.toContain("arrow keys to inspect marks");
+    expect(html).toContain("View data control for a table");
+    expect(html).not.toContain('tabindex="0"');
+  });
+
+  it("should reject invalid semantic root values given server rendering", () => {
+    const render = (props: Partial<RootProps<Row>>) =>
+      renderToStringSync(() => (
+        <Plot.Root data={rows} rowKey="id" label="Requests" {...props}>
+          <Plot.Point x="label" y="value" />
+        </Plot.Root>
+      ));
+
+    expect(() => render({ label: " " })).toThrow("label must be a non-blank string");
+    expect(() => render({ id: " " })).toThrow("id must be non-blank");
+    expect(() => render({ id: "bad id" })).toThrow("id must be non-blank");
+    expect(() => render({ id: 42 as unknown as string })).toThrow("id must be non-blank");
+    expect(() => render({ headingLevel: 0 as 1 })).toThrow(
+      "headingLevel must be an integer from 1 through 6",
+    );
+    expect(() => render({ headingLevel: 2.5 as 2 })).toThrow(
+      "headingLevel must be an integer from 1 through 6",
+    );
+    expect(() => render({ width: Number.NaN })).toThrow("width must be a finite positive number");
+    expect(() => render({ meter: { role: "meter", min: 10, max: 0, value: 4 } })).toThrow(
+      "meter max must be greater than min",
+    );
   });
 });
 

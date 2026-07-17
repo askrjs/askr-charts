@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { arcPath, segmentedLinePath } from "../src/paths";
+import { arcPath, downsamplePixelEnvelope, segmentedLinePath } from "../src/paths";
 
 describe("mark paths", () => {
   it("should emit a fresh move command given each defined line segment", () => {
@@ -63,5 +63,23 @@ describe("mark paths", () => {
     expect(path).toContain("Q");
     expect(path).not.toContain("NaN");
     expect(path.endsWith("Z")).toBe(true);
+  });
+
+  it("should preserve source order while retaining extrema given dense pixel buckets", () => {
+    const points = [
+      { id: "first", x: 0.1, y: 5 },
+      { id: "maximum", x: 0.2, y: 10 },
+      { id: "minimum", x: 0.3, y: 0 },
+      { id: "last", x: 0.4, y: 6 },
+      { id: "next", x: 1.1, y: 4 },
+    ];
+
+    expect(downsamplePixelEnvelope(points, 1).map(({ id }) => id)).toEqual([
+      "first",
+      "maximum",
+      "minimum",
+      "last",
+      "next",
+    ]);
   });
 });

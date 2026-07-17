@@ -176,13 +176,7 @@ const ServicePlot = createPlot<ServiceRow>();
 <ServicePlot.Root data={serviceRows} rowKey="id" label="Requests and latency">
   <ServicePlot.Scale name="time" channel="x" type="utc" />
   <ServicePlot.Scale name="requests" channel="y" type="linear" nice />
-  <ServicePlot.Scale
-    name="latency"
-    channel="y"
-    type="symlog"
-    constant={10}
-    nice
-  />
+  <ServicePlot.Scale name="latency" channel="y" type="symlog" constant={10} nice />
 
   <ServicePlot.Bar x="timestamp" y="requests" xScale="time" yScale="requests" />
   <ServicePlot.Line x="timestamp" y="p95" xScale="time" yScale="latency" />
@@ -281,13 +275,7 @@ adjacent sectors and `Arc.cornerRadius` rounds their radial corners.
   label="Migration progress"
   meter={{ role: "meter", min: 0, max: 100, value: 64, valueText: "64%" }}
 >
-  <ProgressPlot.Bar
-    x="label"
-    y="value"
-    min={0}
-    max={100}
-    orientation="horizontal"
-  />
+  <ProgressPlot.Bar x="label" y="value" min={0} max={100} orientation="horizontal" />
 </ProgressPlot.Root>
 ```
 
@@ -306,7 +294,7 @@ See [mark-families.tsx](../examples/mark-families.tsx) for one typed source file
 <RequestPlot.Brush axis="x" modifier="shift" />
 ```
 
-Wheel and pinch zoom the enabled axes. Primary drag pans when enabled. Shift-drag brushing avoids taking ordinary drag gestures from the page. Keyboard inspection reads the same hit records as pointer inspection.
+Wheel and pinch zoom the enabled axes. Primary drag pans when enabled. Shift-drag brushing avoids taking ordinary drag gestures from the page. Arrow keys inspect marks; Enter or Space activates the focused mark; plus and minus zoom; Home resets the view; and Shift plus an arrow pans. With brushing enabled, Shift+Space toggles the focused row in the selection. Keyboard inspection reads the same hit records as pointer inspection.
 
 Use `onActivate` for product drill-down:
 
@@ -375,7 +363,7 @@ Pass the Askr state getter directly as plot data and configure a matching follow
   rowKey="id"
   label="Live requests"
   followLatest={{ durationMs: 5 * 60_000, field: "timestamp" }}
-  apiRef={(next) => {
+  onApiChange={(next) => {
     api = next;
   }}
 >
@@ -394,7 +382,7 @@ Pan or zoom pauses following. Resume only in response to explicit operator inten
 
 ## Export
 
-Capture the mounted API with `apiRef`:
+Capture the mounted API with `onApiChange`:
 
 ```tsx
 let api: PlotApi<RequestRow> | null = null;
@@ -403,7 +391,7 @@ let api: PlotApi<RequestRow> | null = null;
   data={rows}
   rowKey="id"
   label="Request latency"
-  apiRef={(next) => {
+  onApiChange={(next) => {
     api = next;
   }}
 >
@@ -415,7 +403,7 @@ Then export the same scene:
 
 ```ts
 const png = await api?.exportPng({ view: "current", pixelRatio: 2 });
-const svg = api?.exportSvg({ view: "full", background: "#ffffff" });
+const svg = api?.exportSvg({ view: "full", background: null });
 const csv = api?.exportData({
   view: "current",
   rows: "transformed",
@@ -424,7 +412,7 @@ const csv = api?.exportData({
 });
 ```
 
-PNG and SVG require mounted dimensions. Current/full view and optional background are supported. Transient overlays are excluded unless `includeOverlays` is true. Data export can choose current/full view, source/transformed rows, and all/visible/selected scope.
+PNG and SVG require mounted dimensions. Current/full view and optional backgrounds are supported; pass `background: null` to preserve transparency. Transient overlays are excluded unless `includeOverlays` is true. Data export can choose current/full view, source/transformed rows, and all/visible/selected scope. CSV string cells that look like spreadsheet formulas are neutralized automatically.
 
 ## Empty, missing, signed, and log values
 

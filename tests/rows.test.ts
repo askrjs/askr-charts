@@ -94,6 +94,9 @@ describe("immutable plot row updates", () => {
     expect(Object.isFrozen(predicated)).toBe(true);
     expect(removePlotRows(source, ["missing"], "id")).toBe(source);
     expect(() => removePlotRows(source, ["a"])).toThrow(TypeError);
+    expect(removePlotRows([{ "": "keep" }, { "": "remove" }], ["remove"], "")).toEqual([
+      { "": "keep" },
+    ]);
   });
 });
 
@@ -140,5 +143,13 @@ describe("plot row trimming", () => {
     ).toEqual(["edge", "latest"]);
     expect(() => trimPlotRows(source, { durationMs: -1, field: "at" })).toThrow(RangeError);
     expect(() => trimPlotRows(source, { durationMs: Number.NaN, field: "at" })).toThrow(RangeError);
+    expect(() => trimPlotRows(source, { rows: Number.NaN })).toThrow(RangeError);
+    expect(() => trimPlotRows(source, { rows: Number.POSITIVE_INFINITY })).toThrow(RangeError);
+    expect(() => trimPlotRows(source, { durationMs: 1_000, field: "at", now: Number.NaN })).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      trimPlotRows(source, { durationMs: 1_000, field: "at", now: new Date(Number.NaN) }),
+    ).toThrow(RangeError);
   });
 });

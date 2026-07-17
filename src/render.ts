@@ -46,11 +46,9 @@ export const defaultPlotTheme: PlotTheme = Object.freeze({
 });
 
 export function resolvePlotTheme(element: Element | null): PlotTheme {
-  if (!element || typeof getComputedStyle !== "function")
-    return defaultPlotTheme;
+  if (!element || typeof getComputedStyle !== "function") return defaultPlotTheme;
   const style = getComputedStyle(element);
-  const read = (name: string, fallback: string) =>
-    style.getPropertyValue(name).trim() || fallback;
+  const read = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
   const fontFamily = read("--ak-chart-font-family", "system-ui, sans-serif");
   const fontSize = read("--ak-chart-font-size-small", "12px");
   return Object.freeze({
@@ -62,10 +60,7 @@ export function resolvePlotTheme(element: Element | null): PlotTheme {
     axis: read("--ak-chart-axis", defaultPlotTheme.axis),
     focus: read("--ak-chart-focus-ring", defaultPlotTheme.focus),
     selection: read("--ak-chart-selection", defaultPlotTheme.selection),
-    selectionBorder: read(
-      "--ak-chart-selection-border",
-      defaultPlotTheme.selectionBorder,
-    ),
+    selectionBorder: read("--ak-chart-selection-border", defaultPlotTheme.selectionBorder),
     crosshair: read("--ak-chart-crosshair", defaultPlotTheme.crosshair),
     series: Object.freeze(
       defaultPlotTheme.series.map((fallback, index) =>
@@ -80,10 +75,7 @@ export function resolvePlotTheme(element: Element | null): PlotTheme {
 export function resolvePaint(value: string, theme: PlotTheme): string {
   const series = /(?:var\()?--ak-chart-series-(\d+)/.exec(value);
   if (series) {
-    return (
-      theme.series[(Number(series[1]) - 1) % theme.series.length] ??
-      theme.series[0]!
-    );
+    return theme.series[(Number(series[1]) - 1) % theme.series.length] ?? theme.series[0]!;
   }
   const tokens: Record<string, string> = {
     "var(--ak-chart-bg)": theme.background,
@@ -139,17 +131,16 @@ export function renderPlotScene<Row>(
   drawGrids(context, scene, theme);
   context.save();
   context.beginPath();
-  context.rect(
-    scene.plotArea.x,
-    scene.plotArea.y,
-    scene.plotArea.width,
-    scene.plotArea.height,
-  );
+  context.rect(scene.plotArea.x, scene.plotArea.y, scene.plotArea.width, scene.plotArea.height);
   context.clip();
   for (const mark of scene.marks) {
     if (mark.series && options.hiddenSeries?.has(mark.series)) continue;
     drawMark(context, mark, theme);
-    if (options.selectedKeys && (options.selectedKeys.has(mark.key) || (mark.sourceKeys ?? []).some((key) => options.selectedKeys?.has(key))))
+    if (
+      options.selectedKeys &&
+      (options.selectedKeys.has(mark.key) ||
+        (mark.sourceKeys ?? []).some((key) => options.selectedKeys?.has(key)))
+    )
       drawSelectedMark(context, mark, theme);
   }
   context.restore();
@@ -181,19 +172,14 @@ function drawGrids<Row>(
   context.restore();
 }
 
-function drawAxes<Row>(
-  context: CanvasRenderingContext2D,
-  scene: PlotScene<Row>,
-  theme: PlotTheme,
-) {
+function drawAxes<Row>(context: CanvasRenderingContext2D, scene: PlotScene<Row>, theme: PlotTheme) {
   context.save();
   context.strokeStyle = theme.axis;
   context.fillStyle = theme.textMuted;
   context.lineWidth = 1;
   context.font = theme.smallFont;
   for (const axis of scene.axes) {
-    const horizontal =
-      axis.orientation === "top" || axis.orientation === "bottom";
+    const horizontal = axis.orientation === "top" || axis.orientation === "bottom";
     const edge =
       axis.orientation === "top"
         ? scene.plotArea.y
@@ -249,19 +235,13 @@ function drawAxisLabel<Row>(
     const y =
       orientation === "top"
         ? Math.max(8, scene.plotArea.y - 30)
-        : Math.min(
-            scene.height - 8,
-            scene.plotArea.y + scene.plotArea.height + 30,
-          );
+        : Math.min(scene.height - 8, scene.plotArea.y + scene.plotArea.height + 30);
     context.fillText(label, scene.plotArea.x + scene.plotArea.width / 2, y);
   } else {
     const x =
       orientation === "left"
         ? Math.max(8, scene.plotArea.x - 43)
-        : Math.min(
-            scene.width - 8,
-            scene.plotArea.x + scene.plotArea.width + 43,
-          );
+        : Math.min(scene.width - 8, scene.plotArea.x + scene.plotArea.width + 43);
     const y = scene.plotArea.y + scene.plotArea.height / 2;
     context.translate(x, y);
     context.rotate(orientation === "left" ? -Math.PI / 2 : Math.PI / 2);
@@ -270,11 +250,7 @@ function drawAxisLabel<Row>(
   context.restore();
 }
 
-function drawMark<Row>(
-  context: CanvasRenderingContext2D,
-  mark: SceneMark<Row>,
-  theme: PlotTheme,
-) {
+function drawMark<Row>(context: CanvasRenderingContext2D, mark: SceneMark<Row>, theme: PlotTheme) {
   context.save();
   context.globalAlpha = Math.max(0, Math.min(1, mark.opacity));
   context.fillStyle = resolvePaint(mark.fill, theme);
@@ -306,12 +282,7 @@ function drawMark<Row>(
     case "point": {
       context.beginPath();
       if (mark.shape === "square") {
-        context.rect(
-          mark.x - mark.radius,
-          mark.y - mark.radius,
-          mark.radius * 2,
-          mark.radius * 2,
-        );
+        context.rect(mark.x - mark.radius, mark.y - mark.radius, mark.radius * 2, mark.radius * 2);
       } else if (mark.shape === "diamond") {
         context.moveTo(mark.x, mark.y - mark.radius);
         context.lineTo(mark.x + mark.radius, mark.y);
@@ -366,9 +337,7 @@ function drawSelectedMark<Row>(
     case "cell":
     case "rect":
       context.stroke(
-        new Path2D(
-          roundedRectPath(mark.x, mark.y, mark.width, mark.height, mark.radius),
-        ),
+        new Path2D(roundedRectPath(mark.x, mark.y, mark.width, mark.height, mark.radius)),
       );
       break;
     case "point":
@@ -407,16 +376,8 @@ export function renderInteractionOverlay(
   options: { clear?: boolean } = {},
 ): void {
   context.save();
-  context.setTransform(
-    dimensions.pixelRatio,
-    0,
-    0,
-    dimensions.pixelRatio,
-    0,
-    0,
-  );
-  if (options.clear ?? true)
-    context.clearRect(0, 0, dimensions.width, dimensions.height);
+  context.setTransform(dimensions.pixelRatio, 0, 0, dimensions.pixelRatio, 0, 0);
+  if (options.clear ?? true) context.clearRect(0, 0, dimensions.width, dimensions.height);
   if (state.crosshair) {
     context.strokeStyle = theme.crosshair;
     context.lineWidth = 1;
@@ -448,13 +409,7 @@ export function renderInteractionOverlay(
     context.lineWidth = 2;
     context.setLineDash([]);
     context.beginPath();
-    context.arc(
-      state.focus.x,
-      state.focus.y,
-      state.focus.radius ?? 6,
-      0,
-      Math.PI * 2,
-    );
+    context.arc(state.focus.x, state.focus.y, state.focus.radius ?? 6, 0, Math.PI * 2);
     context.stroke();
   }
   context.restore();

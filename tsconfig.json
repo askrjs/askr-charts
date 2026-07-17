@@ -21,5 +21,6 @@
     "vite.config.ts",
     "vitest.config.ts",
     "vitest*.ts"
-  ]
+  ],
+  "exclude": ["tests/types/**/*"]
 }

@@ -179,6 +179,34 @@ export function createBins(
   values: readonly (number | Date | null | undefined)[],
   options: BinOptions = {},
 ): readonly Bin[] {
+  if (options.interval !== undefined && options.thresholds !== undefined) {
+    throw new TypeError("Bin options cannot specify both interval and thresholds.");
+  }
+  if (
+    options.interval !== undefined &&
+    (!Number.isFinite(options.interval) || options.interval <= 0)
+  ) {
+    throw new RangeError("Bin interval must be a finite positive number.");
+  }
+  if (
+    typeof options.thresholds === "number" &&
+    (!Number.isFinite(options.thresholds) || options.thresholds < 1)
+  ) {
+    throw new RangeError("Bin threshold count must be a finite number of at least one.");
+  }
+  if (
+    Array.isArray(options.thresholds) &&
+    options.thresholds.some((value) => !Number.isFinite(value))
+  ) {
+    throw new TypeError("Every explicit bin threshold must be finite.");
+  }
+  if (
+    options.domain &&
+    (options.domain.length !== 2 ||
+      options.domain.some((value) => toComparableNumber(value) === null))
+  ) {
+    throw new TypeError("An explicit bin domain requires exactly two finite values.");
+  }
   const numeric = values.map(toComparableNumber);
   const finite = numeric.filter((value): value is number => value !== null);
   if (finite.length === 0) return Object.freeze([]);
@@ -202,10 +230,13 @@ export function createBins(
 
   let thresholds: number[];
   if (Array.isArray(options.thresholds)) {
-    thresholds = options.thresholds
-      .filter(isFiniteNumber)
-      .filter((value) => value > min && value < max)
-      .sort((left, right) => left - right);
+    thresholds = [
+      ...new Set(
+        options.thresholds
+          .filter((value) => value > min && value < max)
+          .sort((left, right) => left - right),
+      ),
+    ];
   } else {
     const requested =
       options.interval && options.interval > 0
@@ -273,6 +304,9 @@ export function aggregateBy<Key>(
   keys: readonly Key[],
   operation: "count" | "sum" | "mean",
 ): ReadonlyMap<Key, number> {
+  if (!["count", "sum", "mean"].includes(operation)) {
+    throw new TypeError(`Unsupported aggregate operation ${String(operation)}.`);
+  }
   const groups = new Map<Key, { sum: number; count: number }>();
   for (let index = 0; index < keys.length; index += 1) {
     const value = values[index];
@@ -298,6 +332,15 @@ export function stackValues<Key, Series>(
   data: readonly StackDatum<Key, Series>[],
   options: StackOptions = {},
 ): readonly StackedDatum<Key, Series>[] {
+  if (options.offset !== undefined && !["zero", "diverging", "expand"].includes(options.offset)) {
+    throw new TypeError(`Unsupported stack offset ${String(options.offset)}.`);
+  }
+  if (
+    options.order !== undefined &&
+    !["none", "ascending", "descending", "inside-out"].includes(options.order)
+  ) {
+    throw new TypeError(`Unsupported stack order ${String(options.order)}.`);
+  }
   const grouped = new Map<Key, StackDatum<Key, Series>[]>();
   for (const datum of data) {
     if (!isFiniteNumber(datum.value)) continue;
@@ -373,7 +416,16 @@ export function movingWindowValues(
   values: readonly (number | null | undefined)[],
   options: { window: number; operation?: WindowOperation; partial?: boolean },
 ): readonly (number | null)[] {
-  const window = Math.max(1, Math.floor(options.window));
+  if (!Number.isFinite(options.window) || options.window < 1) {
+    throw new RangeError("Moving-window size must be a finite number of at least one.");
+  }
+  if (
+    options.operation !== undefined &&
+    !["sum", "mean", "min", "max"].includes(options.operation)
+  ) {
+    throw new TypeError(`Unsupported moving-window operation ${String(options.operation)}.`);
+  }
+  const window = Math.floor(options.window);
   const operation = options.operation ?? "mean";
   const partial = options.partial !== false;
   const result: (number | null)[] = Array.from({ length: values.length }, () => null);
@@ -463,6 +515,9 @@ export function partitionRows<Row>(
     padding?: number;
   },
 ): readonly PartitionDatum<Row>[] {
+  if (options.padding !== undefined && (!Number.isFinite(options.padding) || options.padding < 0)) {
+    throw new RangeError("Partition padding must be a finite non-negative number.");
+  }
   type Node = {
     row: Row;
     sourceIndex: number;
@@ -480,6 +535,9 @@ export function partitionRows<Row>(
     if (typeof idValue !== "string" && typeof idValue !== "number") {
       throw new TypeError(`Partition id must be a string or number at row ${sourceIndex}.`);
     }
+    if (typeof idValue === "number" && !Number.isFinite(idValue)) {
+      throw new TypeError(`Partition id must be finite at row ${sourceIndex}.`);
+    }
     if (nodes.has(idValue)) throw new Error(`Duplicate partition id ${String(idValue)}.`);
     const ownValue = readChannel<Row>(row, sourceIndex, options.value);
     const node: Node = {
@@ -494,6 +552,9 @@ export function partitionRows<Row>(
     nodes.set(idValue, node);
     if (options.children !== undefined) {
       const children = readChannel<Row>(row, sourceIndex, options.children);
+      if (children != null && !Array.isArray(children)) {
+        throw new TypeError(`Partition children must be an array at row ${sourceIndex}.`);
+      }
       if (Array.isArray(children)) {
         node.children = children.map((child, childIndex) =>
           visitNested(child as Row, childIndex, idValue),
@@ -513,6 +574,17 @@ export function partitionRows<Row>(
       if (typeof id !== "string" && typeof id !== "number") {
         throw new TypeError(`Partition id must be a string or number at row ${index}.`);
       }
+      if (typeof id === "number" && !Number.isFinite(id)) {
+        throw new TypeError(`Partition id must be finite at row ${index}.`);
+      }
+      if (parent != null && typeof parent !== "string" && typeof parent !== "number") {
+        throw new TypeError(
+          `Partition parent id must be a string, number, or null at row ${index}.`,
+        );
+      }
+      if (typeof parent === "number" && !Number.isFinite(parent)) {
+        throw new TypeError(`Partition parent id must be finite at row ${index}.`);
+      }
       if (nodes.has(id)) throw new Error(`Duplicate partition id ${String(id)}.`);
       const rawValue = readChannel<Row>(row, index, options.value);
       nodes.set(id, {
@@ -528,7 +600,12 @@ export function partitionRows<Row>(
     for (const node of nodes.values()) {
       const parent = node.parentId == null ? undefined : nodes.get(node.parentId);
       if (parent) parent.children.push(node);
-      else roots.push(node);
+      else if (node.parentId == null) roots.push(node);
+      else {
+        throw new Error(
+          `Partition node ${String(node.id)} references unknown parent ${String(node.parentId)}.`,
+        );
+      }
     }
     if (roots.length === 0 && nodes.size > 0) {
       throw new Error("Partition cycle detected: no root node exists.");

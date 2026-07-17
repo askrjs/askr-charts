@@ -13,11 +13,18 @@ export default defineConfig({
     sourcemap: true,
     clean: true,
     unbundle: true,
-    copy: {
-      from: "src/styles.css",
-      to: "dist",
-      rename: "styles.css",
-    },
+    copy: [
+      {
+        from: "src/styles.css",
+        to: "dist",
+        rename: "styles.css",
+      },
+      {
+        from: "src/styles.d.ts",
+        to: "dist",
+        rename: "styles.d.ts",
+      },
+    ],
     deps: {
       neverBundle: [/^@askrjs\/askr(?:\/.*)?$/],
     },

@@ -3,6 +3,7 @@ export type PlotKey = string | number;
 export type PlotScalar = string | number | boolean | Date;
 export type PlotChannelValue = PlotScalar | null | undefined;
 export type ScaleValue = string | number | Date;
+export type ScaleDomainValue = ScaleValue | boolean;
 
 export type RowField<Row> = Extract<keyof Row, string>;
 
@@ -176,7 +177,7 @@ export interface MeterSemantics {
 
 export interface PlotExportViewOptions {
   view?: "current" | "full";
-  background?: string;
+  background?: string | null;
 }
 
 export interface PlotPngExportOptions extends PlotExportViewOptions {
@@ -204,9 +205,7 @@ export interface PlotApi<Row> {
   readonly rows: readonly Row[];
 }
 
-export type PlotApiRef<Row> =
-  | ((api: PlotApi<Row> | null) => void)
-  | { current: PlotApi<Row> | null };
+export type PlotHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface RootProps<Row> {
   data: PlotData<Row>;
@@ -214,13 +213,13 @@ export interface RootProps<Row> {
   label: string;
   children?: unknown;
   title?: string;
+  headingLevel?: PlotHeadingLevel;
   description?: string;
   summary?: string | ((context: PlotSummaryContext<Row>) => string);
   empty?: string;
   width?: number;
   height?: number;
   class?: string;
-  className?: string;
   style?: string | Record<string, string | number | null | undefined | false>;
   id?: string;
   meter?: MeterSemantics;
@@ -232,7 +231,7 @@ export interface RootProps<Row> {
   onSelectionChange?: (selection: PlotSelection) => void;
   onActivate?: (row: Row, key: PlotKey) => void;
   followLatest?: FollowLatest<Row>;
-  apiRef?: PlotApiRef<Row>;
+  onApiChange?: (api: PlotApi<Row> | null) => void;
   locale?: string;
   diagnostics?: boolean;
 }
@@ -249,7 +248,7 @@ export interface ScaleProps {
   name?: string;
   channel?: "x" | "y" | "color";
   type?: ScaleType;
-  domain?: readonly ScaleValue[];
+  domain?: readonly ScaleDomainValue[];
   range?: readonly (number | string)[];
   clamp?: boolean;
   nice?: boolean | number;

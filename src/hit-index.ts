@@ -5,18 +5,25 @@ export interface HitIndex<Row> {
   readonly cellSize: number;
   query(x: number, y: number): HitRegion<Row> | null;
   queryAll(x: number, y: number): readonly HitRegion<Row>[];
-  queryRect(
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
-  ): readonly HitRegion<Row>[];
+  queryRect(x0: number, y0: number, x1: number, y1: number): readonly HitRegion<Row>[];
 }
 
 export function createHitIndex<Row>(
   regions: readonly HitRegion<Row>[],
   options: { width: number; height: number; cellSize?: number },
 ): HitIndex<Row> {
+  if (!Number.isFinite(options.width) || options.width <= 0) {
+    throw new RangeError("Hit-index width must be a finite positive number.");
+  }
+  if (!Number.isFinite(options.height) || options.height <= 0) {
+    throw new RangeError("Hit-index height must be a finite positive number.");
+  }
+  if (
+    options.cellSize !== undefined &&
+    (!Number.isFinite(options.cellSize) || options.cellSize <= 0)
+  ) {
+    throw new RangeError("Hit-index cellSize must be a finite positive number.");
+  }
   const cellSize = Math.max(8, Math.floor(options.cellSize ?? 32));
   const columns = Math.max(1, Math.ceil(options.width / cellSize));
   const rows = Math.max(1, Math.ceil(options.height / cellSize));
@@ -54,6 +61,7 @@ export function createHitIndex<Row>(
   };
 
   const queryRect = (x0: number, y0: number, x1: number, y1: number) => {
+    if (![x0, y0, x1, y1].every(Number.isFinite)) return Object.freeze([]);
     const bounds = {
       x0: Math.min(x0, x1),
       x1: Math.max(x0, x1),
@@ -67,8 +75,7 @@ export function createHitIndex<Row>(
     const indices = new Set<number>();
     for (let row = startRow; row <= endRow; row += 1) {
       for (let column = startColumn; column <= endColumn; column += 1) {
-        for (const index of buckets.get(row * columns + column) ?? [])
-          indices.add(index);
+        for (const index of buckets.get(row * columns + column) ?? []) indices.add(index);
       }
     }
     const matches = [...indices]
@@ -137,10 +144,7 @@ function contains(shape: HitShape, x: number, y: number): boolean {
   switch (shape.kind) {
     case "rect":
       return (
-        x >= shape.x &&
-        x <= shape.x + shape.width &&
-        y >= shape.y &&
-        y <= shape.y + shape.height
+        x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height
       );
     case "circle":
       return (x - shape.x) ** 2 + (y - shape.y) ** 2 <= shape.radius ** 2;
@@ -148,10 +152,8 @@ function contains(shape: HitShape, x: number, y: number): boolean {
       const dx = x - shape.cx;
       const dy = y - shape.cy;
       const radius = Math.sqrt(dx * dx + dy * dy);
-      if (radius < shape.innerRadius || radius > shape.outerRadius)
-        return false;
-      if (Math.abs(shape.endAngle - shape.startAngle) >= Math.PI * 2 - 1e-9)
-        return true;
+      if (radius < shape.innerRadius || radius > shape.outerRadius) return false;
+      if (Math.abs(shape.endAngle - shape.startAngle) >= Math.PI * 2 - 1e-9) return true;
       const span = shape.endAngle - shape.startAngle;
       const angle = Math.atan2(dy, dx);
       const offset =
@@ -161,10 +163,7 @@ function contains(shape: HitShape, x: number, y: number): boolean {
       return offset <= Math.abs(span) + 1e-9;
     }
     case "line":
-      return (
-        pointSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2) <=
-        shape.tolerance
-      );
+      return pointSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2) <= shape.tolerance;
   }
 }
 
@@ -184,10 +183,7 @@ function pointSegmentDistance(
   const dx = x2 - x1;
   const dy = y2 - y1;
   if (dx === 0 && dy === 0) return Math.hypot(x - x1, y - y1);
-  const t = Math.max(
-    0,
-    Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)),
-  );
+  const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)));
   return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
 }
 
@@ -195,10 +191,5 @@ function intersects(
   left: { x0: number; y0: number; x1: number; y1: number },
   right: { x0: number; y0: number; x1: number; y1: number },
 ): boolean {
-  return !(
-    left.x1 < right.x0 ||
-    left.x0 > right.x1 ||
-    left.y1 < right.y0 ||
-    left.y0 > right.y1
-  );
+  return !(left.x1 < right.x0 || left.x0 > right.x1 || left.y1 < right.y0 || left.y0 > right.y1);
 }

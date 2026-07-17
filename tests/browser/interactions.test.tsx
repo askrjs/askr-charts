@@ -45,7 +45,7 @@ describe("plot interactions and live rows", () => {
     const activated: PlotKey[] = [];
     container = mount(
       <InteractivePlot
-        apiRef={(value) => value && (api = value)}
+        onApiChange={(value) => value && (api = value)}
         onView={(view) => views.push(view)}
         onSelection={(selection) => selections.push(selection)}
         onActivate={(_row, key) => activated.push(key)}
@@ -53,7 +53,7 @@ describe("plot interactions and live rows", () => {
     );
     await flushPaint();
 
-    const frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
+    const graphic = required<HTMLElement>(container, '[data-slot="plot-graphic"]');
     const overlay = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-overlay"]');
     const tooltip = required<HTMLElement>(container, '[data-slot="plot-tooltip"]');
     const point = firstPoint(api.exportSvg());
@@ -65,13 +65,28 @@ describe("plot interactions and live rows", () => {
     expect(api.exportSvg()).not.toContain("data-plot-overlays");
     expect(api.exportSvg({ includeOverlays: true })).toContain('data-plot-overlays="true"');
 
-    frame.focus();
-    frame.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    graphic.focus();
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     expect(tooltip.hidden).toBe(false);
-    frame.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     expect(activated).toHaveLength(1);
+    graphic.dispatchEvent(
+      new KeyboardEvent("keydown", { key: " ", shiftKey: true, bubbles: true }),
+    );
+    expect(selections[selections.length - 1]?.keys).toContain("a");
 
-    const legend = required<HTMLButtonElement>(container, '[data-plot-series="api"]');
+    const viewsBeforeKeyboard = views.length;
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "+", bubbles: true }));
+    expect(views).toHaveLength(viewsBeforeKeyboard + 1);
+    graphic.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowRight", shiftKey: true, bubbles: true }),
+    );
+    expect(views).toHaveLength(viewsBeforeKeyboard + 2);
+    const viewsBeforeReset = views.length;
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+    expect(views).toHaveLength(viewsBeforeReset + 1);
+
+    const legend = legendButton(container, "api");
     legend.click();
     expect(legend.getAttribute("aria-pressed")).toBe("false");
 
@@ -122,6 +137,11 @@ describe("plot interactions and live rows", () => {
     dispatchPointer(overlay, "pointerup", 190, 120, { pointerId: 3 });
     expect(views.length).toBeGreaterThan(viewsBeforePan);
 
+    const viewsBeforeReleasePan = views.length;
+    dispatchPointer(overlay, "pointerdown", 190, 120, { pointerId: 6, buttons: 1 });
+    dispatchPointer(overlay, "pointerup", 220, 120, { pointerId: 6 });
+    expect(views.length).toBeGreaterThan(viewsBeforeReleasePan);
+
     const viewsBeforePinch = views.length;
     dispatchPointer(overlay, "pointerdown", 180, 100, { pointerId: 4, buttons: 1 });
     dispatchPointer(overlay, "pointerdown", 300, 100, { pointerId: 5, buttons: 1 });
@@ -154,7 +174,7 @@ describe("plot interactions and live rows", () => {
         rows.set((current) =>
           appendPlotRows(current, { id: "e", time: 4, value: 14, service: "api" }),
         );
-      return <InteractivePlot data={rows} apiRef={(value) => value && (api = value)} />;
+      return <InteractivePlot data={rows} onApiChange={(value) => value && (api = value)} />;
     }
     container = mount(<LiveApp />);
     await flushPaint();
@@ -181,7 +201,7 @@ describe("plot interactions and live rows", () => {
         <InteractivePlot
           data={rows}
           followLatest={{ rows: 2 }}
-          apiRef={(value) => value && (api = value)}
+          onApiChange={(value) => value && (api = value)}
         />
       );
     }
@@ -216,14 +236,14 @@ describe("plot interactions and live rows", () => {
 
 function InteractivePlot({
   data = initialRows,
-  apiRef,
+  onApiChange,
   onView,
   onSelection,
   onActivate,
   followLatest = { rows: 10 },
 }: {
   data?: readonly Row[] | (() => readonly Row[]);
-  apiRef?: (api: PlotApi<Row> | null) => void;
+  onApiChange?: (api: PlotApi<Row> | null) => void;
   onView?: (view: PlotView) => void;
   onSelection?: (selection: PlotSelection) => void;
   onActivate?: (row: Row, key: PlotKey) => void;
@@ -237,27 +257,15 @@ function InteractivePlot({
       title="Live requests"
       height={280}
       followLatest={followLatest}
-      apiRef={apiRef}
+      onApiChange={onApiChange}
       onViewChange={onView}
       onSelectionChange={onSelection}
       onActivate={onActivate}
     >
       <Plot.Scale name="time-scale" channel="x" type="linear" />
       <Plot.Scale name="value-scale" channel="y" type="linear" />
-      <Plot.Line
-        x="time"
-        y="value"
-        xScale="time-scale"
-        yScale="value-scale"
-        stroke="service"
-      />
-      <Plot.Point
-        x="time"
-        y="value"
-        xScale="time-scale"
-        yScale="value-scale"
-        fill="service"
-      />
+      <Plot.Line x="time" y="value" xScale="time-scale" yScale="value-scale" stroke="service" />
+      <Plot.Point x="time" y="value" xScale="time-scale" yScale="value-scale" fill="service" />
       <Plot.Legend interactive />
       <Plot.Tooltip />
       <Plot.Crosshair axes="xy" />
@@ -306,7 +314,17 @@ function required<ElementType extends Element>(root: ParentNode, selector: strin
   return element;
 }
 
+function legendButton(root: ParentNode, label: string): HTMLButtonElement {
+  const button = [
+    ...root.querySelectorAll<HTMLButtonElement>('[data-slot="plot-legend-item"]'),
+  ].find((candidate) => candidate.textContent?.trim() === label);
+  if (!button) throw new Error(`Missing legend item ${label}`);
+  return button;
+}
+
 async function flushPaint(): Promise<void> {
   await Promise.resolve();
-  await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 }

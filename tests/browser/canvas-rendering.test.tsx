@@ -31,10 +31,10 @@ const cartesianRows: readonly CartesianRow[] = [
 const currentCartesianRows: readonly CartesianRow[] = [cartesianRows[3]!];
 
 function CartesianExample({
-  apiRef,
+  onApiChange,
   tokenHeight = false,
 }: {
-  apiRef?: (api: PlotApi<CartesianRow> | null) => void;
+  onApiChange?: (api: PlotApi<CartesianRow> | null) => void;
   tokenHeight?: boolean;
 }) {
   return (
@@ -45,23 +45,14 @@ function CartesianExample({
       title="Operations trend"
       width={640}
       height={tokenHeight ? undefined : 320}
-      apiRef={apiRef}
+      onApiChange={onApiChange}
     >
       <Cartesian.Grid axis="y" />
       <Cartesian.Area x="day" y="value" y2="low" fill={constant("#bfdbfe")} />
       <Cartesian.Bar x="day" y="low" fill="series" opacity={0.7} />
-      <Cartesian.Line
-        x="day"
-        y="value"
-        stroke={constant("#1d4ed8")}
-        curve="monotone"
-      />
+      <Cartesian.Line x="day" y="value" stroke={constant("#1d4ed8")} curve="monotone" />
       <Cartesian.Point x="day" y="value" fill="series" />
-      <Cartesian.Rule
-        y={constant(18)}
-        stroke={constant("#dc2626")}
-        dash={[4, 3]}
-      />
+      <Cartesian.Rule y={constant(18)} stroke={constant("#dc2626")} dash={[4, 3]} />
       <Cartesian.Text
         data={currentCartesianRows}
         x={constant("Thu")}
@@ -90,15 +81,10 @@ describe("canvas rendering and export", () => {
     container = mount(<CartesianExample />);
     await flushPaint();
     const frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    const canvas = required<HTMLCanvasElement>(
-      container,
-      '[data-slot="plot-canvas-base"]',
-    );
+    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-base"]');
 
     expect(canvas.width).toBe(Math.round(frame.clientWidth * devicePixelRatio));
-    expect(canvas.height).toBe(
-      Math.round(frame.clientHeight * devicePixelRatio),
-    );
+    expect(canvas.height).toBe(Math.round(frame.clientHeight * devicePixelRatio));
     const before = canvas.getContext("2d")?.getImageData(2, 2, 1, 1).data;
     expect(before?.[3]).toBe(255);
 
@@ -120,10 +106,7 @@ describe("canvas rendering and export", () => {
     await flushPaint();
 
     const frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    const canvas = required<HTMLCanvasElement>(
-      container,
-      '[data-slot="plot-canvas-base"]',
-    );
+    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-base"]');
     expect(frame.clientHeight).toBe(196);
     expect(canvas.height).toBe(Math.round(196 * devicePixelRatio));
 
@@ -135,7 +118,7 @@ describe("canvas rendering and export", () => {
 
   it("should export scene-parity svg and png given a mounted plot", async () => {
     let api: PlotApi<CartesianRow> | null = null;
-    container = mount(<CartesianExample apiRef={(value) => (api = value)} />);
+    container = mount(<CartesianExample onApiChange={(value) => (api = value)} />);
     await flushPaint();
 
     const svg = api!.exportSvg();
@@ -164,42 +147,28 @@ describe("canvas rendering and export", () => {
       '[data-slot="plot-canvas-base"]',
     );
     expect(canvases).toHaveLength(6);
-    const frames = [
-      ...container.querySelectorAll<HTMLElement>('[data-slot="plot-frame"]'),
-    ];
-    expect(
-      frames.map((frame) => Math.round(frame.getBoundingClientRect().height)),
-    ).toEqual([320, 320, 240, 220, 220, 180]);
-    const expectedMarks = new Map<
-      string,
-      { minimum: number; screenshot: string }
-    >([
-      ["Operations trend", { minimum: 6, screenshot: "cartesian-marks" }],
-      [
-        "Latency distribution and P95 trend",
-        { minimum: 6, screenshot: "mixed-histogram-trend" },
-      ],
-      ["Subsystem share", { minimum: 3, screenshot: "arc-marks" }],
-      ["Traffic heatmap", { minimum: 4, screenshot: "cell-marks" }],
-      ["Request flame graph", { minimum: 3, screenshot: "rect-marks" }],
-      ["SLO gauge", { minimum: 1, screenshot: "bounded-arc" }],
+    const frames = [...container.querySelectorAll<HTMLElement>('[data-slot="plot-frame"]')];
+    expect(frames.map((frame) => Math.round(frame.getBoundingClientRect().height))).toEqual([
+      320, 320, 240, 220, 220, 180,
+    ]);
+    const expectedMarks = new Map<string, number>([
+      ["Operations trend", 6],
+      ["Latency distribution and P95 trend", 6],
+      ["Subsystem share", 3],
+      ["Traffic heatmap", 4],
+      ["Request flame graph", 3],
+      ["SLO gauge", 1],
     ]);
     for (const frame of frames) {
-      const label = frame.getAttribute("aria-label") ?? "";
+      const label =
+        required<HTMLElement>(frame, '[data-slot="plot-graphic"]').getAttribute("aria-label") ?? "";
       const expected = expectedMarks.get(label);
       expect(expected, `missing mark expectation for ${label}`).toBeDefined();
-      expect(
-        Number(frame.dataset.markCount),
-        `${label} scene mark count`,
-      ).toBeGreaterThanOrEqual(expected!.minimum);
-      const canvas = required<HTMLCanvasElement>(
-        frame,
-        '[data-slot="plot-canvas-base"]',
+      expect(Number(frame.dataset.markCount), `${label} scene mark count`).toBeGreaterThanOrEqual(
+        expected!,
       );
-      expect(
-        countPaintedPixels(canvas),
-        `${label} painted pixels`,
-      ).toBeGreaterThan(100);
+      const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+      expect(countPaintedPixels(canvas), `${label} painted pixels`).toBeGreaterThan(100);
     }
     const expectedLegendPositions = new Map([
       ["Operations trend", "bottom"],
@@ -209,21 +178,19 @@ describe("canvas rendering and export", () => {
     ]);
     for (const [label, position] of expectedLegendPositions) {
       const frame = frames.find(
-        (candidate) => candidate.getAttribute("aria-label") === label,
+        (candidate) =>
+          candidate.querySelector('[data-slot="plot-graphic"]')?.getAttribute("aria-label") ===
+          label,
       );
       const region = frame
         ?.closest('[data-slot="plot-root"]')
         ?.querySelector('[data-slot="plot-legends"]');
-      expect(
-        region?.getAttribute("data-plot-legend-position"),
-        `${label} legend position`,
-      ).toBe(position);
+      expect(region?.getAttribute("data-plot-legend-position"), `${label} legend position`).toBe(
+        position,
+      );
     }
 
-    const matrix = required<HTMLElement>(
-      container,
-      '[data-testid="visual-matrix"]',
-    );
+    const matrix = required<HTMLElement>(container, '[data-testid="visual-matrix"]');
     for (const theme of ["light", "dark"] as const) {
       for (const viewport of ["desktop", "narrow"] as const) {
         await page.viewport(viewport === "desktop" ? 800 : 440, 700);
@@ -231,14 +198,16 @@ describe("canvas rendering and export", () => {
         matrix.style.width = viewport === "desktop" ? "720px" : "360px";
         await flushPaint();
         for (const frame of frames) {
-          const label = frame.getAttribute("aria-label") ?? "";
-          const screenshot = expectedMarks.get(label)?.screenshot;
+          const label =
+            required<HTMLElement>(frame, '[data-slot="plot-graphic"]').getAttribute("aria-label") ??
+            "";
           const root = frame.closest<HTMLElement>('[data-slot="plot-root"]');
-          if (!screenshot || !root)
-            throw new Error(`Missing visual frame for ${label}`);
-          await page.elementLocator(root).screenshot({
-            path: `../__screenshots__/${screenshot}-${theme}-${viewport}.png`,
-          });
+          expect(root, `missing ${theme} ${viewport} root for ${label}`).not.toBeNull();
+          const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+          expect(
+            countPaintedPixels(canvas),
+            `${label} ${theme} ${viewport} painted pixels`,
+          ).toBeGreaterThan(100);
         }
       }
     }
@@ -276,16 +245,13 @@ interface LatencyRow {
 }
 
 const Latency = createPlot<LatencyRow>();
-const latencyRows: readonly LatencyRow[] = Array.from(
-  { length: 18 },
-  (_, index) => ({
-    id: `request-${index}`,
-    timestamp: new Date(Date.UTC(2026, 6, 17, 12, index)),
-    latencyMs: index === 7 ? null : 70 + ((index * 53) % 390),
-    p95: 170 + ((index * 19) % 90),
-    outcome: index % 5 === 0 ? "error" : "ok",
-  }),
-);
+const latencyRows: readonly LatencyRow[] = Array.from({ length: 18 }, (_, index) => ({
+  id: `request-${index}`,
+  timestamp: new Date(Date.UTC(2026, 6, 17, 12, index)),
+  latencyMs: index === 7 ? null : 70 + ((index * 53) % 390),
+  p95: 170 + ((index * 19) % 90),
+  outcome: index % 5 === 0 ? "error" : "ok",
+}));
 
 function MixedHistogramTrend() {
   return (
@@ -299,13 +265,7 @@ function MixedHistogramTrend() {
       <Latency.Scale name="latency-x" channel="x" type="linear" nice />
       <Latency.Scale name="time-x" channel="x" type="utc" nice />
       <Latency.Scale name="count-y" channel="y" type="linear" nice />
-      <Latency.Scale
-        name="p95-y"
-        channel="y"
-        type="symlog"
-        constant={10}
-        nice
-      />
+      <Latency.Scale name="p95-y" channel="y" type="symlog" constant={10} nice />
       <Latency.Scale
         name="outcome-color"
         channel="color"
@@ -374,12 +334,7 @@ function VisualMatrix() {
     >
       <CartesianExample />
       <MixedHistogramTrend />
-      <Share.Root
-        data={shares}
-        rowKey="id"
-        label="Subsystem share"
-        height={240}
-      >
+      <Share.Root data={shares} rowKey="id" label="Subsystem share" height={240}>
         <Share.Arc
           value="value"
           category="name"
@@ -393,12 +348,7 @@ function VisualMatrix() {
         <Heat.Cell x="x" y="y" value="value" />
         <Heat.Legend label="Volume" position="left" />
       </Heat.Root>
-      <Frame.Root
-        data={frames}
-        rowKey="id"
-        label="Request flame graph"
-        height={220}
-      >
+      <Frame.Root data={frames} rowKey="id" label="Request flame graph" height={220}>
         <Frame.Rect
           transform={partition<FrameRow>({
             id: "id",
@@ -436,10 +386,7 @@ function mount(element: JSXElement): HTMLDivElement {
   return root;
 }
 
-function required<ElementType extends Element>(
-  root: ParentNode,
-  selector: string,
-): ElementType {
+function required<ElementType extends Element>(root: ParentNode, selector: string): ElementType {
   const element = root.querySelector<ElementType>(selector);
   if (!element) throw new Error(`Missing ${selector}`);
   return element;

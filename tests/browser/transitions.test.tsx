@@ -33,7 +33,7 @@ function TransitionPlot({ data }: { data: readonly Row[] | (() => readonly Row[]
       width={420}
       height={220}
       defaultSelection={{ keys: ["a"] }}
-      apiRef={(api) => (plotApi = api)}
+      onApiChange={(api) => (plotApi = api)}
     >
       <Plot.Line x="day" y="value" stroke="series" />
       <Plot.Point x="day" y="value" fill="series" />
@@ -75,7 +75,7 @@ describe("mounted canvas transitions", () => {
     let canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
     expect(frame.dataset.animationMode).toBe("none");
     expect(frame.hasAttribute("data-animation-running")).toBe(false);
-    required<HTMLButtonElement>(container, '[data-plot-series="api"]').click();
+    legendButton(container, "api").click();
     frame.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     expect(plotApi!.exportSvg({ includeOverlays: true })).toMatch(
       /data-plot-overlays="true"[\s\S]*<circle/,
@@ -94,11 +94,7 @@ describe("mounted canvas transitions", () => {
     canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
     expect(frame.dataset.animationMode, JSON.stringify({ ...frame.dataset })).toBe("keyed");
     expect(frame.getAttribute("data-animation-running")).toBe("true");
-    expect(
-      required<HTMLButtonElement>(container, '[data-plot-series="api"]').getAttribute(
-        "aria-pressed",
-      ),
-    ).toBe("false");
+    expect(legendButton(container, "api").getAttribute("aria-pressed")).toBe("false");
     const selected = JSON.parse(
       plotApi!.exportData({ rows: "source", scope: "selected", format: "json" }),
     ) as Row[];
@@ -143,6 +139,14 @@ function required<ElementType extends Element>(root: ParentNode, selector: strin
   const element = root.querySelector<ElementType>(selector);
   if (!element) throw new Error(`Missing ${selector}`);
   return element;
+}
+
+function legendButton(root: ParentNode, label: string): HTMLButtonElement {
+  const button = [
+    ...root.querySelectorAll<HTMLButtonElement>('[data-slot="plot-legend-item"]'),
+  ].find((candidate) => candidate.textContent?.trim() === label);
+  if (!button) throw new Error(`Missing legend item ${label}`);
+  return button;
 }
 
 async function flushPaint(): Promise<void> {

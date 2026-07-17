@@ -23,7 +23,10 @@ describe("package exports", () => {
         types: "./dist/index.d.ts",
         import: "./dist/index.js",
       },
-      "./styles": "./dist/styles.css",
+      "./styles": {
+        types: "./dist/styles.d.ts",
+        default: "./dist/styles.css",
+      },
       "./package.json": "./package.json",
     });
 

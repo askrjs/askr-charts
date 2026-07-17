@@ -2,16 +2,17 @@
 
 The benchmark tiers separate algorithm cost from browser integration so a regression identifies its owning layer.
 
-| Tier | Runtime  | Owner                                                                                           |
-| ---- | -------- | ----------------------------------------------------------------------------------------------- |
-| 1    | Node     | Scales, transforms, paths, and immutable row helpers                                            |
-| 2    | jsdom    | DOM-free scene compilation, including the 100,000-row line workload                             |
+| Tier | Runtime  | Owner                                                                                            |
+| ---- | -------- | ------------------------------------------------------------------------------------------------ |
+| 1    | Node     | Scales, transforms, paths, and immutable row helpers                                             |
+| 2    | jsdom    | DOM-free scene compilation, including the 100,000-row line workload                              |
 | 3    | jsdom    | Transient pan/zoom frames, settled scene compilation, spatial queries, and followed live batches |
-| 4    | Chromium | Mounted first compile/paint and warm real Canvas 2D painting                                    |
+| 4    | Chromium | Mounted first compile/paint and warm real Canvas 2D painting                                     |
 
 Release-candidate evidence is three consecutive `npm run bench` executions on the same Chromium host. The scripts set `NODE_ENV=production` so development diagnostics are not charged to the shipped render path. The acceptance rows are:
 
 - Tier 4 100,000-row line mount, compile, and paint: at most 250 ms.
+- Tier 4 warm real-canvas 100,000-row scene repaint: p95 at most 16.7 ms.
 - Tier 3 warm pan/zoom transient frame: p95 at most 16.7 ms.
 - Tier 3 spatial hit query for the culled 100,000-source-row scene: p95 at most 2 ms.
 - Tier 3 append, follow-window trim, compile, and repaint of 1,000 rows: p95 at most 50 ms.

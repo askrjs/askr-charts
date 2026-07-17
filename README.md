@@ -65,7 +65,7 @@ export function RevenueTrend() {
 - marks: `Bar`, `Line`, `Area`, `Point`, `Arc`, `Cell`, `Rect`, `Rule`, `Text`
 - interaction: `Legend`, `Tooltip`, `Crosshair`, `Zoom`, `Brush`
 
-The root owns responsive sizing, semantic labels, title and description, empty and summary states, controlled or uncontrolled view and selection, follow-latest behavior, activation, and export access through `apiRef`.
+The root owns responsive sizing, semantic labels, title and description, empty and summary states, controlled or uncontrolled view and selection, follow-latest behavior, activation, and export access through `onApiChange`.
 
 Useful defaults are inferred from channels and mark context:
 

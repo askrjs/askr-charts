@@ -80,7 +80,7 @@ export function removePlotRows<Row>(
   if (typeof keys === "function") {
     shouldRemove = keys;
   } else {
-    if (!rowKey) {
+    if (rowKey === undefined) {
       throw new TypeError("removePlotRows requires rowKey when removing by key.");
     }
     const keySet = keys instanceof Set ? keys : new Set(keys);
@@ -116,7 +116,10 @@ export function trimPlotRows<Row>(
   const normalized = typeof options === "number" ? { rows: options } : options;
 
   if ("rows" in normalized) {
-    const limit = Math.max(0, Math.floor(normalized.rows));
+    if (!Number.isFinite(normalized.rows) || normalized.rows < 0) {
+      throw new RangeError("trimPlotRows rows must be a finite non-negative number.");
+    }
+    const limit = Math.floor(normalized.rows);
     if (rows.length <= limit) return rows;
     return Object.freeze(rows.slice(rows.length - limit));
   }
@@ -131,6 +134,9 @@ export function trimPlotRows<Row>(
       : typeof normalized.now === "number"
         ? normalized.now
         : findLatestTimestamp(rows, normalized.field);
+  if (!Number.isFinite(latest)) {
+    throw new RangeError("trimPlotRows now must be a valid Date or finite number.");
+  }
   const threshold = latest - normalized.durationMs;
   let changed = false;
   const retained = rows.filter((row, index) => {

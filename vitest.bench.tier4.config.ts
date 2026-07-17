@@ -19,6 +19,10 @@ const tier4Config = {
             name: "mount, compile, and paint a 100k line plot (<=250ms)",
             p99Milliseconds: 250,
           },
+          {
+            name: "warm real-canvas 100k scene repaint (p99 proxy <=16.7ms)",
+            p99Milliseconds: 16.7,
+          },
         ]),
       ],
     },

@@ -99,7 +99,7 @@ export function LiveInteractionsExport() {
         onSelectionChange={(next) => setSelection(next)}
         onActivate={(row) => setSelection({ keys: [row.id] })}
         followLatest={{ durationMs: 5 * 60_000, field: "timestamp" }}
-        apiRef={(next) => setApi(next)}
+        onApiChange={(next) => setApi(next)}
       >
         <LivePlot.Line x="timestamp" y="latencyMs" stroke="service" />
         <LivePlot.Point x="timestamp" y="latencyMs" fill="service" />

@@ -5,7 +5,6 @@ import { createHitIndex, type HitIndex } from "./hit-index";
 import type {
   FollowLatest,
   PlotApi,
-  PlotApiRef,
   PlotDataExportOptions,
   PlotKey,
   PlotPngExportOptions,
@@ -79,7 +78,6 @@ interface ControllerState<Row> {
   baseCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
   tooltip: HTMLElement | null;
-  liveStatus: HTMLElement | null;
   config: PlotRuntimeConfig<Row>;
   scene: PlotScene<Row>;
   hitIndex: HitIndex<Row>;
@@ -108,8 +106,9 @@ interface ControllerState<Row> {
   transitionScene: PlotScene<Row> | null;
   transitionFrameHandle: number | null;
   canvasAnimation: Animation | null;
-  currentApiRef: PlotApiRef<Row> | undefined;
+  currentApiChange: ((api: PlotApi<Row> | null) => void) | undefined;
   api: PlotApi<Row>;
+  activeDiagnosticSignatures: Set<string>;
   cleanups: Array<() => void>;
 }
 
@@ -149,10 +148,6 @@ export function createPlotController<Row>(
     baseCanvas,
     overlayCanvas,
     tooltip: host.querySelector('[data-slot="plot-tooltip"]'),
-    liveStatus:
-      host
-        .closest<HTMLElement>('[data-slot="plot-root"]')
-        ?.querySelector('[data-slot="plot-live-status"]') ?? null,
     config,
     scene: initialScene,
     hitIndex: createHitIndex([], {
@@ -186,38 +181,54 @@ export function createPlotController<Row>(
     transitionScene: null,
     transitionFrameHandle: null,
     canvasAnimation: null,
-    currentApiRef: config.props.apiRef,
+    currentApiChange: config.props.onApiChange,
     api,
+    activeDiagnosticSignatures: new Set<string>(),
     cleanups: [],
   } satisfies Partial<ControllerState<Row>>);
 
-  bindController(state);
-  assignApiRef(state.currentApiRef, state.api);
-  installSceneAndPaint(
-    state,
-    initialScene,
-    initialWidth,
-    initialHeight,
-    config.transitionFromScene !== undefined,
-    config.transitionFromScene,
-  );
+  try {
+    bindController(state);
+    state.currentApiChange?.(state.api);
+    installSceneAndPaint(
+      state,
+      initialScene,
+      initialWidth,
+      initialHeight,
+      config.transitionFromScene !== undefined,
+      config.transitionFromScene,
+    );
+  } catch (error) {
+    const errors = [error];
+    try {
+      destroyController(state);
+    } catch (cleanupError) {
+      collectErrors(errors, cleanupError);
+    }
+    throwCollectedErrors(errors, "Plot controller initialization failed");
+  }
 
   return Object.freeze({
     update(nextConfig: PlotRuntimeConfig<Row>) {
       if (state.destroyed) return;
-      const previousRef = state.currentApiRef;
+      const previousApiChange = state.currentApiChange;
+      const notificationErrors: unknown[] = [];
       state.pendingDataTransition ||= state.config.sourceRows !== nextConfig.sourceRows;
       state.config = nextConfig;
-      state.currentApiRef = nextConfig.props.apiRef;
-      if (previousRef !== state.currentApiRef) {
-        assignApiRef(previousRef, null);
-        assignApiRef(state.currentApiRef, state.api);
+      state.currentApiChange = nextConfig.props.onApiChange;
+      if (previousApiChange !== state.currentApiChange) {
+        if (state.currentApiChange) {
+          invokeAndCollect(notificationErrors, () => state.currentApiChange?.(state.api));
+        } else {
+          invokeAndCollect(notificationErrors, () => previousApiChange?.(null));
+        }
       }
       if (state.internalSelection.size > 0 || (nextConfig.props.selection?.keys.length ?? 0) > 0) {
         retainSelection(state);
       }
       if (gestureIsActive(state)) state.compileDeferredForGesture = true;
       else scheduleCompile(state);
+      throwCollectedErrors(notificationErrors, "Plot API change notification failed");
     },
     destroy() {
       destroyController(state);
@@ -296,10 +307,27 @@ function bindController<Row>(state: ControllerState<Row>): void {
     });
     observer.observe(state.host);
     state.cleanups.push(() => observer.disconnect());
-  } else if (typeof window !== "undefined") {
+  }
+
+  if (typeof window !== "undefined") {
     const resize = () => scheduleCompile(state);
     window.addEventListener("resize", resize);
     state.cleanups.push(() => window.removeEventListener("resize", resize));
+  }
+
+  if (typeof matchMedia === "function") {
+    let resolution: MediaQueryList | null = null;
+    const resolutionChanged = () => {
+      scheduleCompile(state);
+      watchResolution();
+    };
+    const watchResolution = () => {
+      resolution?.removeEventListener?.("change", resolutionChanged);
+      resolution = matchMedia(`(resolution: ${devicePixelRatioValue()}dppx)`);
+      resolution.addEventListener?.("change", resolutionChanged, { once: true });
+    };
+    watchResolution();
+    state.cleanups.push(() => resolution?.removeEventListener?.("change", resolutionChanged));
   }
 
   if (typeof MutationObserver !== "undefined") {
@@ -444,11 +472,23 @@ function installSceneAndPaint<Row>(
   if (state.hiddenSeries.size > 0) updateLegendButtons(state);
   updateLiveStatus(state);
   const development = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
-  if ((state.config.props.diagnostics ?? development) && state.scene.diagnostics.length > 0) {
-    for (const diagnostic of state.scene.diagnostics) {
+  reportDiagnostics(state, state.config.props.diagnostics ?? development);
+}
+
+function reportDiagnostics<Row>(state: ControllerState<Row>, enabled: boolean): void {
+  if (!enabled) {
+    state.activeDiagnosticSignatures.clear();
+    return;
+  }
+  const nextSignatures = new Set<string>();
+  for (const diagnostic of state.scene.diagnostics) {
+    const signature = `${diagnostic.code}:${diagnostic.message}`;
+    nextSignatures.add(signature);
+    if (!state.activeDiagnosticSignatures.has(signature)) {
       console.warn(`[Askr charts] ${diagnostic.message}`);
     }
   }
+  state.activeDiagnosticSignatures = nextSignatures;
 }
 
 function compileRuntimeScene<Row>(
@@ -529,13 +569,7 @@ function startKeyedSceneTransition<Row>(
     if (state.destroyed) return;
     const linearProgress = Math.max(0, Math.min(1, (timestamp - startedAt) / duration));
     const easedProgress = 1 - Math.pow(1 - linearProgress, 3);
-    paintKeyedTransitionFrame(
-      state,
-      next,
-      previousMarks,
-      nextMarks,
-      easedProgress,
-    );
+    paintKeyedTransitionFrame(state, next, previousMarks, nextMarks, easedProgress);
     if (linearProgress < 1) {
       state.transitionFrameHandle = requestAnimationFrame(step);
       return;
@@ -666,7 +700,11 @@ function onPointerMove<Row>(state: ControllerState<Row>, event: PointerEvent): v
   // Only pointerdown registers an active gesture pointer. Hover moves must not
   // linger in this map or the next drag is incorrectly interpreted as a pinch.
   if (state.pointers.has(event.pointerId)) state.pointers.set(event.pointerId, point);
-  if (state.pointers.size >= 2 && state.scene.interactions.zoom?.pinch && hasContinuousZoomAxis(state)) {
+  if (
+    state.pointers.size >= 2 &&
+    state.scene.interactions.zoom?.pinch &&
+    hasContinuousZoomAxis(state)
+  ) {
     const [first, second] = [...state.pointers.values()];
     if (first && second) {
       const distance = Math.hypot(second.x - first.x, second.y - first.y);
@@ -711,7 +749,11 @@ function onPointerDown<Row>(state: ControllerState<Row>, event: PointerEvent): v
     // Synthetic events and pointers that have already ended cannot be captured.
     // Canvas-local events still provide enough information to track the gesture.
   }
-  if (state.pointers.size >= 2 && state.scene.interactions.zoom?.pinch && hasContinuousZoomAxis(state)) {
+  if (
+    state.pointers.size >= 2 &&
+    state.scene.interactions.zoom?.pinch &&
+    hasContinuousZoomAxis(state)
+  ) {
     const [first, second] = [...state.pointers.values()];
     state.suppressClick ||= state.drag?.moved ?? false;
     state.drag = null;
@@ -733,7 +775,11 @@ function onPointerDown<Row>(state: ControllerState<Row>, event: PointerEvent): v
       startView: currentDomainView(state.scene),
       moved: false,
     };
-  } else if (state.scene.interactions.zoom?.pan && event.button === 0 && hasContinuousZoomAxis(state)) {
+  } else if (
+    state.scene.interactions.zoom?.pan &&
+    event.button === 0 &&
+    hasContinuousZoomAxis(state)
+  ) {
     state.drag = {
       mode: "pan",
       pointerId: event.pointerId,
@@ -767,6 +813,10 @@ function onPointerUp<Row>(state: ControllerState<Row>, event: PointerEvent): voi
   const drag = state.drag;
   drag.currentX = point.x;
   drag.currentY = point.y;
+  drag.moved ||= Math.hypot(point.x - drag.startX, point.y - drag.startY) > 3;
+  if (drag.mode === "pan" && drag.moved) {
+    panTo(state, drag, point.x, point.y);
+  }
   if (drag.mode === "brush" && drag.moved) {
     const brush = state.scene.interactions.brush;
     const bounds = brushBounds(drag, brush?.axis ?? "xy", state.scene);
@@ -860,7 +910,29 @@ function onClick<Row>(state: ControllerState<Row>, event: MouseEvent): void {
 
 function onKeyDown<Row>(state: ControllerState<Row>, event: KeyboardEvent): void {
   const hits = filteredHits(state);
-  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+  const zoom = state.scene.interactions.zoom;
+  if (zoom && (event.key === "+" || event.key === "=" || event.key === "-" || event.key === "_")) {
+    event.preventDefault();
+    const area = state.scene.plotArea;
+    zoomAt(
+      state,
+      area.x + area.width / 2,
+      area.y + area.height / 2,
+      event.key === "+" || event.key === "=" ? 0.8 : 1.25,
+      false,
+    );
+    commitTransientView(state);
+  } else if (
+    event.shiftKey &&
+    zoom?.pan &&
+    (event.key === "ArrowRight" ||
+      event.key === "ArrowDown" ||
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowUp")
+  ) {
+    event.preventDefault();
+    panWithKeyboard(state, event.key);
+  } else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
     event.preventDefault();
     state.focusIndex = hits.length === 0 ? -1 : (state.focusIndex + 1 + hits.length) % hits.length;
     announceFocusedHit(state, hits[state.focusIndex] ?? null);
@@ -870,6 +942,12 @@ function onKeyDown<Row>(state: ControllerState<Row>, event: KeyboardEvent): void
     state.focusIndex = hits.length === 0 ? -1 : (state.focusIndex - 1 + hits.length) % hits.length;
     announceFocusedHit(state, hits[state.focusIndex] ?? null);
     paintOverlay(state);
+  } else if (event.shiftKey && event.key === " " && state.scene.interactions.brush) {
+    const hit = hits[state.focusIndex];
+    if (hit) {
+      event.preventDefault();
+      toggleFocusedSelection(state, hit);
+    }
   } else if (event.key === "Enter" || event.key === " ") {
     const hit = hits[state.focusIndex];
     if (hit) {
@@ -881,9 +959,45 @@ function onKeyDown<Row>(state: ControllerState<Row>, event: KeyboardEvent): void
     state.hover = null;
     hideTooltip(state);
     paintOverlay(state);
-  } else if (event.key === "Home") {
+  } else if (zoom && event.key === "Home") {
+    event.preventDefault();
     resetView(state);
   }
+}
+
+function panWithKeyboard<Row>(
+  state: ControllerState<Row>,
+  key: "ArrowRight" | "ArrowDown" | "ArrowLeft" | "ArrowUp",
+): void {
+  const area = state.scene.plotArea;
+  const startX = area.x + area.width / 2;
+  const startY = area.y + area.height / 2;
+  const horizontal = key === "ArrowRight" ? 1 : key === "ArrowLeft" ? -1 : 0;
+  const vertical = key === "ArrowDown" ? 1 : key === "ArrowUp" ? -1 : 0;
+  const drag: DragState = {
+    mode: "pan",
+    pointerId: -1,
+    startX,
+    startY,
+    currentX: startX - horizontal * area.width * 0.1,
+    currentY: startY - vertical * area.height * 0.1,
+    startView: currentDomainView(state.scene),
+    moved: true,
+  };
+  panTo(state, drag, drag.currentX, drag.currentY);
+  commitTransientView(state);
+}
+
+function toggleFocusedSelection<Row>(state: ControllerState<Row>, hit: HitRegion<Row>): void {
+  const keys = new Set(selectionKeys(state));
+  const record = state.scene.transformedRows.find((candidate) => candidate.key === hit.key);
+  const sourceKeys = record?.sourceKeys ?? [hit.key];
+  const selected = sourceKeys.every((key) => keys.has(key));
+  for (const key of sourceKeys) {
+    if (selected) keys.delete(key);
+    else keys.add(key);
+  }
+  setSelection(state, keys);
 }
 
 function zoomAt<Row>(
@@ -905,8 +1019,17 @@ function zoomAt<Row>(
       const scale = state.scene.scales[name];
       if (!isContinuousScale(scale)) continue;
       const domain = current.scales?.[name] ?? (axis === "x" ? current.x : current.y);
-      const full = state.fullView.scales?.[name] ?? (axis === "x" ? state.fullView.x : state.fullView.y);
-      const updated = zoomScale(scale, domain, full, axis === "x" ? x : y, factor, interaction.min, interaction.max);
+      const full =
+        state.fullView.scales?.[name] ?? (axis === "x" ? state.fullView.x : state.fullView.y);
+      const updated = zoomScale(
+        scale,
+        domain,
+        full,
+        axis === "x" ? x : y,
+        factor,
+        interaction.min,
+        interaction.max,
+      );
       if (updated) scales[name] = updated;
       if (name === primaryScale(state.scene, axis)?.name) next[axis] = updated;
     }
@@ -961,9 +1084,17 @@ function panTo<Row>(state: ControllerState<Row>, drag: DragState, x: number, y: 
     for (const name of axisScaleNames(state.scene, axis)) {
       const scale = state.scene.scales[name];
       if (!isContinuousScale(scale)) continue;
-      const domain = drag.startView.scales?.[name] ?? (axis === "x" ? drag.startView.x : drag.startView.y);
-      const full = state.fullView.scales?.[name] ?? (axis === "x" ? state.fullView.x : state.fullView.y);
-      const updated = panScale(scale, domain, full, axis === "x" ? drag.startX : drag.startY, axis === "x" ? x : y);
+      const domain =
+        drag.startView.scales?.[name] ?? (axis === "x" ? drag.startView.x : drag.startView.y);
+      const full =
+        state.fullView.scales?.[name] ?? (axis === "x" ? state.fullView.x : state.fullView.y);
+      const updated = panScale(
+        scale,
+        domain,
+        full,
+        axis === "x" ? drag.startX : drag.startY,
+        axis === "x" ? x : y,
+      );
       if (updated) scales[name] = updated;
       if (name === primaryScale(state.scene, axis)?.name) next[axis] = updated;
     }
@@ -998,7 +1129,11 @@ function panScale(
   return [restoreValue(domain[0], bounded[0]), restoreValue(domain[1], bounded[1])];
 }
 
-function setView<Row>(state: ControllerState<Row>, view: PlotView | undefined, commit = true): void {
+function setView<Row>(
+  state: ControllerState<Row>,
+  view: PlotView | undefined,
+  commit = true,
+): void {
   state.config.props.onViewChange?.(view ?? {});
   if (state.config.props.view === undefined) state.internalView = view;
   state.transientView = commit ? null : (view ?? {});
@@ -1339,8 +1474,11 @@ function brushBounds<Row>(drag: DragState, axis: "x" | "y" | "xy", scene: PlotSc
 }
 
 function updateLiveStatus<Row>(state: ControllerState<Row>): void {
-  if (!state.liveStatus) return;
-  state.liveStatus.textContent = state.config.props.followLatest
+  const liveStatus = state.host
+    .closest<HTMLElement>('[data-slot="plot-root"]')
+    ?.querySelector<HTMLElement>('[data-slot="plot-live-status"]');
+  if (!liveStatus) return;
+  liveStatus.textContent = state.config.props.followLatest
     ? state.followPaused
       ? "Live following paused. Use Resume live to follow the latest rows."
       : "Following the latest rows."
@@ -1434,22 +1572,37 @@ function scheduleCompile<Row>(state: ControllerState<Row>): void {
 function destroyController<Row>(state: ControllerState<Row>): void {
   if (state.destroyed) return;
   state.destroyed = true;
-  cancelSceneTransition(state);
-  if (state.frameHandle != null && typeof cancelAnimationFrame === "function") {
-    cancelAnimationFrame(state.frameHandle);
-  }
-  if (state.viewCommitTimer != null) clearTimeout(state.viewCommitTimer);
-  for (const cleanup of state.cleanups.splice(0)) cleanup();
-  assignApiRef(state.currentApiRef, null);
-  hideTooltip(state);
-  state.baseCanvas.width = 0;
-  state.baseCanvas.height = 0;
-  state.overlayCanvas.width = 0;
-  state.overlayCanvas.height = 0;
-  state.pointers.clear();
-  state.host.closest<HTMLElement>('[data-slot="plot-root"]')?.removeAttribute("data-panning");
-  state.hiddenSeries.clear();
-  state.internalSelection.clear();
+  const errors: unknown[] = [];
+  invokeAndCollect(errors, () => cancelSceneTransition(state));
+  invokeAndCollect(errors, () => {
+    if (state.frameHandle != null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(state.frameHandle);
+    }
+    state.frameHandle = null;
+  });
+  invokeAndCollect(errors, () => {
+    if (state.viewCommitTimer != null) clearTimeout(state.viewCommitTimer);
+    state.viewCommitTimer = null;
+  });
+  for (const cleanup of state.cleanups.splice(0)) invokeAndCollect(errors, cleanup);
+  const onApiChange = state.currentApiChange;
+  state.currentApiChange = undefined;
+  invokeAndCollect(errors, () => onApiChange?.(null));
+  invokeAndCollect(errors, () => hideTooltip(state));
+  invokeAndCollect(errors, () => {
+    state.baseCanvas.width = 0;
+    state.baseCanvas.height = 0;
+    state.overlayCanvas.width = 0;
+    state.overlayCanvas.height = 0;
+  });
+  invokeAndCollect(errors, () => state.pointers.clear());
+  invokeAndCollect(errors, () =>
+    state.host.closest<HTMLElement>('[data-slot="plot-root"]')?.removeAttribute("data-panning"),
+  );
+  invokeAndCollect(errors, () => state.hiddenSeries.clear());
+  invokeAndCollect(errors, () => state.internalSelection.clear());
+  state.activeDiagnosticSignatures.clear();
+  throwCollectedErrors(errors, "Plot controller cleanup failed");
 }
 
 function listen<Row>(
@@ -1462,10 +1615,37 @@ function listen<Row>(
   state.cleanups.push(() => target.removeEventListener(type, listener));
 }
 
-function assignApiRef<Row>(ref: PlotApiRef<Row> | undefined, value: PlotApi<Row> | null): void {
-  if (!ref) return;
-  if (typeof ref === "function") ref(value);
-  else ref.current = value;
+function invokeAndCollect(errors: unknown[], operation: () => void): void {
+  try {
+    operation();
+  } catch (error) {
+    collectErrors(errors, error);
+  }
+}
+
+function collectErrors(errors: unknown[], error: unknown): void {
+  if (isAggregateError(error)) errors.push(...error.errors);
+  else errors.push(error);
+}
+
+function throwCollectedErrors(errors: unknown[], message: string): void {
+  if (errors.length === 0) return;
+  if (errors.length === 1) throw errors[0];
+  throw new RuntimeAggregateError(errors, message);
+}
+
+interface AggregateErrorLike extends Error {
+  readonly errors: readonly unknown[];
+}
+
+const RuntimeAggregateError = (
+  globalThis as typeof globalThis & {
+    AggregateError: new (errors: Iterable<unknown>, message?: string) => AggregateErrorLike;
+  }
+).AggregateError;
+
+function isAggregateError(error: unknown): error is AggregateErrorLike {
+  return error instanceof RuntimeAggregateError;
 }
 
 function requireCanvas(host: HTMLElement, slot: string): HTMLCanvasElement {

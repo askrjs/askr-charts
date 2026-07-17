@@ -26,6 +26,21 @@ describe("scale inference", () => {
 });
 
 describe("continuous coordinate scales", () => {
+  it("should reject invalid explicit scale parameters given malformed runtime input", () => {
+    expect(() => createScale({ type: "log", domain: [1, 10], range: [0, 1], base: 1 })).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      createScale({ type: "power", domain: [0, 10], range: [0, 1], exponent: 0 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      createScale({ type: "symlog", domain: [-1, 1], range: [0, 1], constant: Number.NaN }),
+    ).toThrow(RangeError);
+    expect(() => createScale({ type: "band", domain: ["a"], range: [0, 1], padding: -1 })).toThrow(
+      RangeError,
+    );
+  });
+
   it("should preserve signed values given missing observations when deriving a linear domain", () => {
     const scale = createScale({
       name: "signed",
@@ -311,6 +326,23 @@ describe("color scales", () => {
     expect(scale.map(100)).toBe("#ffffff");
     expect(scale.map("invalid")).toBe("transparent");
     expect(scale.ticks(5)).toEqual([0, 20, 40, 60, 80, 100]);
+  });
+
+  it("should parse percentage alpha and honor unclamped extrapolation given RGB colors", () => {
+    const alpha = createScale({
+      type: "continuous-color",
+      domain: [0, 1],
+      range: ["rgb(0 0 0 / 0%)", "rgb(100% 100% 100% / 100%)"],
+    });
+    const extrapolated = createScale({
+      type: "continuous-color",
+      domain: [0, 100],
+      range: ["rgb(0, 100, 0)", "rgb(100, 0, 0)"],
+      clamp: false,
+    });
+
+    expect(alpha.map(0.5)).toBe("rgba(128, 128, 128, 0.5)");
+    expect(extrapolated.map(150)).toBe("rgb(150, 0, 0)");
   });
 
   it("should use date ticks given temporal values when mapping continuous colors", () => {

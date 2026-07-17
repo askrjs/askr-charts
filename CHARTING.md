@@ -32,26 +32,26 @@ The returned namespace is stable and factory-bound. A root accepts its own primi
 
 `Root` requires `data`, `rowKey`, and `label`.
 
-| Prop                                | Contract                                                                          |
-| ----------------------------------- | --------------------------------------------------------------------------------- |
-| `data`                              | `readonly Row[]` or a reactive `() => readonly Row[]` getter                      |
-| `rowKey`                            | A row field or `(row, index) => string \| number`; keys must be unique and finite |
-| `label`                             | Required accessible name for the plot                                             |
-| `title`, `description`              | Visible semantic heading and supporting text                                      |
-| `summary`                           | Text or a callback receiving source, transformed, omitted, and visible counts     |
-| `empty`                             | Empty-state message when no renderable rows remain                                |
-| `width`, `height`                   | Explicit resolved size; otherwise the mounted root responds to its container      |
-| `class`, `className`, `style`, `id` | Structural application hooks                                                      |
-| `meter`                             | `{ role: "meter", min, max, value, valueText? }` for bounded bars and arcs        |
-| `view`, `onViewChange`              | Controlled visible x/y domains                                                    |
-| `defaultView`                       | Initial uncontrolled visible domains                                              |
-| `selection`, `onSelectionChange`    | Controlled selection as stable row keys                                           |
-| `defaultSelection`                  | Initial uncontrolled selection                                                    |
-| `onActivate`                        | Drill-down callback receiving the activated row and stable key                    |
-| `followLatest`                      | Row-count or time window for live plots                                           |
-| `apiRef`                            | Callback ref or `{ current }` object receiving `PlotApi<Row>` after mount         |
-| `locale`                            | Locale used by inferred formatting                                                |
-| `diagnostics`                       | Enable development diagnostics for omitted or invalid values                      |
+| Prop                                   | Contract                                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| `data`                                 | `readonly Row[]` or a reactive `() => readonly Row[]` getter                      |
+| `rowKey`                               | A row field or `(row, index) => string \| number`; keys must be unique and finite |
+| `label`                                | Required accessible name for the plot                                             |
+| `title`, `headingLevel`, `description` | Visible semantic heading, configurable level, and supporting text                 |
+| `summary`                              | Text or a callback receiving source, transformed, omitted, and visible counts     |
+| `empty`                                | Empty-state message when no renderable rows remain                                |
+| `width`, `height`                      | Explicit resolved size; otherwise the mounted root responds to its container      |
+| `class`, `style`, `id`                 | Structural application hooks                                                      |
+| `meter`                                | `{ role: "meter", min, max, value, valueText? }` for bounded bars and arcs        |
+| `view`, `onViewChange`                 | Controlled visible x/y domains                                                    |
+| `defaultView`                          | Initial uncontrolled visible domains                                              |
+| `selection`, `onSelectionChange`       | Controlled selection as stable row keys                                           |
+| `defaultSelection`                     | Initial uncontrolled selection                                                    |
+| `onActivate`                           | Drill-down callback receiving the activated row and stable key                    |
+| `followLatest`                         | Row-count or time window for live plots                                           |
+| `onApiChange`                          | Callback receiving `PlotApi<Row>` after mount and `null` after cleanup            |
+| `locale`                               | Locale used by inferred formatting                                                |
+| `diagnostics`                          | Enable development diagnostics for omitted or invalid values                      |
 
 Summary callbacks can keep accessibility truthful when data is omitted:
 
@@ -78,11 +78,7 @@ A channel accepts one of three forms:
 3. a channel expression.
 
 ```tsx
-<MetricPlot.Point
-  x="at"
-  y={(row) => row.value / 1_000}
-  title={(row) => `${row.value} µs`}
-/>
+<MetricPlot.Point x="at" y={(row) => row.value / 1_000} title={(row) => `${row.value} µs`} />
 ```
 
 Bare strings always identify row fields. Wrap a literal string in `constant(...)` so a color, label, or other channel is not mistaken for a field:
@@ -190,13 +186,7 @@ Use named scales when marks need independent domains or units:
 <ServicePlot.Root data={rows} rowKey="id" label="Traffic and latency">
   <ServicePlot.Scale name="time" channel="x" type="utc" />
   <ServicePlot.Scale name="requests" channel="y" type="linear" nice />
-  <ServicePlot.Scale
-    name="latency"
-    channel="y"
-    type="symlog"
-    constant={10}
-    nice
-  />
+  <ServicePlot.Scale name="latency" channel="y" type="symlog" constant={10} nice />
 
   <ServicePlot.Bar x="timestamp" y="requests" xScale="time" yScale="requests" />
   <ServicePlot.Line x="timestamp" y="p95" xScale="time" yScale="latency" />
@@ -248,7 +238,7 @@ See [examples/mark-families.tsx](./examples/mark-families.tsx) for all nine mark
 | `Zoom`      | x, y, or xy zoom with wheel, pinch, and pan toggles plus min/max extent |
 | `Brush`     | x, y, or xy brush; Shift is the default product-safe modifier choice    |
 
-Primary drag pans when pan is enabled. Wheel and pinch zoom the enabled axes. Shift-drag brushing avoids stealing ordinary page gestures. Pointer and keyboard inspection share the same hit records, and `onActivate(row, key)` is the drill-down seam.
+Primary drag pans when pan is enabled. Wheel and pinch zoom the enabled axes. Shift-drag brushing avoids stealing ordinary page gestures. Arrow keys inspect marks; Enter or Space activates the focused mark; plus and minus zoom; Home resets the view; and Shift plus an arrow pans. With brushing enabled, Shift+Space toggles the focused row in the selection. Pointer and keyboard inspection share the same hit records, and `onActivate(row, key)` is the drill-down seam.
 
 Interactive legends filter their color scale without rewriting caller data. Stable row keys retain selection when rows are updated.
 
@@ -268,7 +258,7 @@ User pan or zoom pauses following. It stays paused until `PlotApi.resumeLive()` 
 
 ## Plot API and exports
 
-`apiRef` receives this mounted API:
+`onApiChange` receives this mounted API:
 
 ```ts
 interface PlotApi<Row> {
@@ -281,7 +271,7 @@ interface PlotApi<Row> {
 }
 ```
 
-PNG and SVG export options select `view: "current" | "full"`, a resolved background, and whether transient overlays are included. PNG also accepts `pixelRatio`. Hover, crosshair, and brush overlays are excluded by default.
+PNG and SVG export options select `view: "current" | "full"`, a resolved background (or `null` for transparency), and whether transient overlays are included. PNG also accepts `pixelRatio`. Hover, crosshair, and brush overlays are excluded by default.
 
 Data export selects:
 
@@ -291,6 +281,8 @@ Data export selects:
 - `format: "csv" | "json"`.
 
 PNG and SVG require a mounted plot with resolved dimensions. SVG references fonts rather than embedding them. Export does not create a visible SVG renderer.
+
+CSV export neutralizes string cells that spreadsheet applications could interpret as formulas. JSON export preserves dates as ISO strings and represents non-finite numbers as `null`.
 
 ## Signed, missing, and log data
 

@@ -20,17 +20,14 @@ describe("benchmark threshold reporter", () => {
   it("should leave the exit status unchanged given a measured p99 within budget when finishing", () => {
     let failed = false;
     let output = "";
-    const reporter = new BenchmarkThresholdReporter(
-      [{ name: "hot path", p99Milliseconds: 16.7 }],
-      {
-        fail: () => {
-          failed = true;
-        },
-        write: (message) => {
-          output += message;
-        },
+    const reporter = new BenchmarkThresholdReporter([{ name: "hot path", p99Milliseconds: 16.7 }], {
+      fail: () => {
+        failed = true;
       },
-    );
+      write: (message) => {
+        output += message;
+      },
+    });
 
     reporter.onTestRunStart();
     reporter.onTestCaseResult(benchmarkCase("hot path", 16.7));
@@ -43,17 +40,14 @@ describe("benchmark threshold reporter", () => {
   it("should request a nonzero exit given a deliberately impossible p99 budget when finishing", () => {
     let failed = false;
     let output = "";
-    const reporter = new BenchmarkThresholdReporter(
-      [{ name: "hot path", p99Milliseconds: 0 }],
-      {
-        fail: () => {
-          failed = true;
-        },
-        write: (message) => {
-          output += message;
-        },
+    const reporter = new BenchmarkThresholdReporter([{ name: "hot path", p99Milliseconds: 0 }], {
+      fail: () => {
+        failed = true;
       },
-    );
+      write: (message) => {
+        output += message;
+      },
+    });
 
     reporter.onTestRunStart();
     reporter.onTestCaseResult(benchmarkCase("hot path", 0.001));

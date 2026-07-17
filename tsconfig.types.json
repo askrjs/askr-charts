@@ -4,5 +4,6 @@
     "noEmit": true,
     "skipLibCheck": false
   },
-  "include": ["tests/types/**/*.tsx"]
+  "include": ["tests/types/**/*.tsx"],
+  "exclude": []
 }
