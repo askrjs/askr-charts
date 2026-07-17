@@ -1,11 +1,8 @@
 # @askrjs/charts
 
-CSS-first chart primitives for Askr dashboards and product UI.
+Typed Canvas 2D plots for Askr applications, with the same immutable scene available for SVG and data export.
 
-`@askrjs/charts` keeps chart rendering composable, responsive, and themeable
-without depending on `@askrjs/themes`. Use it when you want charts that read
-quickly in product interfaces without turning into a general-purpose plotting
-library.
+Version 0.1 is a clean break from the old CSS-first chart catalog. JavaScript comes from `@askrjs/charts`; structural and theme-token styles come from `@askrjs/charts/styles`. There are no component, core, default, per-chart CSS, template, or generator compatibility entrypoints.
 
 ## Install
 
@@ -13,54 +10,115 @@ library.
 npm install @askrjs/charts
 ```
 
-## Quick Start
-
-Import the default chart styles in your app stylesheet:
+Import the styles once at the application boundary:
 
 ```css
-@import "@askrjs/charts/default";
+@import "@askrjs/charts/styles";
 ```
 
-Then render from the component surface:
+## Quick start
+
+Create a typed plot namespace once at module scope, then compose marks inside its root:
 
 ```tsx
-import { AreaChart, ChartPanel, ChartShell } from "@askrjs/charts/components";
+import { createPlot } from "@askrjs/charts";
 
-const revenue = [
-  { label: "Mon", value: 42 },
-  { label: "Tue", value: 58 },
-  { label: "Wed", value: 51 },
+type RevenueRow = {
+  id: string;
+  day: Date;
+  revenue: number;
+  target: number;
+};
+
+const RevenuePlot = createPlot<RevenueRow>();
+
+const revenue: readonly RevenueRow[] = [
+  { id: "mon", day: new Date("2026-07-13T00:00:00Z"), revenue: 42, target: 48 },
+  { id: "tue", day: new Date("2026-07-14T00:00:00Z"), revenue: 58, target: 50 },
+  { id: "wed", day: new Date("2026-07-15T00:00:00Z"), revenue: 51, target: 52 },
 ];
 
-export function RevenueChart() {
+export function RevenueTrend() {
   return (
-    <ChartShell title="Revenue" description="Last 3 days">
-      <ChartPanel title="Trend" description="Simple filled trend">
-        <AreaChart label="Revenue trend" data={revenue} />
-      </ChartPanel>
-    </ChartShell>
+    <RevenuePlot.Root
+      data={revenue}
+      rowKey="id"
+      label="Daily revenue"
+      title="Revenue"
+      description="Actual revenue and target for the current week."
+    >
+      <RevenuePlot.Bar x="day" y="revenue" />
+      <RevenuePlot.Line x="day" y="target" />
+      <RevenuePlot.Point x="day" y="target" />
+    </RevenuePlot.Root>
   );
 }
 ```
 
-## Use The Right Surface
+`Row` drives field-name inference. A numeric mark channel cannot name a string field, and a factory's primitives cannot be mixed into another factory's root. Fields, accessors, and expressions can be combined without giving up row typing.
 
-- `@askrjs/charts/components` exports the chart components and chart chrome:
-  `AreaChart`, `BarChart`, `LineChart`, `DonutChart`, `PieChart`, `StackedBarChart`,
-  `Sparkline`, `Heatmap`, `Timeline`, `FlameGraph`, `ProgressMeter`,
-  `RadialGauge`, `ChartShell`, `ChartPanel`, `ChartLegend`, and
-  `ChartEmptyState`.
-- `@askrjs/charts/core` exports normalization, formatting, animation, and
-  legend helpers for advanced composition.
-- The package is CSS-first, so the chart visuals still come from the imported
-  stylesheets.
-- `@askrjs/themes` is optional. Chart tokens are self-sufficient, while their
-  defaults are shaped to sit naturally beside Askr theme styles when both are
-  present.
+## Public surface
 
-## Design Rules
+`createPlot<Row>()` returns a stable namespace containing:
 
-- Charts should read quickly in product dashboards.
-- Tooltips are an enhancement, not the only way to understand the data.
-- Prefer compact, semantic layouts over analytical charting complexity.
-- Use [CHARTING.md](./CHARTING.md) for the full contract surface, chart-specific guidance, and examples.
+- structure: `Root`, `Scale`, `Axis`, `Grid`
+- marks: `Bar`, `Line`, `Area`, `Point`, `Arc`, `Cell`, `Rect`, `Rule`, `Text`
+- interaction: `Legend`, `Tooltip`, `Crosshair`, `Zoom`, `Brush`
+
+The root owns responsive sizing, semantic labels, title and description, empty and summary states, controlled or uncontrolled view and selection, follow-latest behavior, activation, and export access through `apiRef`.
+
+Useful defaults are inferred from channels and mark context:
+
+- numbers use linear scales
+- `Date` values use local-time scales
+- categorical positions use band or point scales
+- categorical colors use ordinal scales; numeric colors use continuous scales
+- Cartesian marks receive default axes and tooltip behavior
+
+Add explicit scale, axis, grid, legend, or tooltip children when the composition needs different behavior. Named scales support mixed plots and dual axes.
+
+## Data rules
+
+- Signed finite numbers stay signed; negative values are not clamped to zero.
+- `null`, `undefined`, invalid dates, and non-finite numbers are missing values, not zero.
+- Log scales omit zero and negative values.
+- `diagnostics` reports omitted values during development, and `summary` receives `omittedRowCount` for accessible reporting.
+- Stable row keys drive selection retention, transitions, and live updates.
+- Use `constant("...")` for a literal string channel. Bare strings identify row fields.
+
+## Migration from the old catalog
+
+There are no compatibility wrappers in 0.1.
+
+| Removed 0.0 surface                         | 0.1 composition                                                   |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| `ChartShell`                                | `Plot.Root`; keep product card or page chrome in the app          |
+| `ChartPanel`                                | App-owned card/section plus `Plot.Root` title and description     |
+| `ChartEmptyState`                           | `Root empty="..."`; keep loading and error ownership in the route |
+| `ChartLegend`                               | `Plot.Legend`                                                     |
+| `AreaChart`                                 | `Plot.Area`                                                       |
+| `BarChart`                                  | `Plot.Bar`                                                        |
+| `LineChart`                                 | `Plot.Line`, optionally with `Plot.Point`                         |
+| `DonutChart`                                | `Plot.Arc` with `innerRadius`                                     |
+| `PieChart`                                  | `Plot.Arc` with `innerRadius={0}`                                 |
+| `StackedBarChart`                           | `Plot.Bar stack="series"`; use `normalize` for percent stacks     |
+| `Sparkline`                                 | Compact `Plot.Root` with `Plot.Line` or `Plot.Area`               |
+| `Heatmap`                                   | `Plot.Cell`                                                       |
+| `Timeline`                                  | `Plot.Rule`, `Plot.Point`, and `Plot.Text`                        |
+| `FlameGraph`                                | `Plot.Rect` with `partition(...)`                                 |
+| `ProgressMeter`                             | Bounded `Plot.Bar` plus `Root meter={{ role: "meter", ... }}`     |
+| `RadialGauge`                               | Bounded `Plot.Arc` plus `Root meter={{ role: "meter", ... }}`     |
+| `@askrjs/charts/core`                       | Helpers exported directly from `@askrjs/charts`                   |
+| `@askrjs/charts/default` or root CSS import | `@askrjs/charts/styles`                                           |
+| Per-chart CSS, templates, and `new:chart`   | One structural stylesheet and primitive composition               |
+
+## More
+
+- [Charting contract](./CHARTING.md)
+- [Architecture and defaults](./docs/overview.md)
+- [Usage recipes](./docs/usage.md)
+- [Mixed histogram and trend](./examples/mixed-histogram-trend.tsx)
+- [All mark families](./examples/mark-families.tsx)
+- [Live data, interactions, and export](./examples/live-interactions-export.tsx)
+
+`@askrjs/themes` is optional. The stylesheet defines self-contained `--ak-chart-*` tokens and uses compatible Askr theme tokens when they are present.

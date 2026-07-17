@@ -1,0 +1,2486 @@
+import type { PlotDescriptor } from "./descriptors";
+import { isChannelExpression, isRowTransform } from "./expressions";
+import type {
+  AxisProps,
+  PlotKey,
+  PlotRowKey,
+  PlotSummaryContext,
+  PlotView,
+  PrimitiveKind,
+  ScaleProps,
+  ScaleValue,
+  StackOptions,
+} from "./model";
+import { downsamplePixelEnvelope } from "./paths";
+import { readRowKey } from "./rows";
+import {
+  createScale,
+  inferScaleType,
+  type ResolvedScale,
+  type ScaleInput,
+} from "./scales";
+import type {
+  HitRegion,
+  PlotScene,
+  SceneAxis,
+  SceneDiagnostic,
+  SceneExportRow,
+  SceneGrid,
+  SceneInteractions,
+  SceneLegend,
+  SceneMark,
+  SceneMarkBase,
+  ScenePoint,
+  SceneTick,
+} from "./scene-model";
+import {
+  applyRowTransforms,
+  createBins,
+  evaluateChannel,
+  isFiniteNumber,
+  partitionRows,
+  readChannel,
+  stackValues,
+  validScaleValue,
+} from "./transforms";
+
+type MarkKind = Extract<
+  PrimitiveKind,
+  "Bar" | "Line" | "Area" | "Point" | "Arc" | "Cell" | "Rect" | "Rule" | "Text"
+>;
+
+interface PreparedDatum<Row> {
+  readonly row: Row;
+  readonly sourceIndex: number;
+  readonly sourceKeys: readonly PlotKey[];
+  readonly key: PlotKey;
+  readonly x?: unknown;
+  readonly x2?: unknown;
+  readonly y?: unknown;
+  readonly y2?: unknown;
+  readonly value?: unknown;
+  readonly radius?: unknown;
+  readonly fillValue?: unknown;
+  readonly strokeValue?: unknown;
+  readonly titleValue?: unknown;
+  readonly textValue?: unknown;
+  readonly series: string | null;
+  readonly defined?: boolean;
+  readonly stack0?: number;
+  readonly stack1?: number;
+  readonly bin0?: number | Date;
+  readonly bin1?: number | Date;
+  readonly values: Readonly<Record<string, unknown>>;
+  visible?: boolean;
+}
+
+interface PreparedMark<Row> {
+  readonly kind: MarkKind;
+  readonly props: Readonly<Record<string, unknown>>;
+  readonly data: readonly PreparedDatum<Row>[];
+  readonly ordinal: number;
+  readonly directSourceIdentity: boolean;
+}
+
+interface ScaleUse {
+  readonly name: string;
+  readonly channel: "x" | "y" | "color";
+  readonly values: unknown[];
+  band: boolean;
+  includeZero: boolean;
+}
+
+export interface CompilePlotOptions<Row> {
+  readonly rows: readonly Row[];
+  readonly rowKey: PlotRowKey<Row>;
+  readonly label: string;
+  readonly descriptors: readonly PlotDescriptor[];
+  readonly width: number;
+  readonly height: number;
+  readonly pixelRatio?: number;
+  readonly view?: PlotView;
+  readonly summary?: string | ((context: PlotSummaryContext<Row>) => string);
+  readonly locale?: string;
+}
+
+const SERIES_COLORS = Object.freeze(
+  Array.from(
+    { length: 10 },
+    (_, index) => `var(--ak-chart-series-${index + 1})`,
+  ),
+);
+
+const MARK_KINDS = new Set<PrimitiveKind>([
+  "Bar",
+  "Line",
+  "Area",
+  "Point",
+  "Arc",
+  "Cell",
+  "Rect",
+  "Rule",
+  "Text",
+]);
+
+export function compilePlotScene<Row>(
+  options: CompilePlotOptions<Row>,
+): PlotScene<Row> {
+  const width = Math.max(1, finiteOr(options.width, 640));
+  const height = Math.max(1, finiteOr(options.height, 360));
+  const pixelRatio = Math.max(1, finiteOr(options.pixelRatio, 1));
+  const sourceRows = Object.freeze([...options.rows]);
+  const sourceIndexByKey = validateKeys(sourceRows, options.rowKey);
+  const markDescriptors = options.descriptors.filter(
+    (descriptor) =>
+      MARK_KINDS.has(descriptor.kind) &&
+      !(descriptor.props as Readonly<Record<string, unknown>>).hidden,
+  );
+  const sourceIndexByRow = new Map<Row, number>();
+  if (markDescriptors.some(requiresSourceRowLookup)) {
+    for (let index = 0; index < sourceRows.length; index += 1) {
+      if (!sourceIndexByRow.has(sourceRows[index]!))
+        sourceIndexByRow.set(sourceRows[index]!, index);
+    }
+  }
+  const cartesian = markDescriptors.some(
+    (descriptor) => descriptor.kind !== "Arc",
+  );
+  const margins = resolvePlotMargins(options.descriptors);
+  const plotArea = Object.freeze(
+    cartesian
+      ? {
+          x: margins.left,
+          y: margins.top,
+          width: Math.max(1, width - margins.left - margins.right),
+          height: Math.max(1, height - margins.top - margins.bottom),
+        }
+      : {
+          x: 12,
+          y: 12,
+          width: Math.max(1, width - 24),
+          height: Math.max(1, height - 24),
+        },
+  );
+  const omittedKeys = new Set<PlotKey>();
+  const invalidLogKeys = new Set<PlotKey>();
+  const preparedMarks = markDescriptors.map((descriptor, ordinal) =>
+    prepareMark(
+      descriptor as PlotDescriptor<Record<string, unknown>>,
+      ordinal,
+      sourceRows,
+      options.rowKey,
+      sourceIndexByKey,
+      sourceIndexByRow,
+      omittedKeys,
+    ),
+  );
+  const scaleUses = collectScaleUses(preparedMarks);
+  const scales = resolveScales(
+    options.descriptors,
+    scaleUses,
+    plotArea,
+    options.view,
+  );
+  collectInvalidLogSourceKeys(preparedMarks, scales, invalidLogKeys);
+  const axes = resolveAxes(
+    options.descriptors,
+    scales,
+    scaleUses,
+    cartesian,
+    options.locale,
+  );
+  const grids = resolveGrids(options.descriptors, scales, axes, plotArea);
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  const visibleKeys = new Set<PlotKey>();
+  const directExportMark =
+    preparedMarks.length === 1 && preparedMarks[0]!.directSourceIdentity
+      ? preparedMarks[0]!
+      : null;
+  const exportRowsByKey = directExportMark
+    ? null
+    : new Map<
+    PlotKey,
+    {
+      row: Row;
+      key: PlotKey;
+      sourceIndex: number;
+      sourceKeys: Set<PlotKey>;
+      values: Record<string, unknown>;
+    }
+  >();
+  let order = 0;
+
+  for (const prepared of preparedMarks) {
+    const rendered = compileMark(prepared, scales, plotArea, order);
+    order += rendered.marks.length + rendered.hits.length;
+    marks.push(...rendered.marks);
+    hits.push(...rendered.hits);
+    for (const hit of rendered.hits) visibleKeys.add(hit.key);
+    if (exportRowsByKey) {
+      for (const datum of prepared.data) {
+        const existing = exportRowsByKey.get(datum.key);
+        if (existing) {
+          Object.assign(existing.values, datum.values);
+          for (const key of datum.sourceKeys) existing.sourceKeys.add(key);
+        } else {
+          exportRowsByKey.set(datum.key, {
+            row: datum.row,
+            key: datum.key,
+            sourceIndex: datum.sourceIndex,
+            sourceKeys: new Set(datum.sourceKeys),
+            values: { ...datum.values },
+          });
+        }
+      }
+    }
+  }
+
+  const exportRows: readonly SceneExportRow<Row>[] = Object.freeze(
+    directExportMark
+      ? directExportMark.data.map((datum) => {
+          datum.visible = visibleKeys.has(datum.key);
+          return Object.freeze(datum) as SceneExportRow<Row>;
+        })
+      : [...exportRowsByKey!.values()].map((record) =>
+          Object.freeze({
+            ...record,
+            sourceKeys: Object.freeze([...record.sourceKeys]),
+            visible: visibleKeys.has(record.key),
+            values: Object.freeze(record.values),
+          }),
+        ),
+  );
+  const exportRowsAreSourceRows =
+    directExportMark?.directSourceIdentity === true &&
+    exportRows.length === sourceRows.length;
+  const sourceRowRecords = exportRowsAreSourceRows
+    ? exportRows
+    : buildSourceRowRecords(
+        sourceRows,
+        options.rowKey,
+        exportRows,
+      );
+
+  const legends = resolveLegends(options.descriptors, scales, scaleUses);
+  const interactions = resolveInteractions(
+    options.descriptors,
+    marks.length > 0,
+  );
+  const scaleDiagnostics = Object.values(scales)
+    .filter((scale) => scale.omittedValueCount > 0)
+    .map<SceneDiagnostic>((scale) =>
+      Object.freeze({
+        code: scale.type === "log" ? "invalid-log" : "missing-channel",
+        message: `${scale.omittedValueCount} value(s) were omitted from ${scale.name}.`,
+        count: scale.omittedValueCount,
+      }),
+    );
+  const diagnostics: SceneDiagnostic[] = [...scaleDiagnostics];
+  if (omittedKeys.size > 0) {
+    diagnostics.unshift(
+      Object.freeze({
+        code: "missing-channel",
+        message: `${omittedKeys.size} row(s) had missing or non-finite required channels.`,
+        count: omittedKeys.size,
+      }),
+    );
+  }
+  const omittedSourceKeys = new Set([...omittedKeys, ...invalidLogKeys]);
+  const omittedRowCount = Math.min(sourceRows.length, omittedSourceKeys.size);
+  const summaryContext: PlotSummaryContext<Row> = Object.freeze({
+    rows: sourceRows,
+    sourceRowCount: sourceRows.length,
+    transformedRowCount: exportRows.length,
+    omittedRowCount,
+    visibleRowCount: visibleKeys.size,
+  });
+  const summary =
+    typeof options.summary === "function"
+      ? options.summary(summaryContext)
+      : (options.summary ?? defaultSummary(options.label, summaryContext));
+
+  return Object.freeze({
+    width,
+    height,
+    pixelRatio,
+    plotArea,
+    scales: Object.freeze(scales),
+    axes: Object.freeze(axes),
+    grids: Object.freeze(grids),
+    marks: Object.freeze(marks),
+    hits: Object.freeze(hits),
+    legends: Object.freeze(legends),
+    interactions,
+    sourceRows,
+    sourceRowRecords,
+    transformedRows: exportRows,
+    omittedRowCount,
+    visibleRowCount: visibleKeys.size,
+    diagnostics: Object.freeze(diagnostics),
+    summary,
+    empty: marks.length === 0,
+  });
+}
+
+function validateKeys<Row>(
+  rows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+): ReadonlyMap<PlotKey, number> {
+  const result = new Map<PlotKey, number>();
+  for (let index = 0; index < rows.length; index += 1) {
+    const key = readRowKey(rows[index]!, index, rowKey);
+    if (result.has(key))
+      throw new Error(`Duplicate plot row key ${String(key)}.`);
+    result.set(key, index);
+  }
+  return result;
+}
+
+function resolvePlotMargins(descriptors: readonly PlotDescriptor[]) {
+  const axes = descriptors
+    .filter((descriptor) => descriptor.kind === "Axis")
+    .map((descriptor) => descriptor.props as AxisProps);
+  const top = axes.some(
+    (axis) => axis.orient === "top" && axis.label != null,
+  )
+    ? 44
+    : 18;
+  const right = axes.some(
+    (axis) => axis.orient === "right" && axis.label != null,
+  )
+    ? 56
+    : 20;
+  return Object.freeze({ top, right, bottom: 44, left: 56 });
+}
+
+function requiresSourceRowLookup(descriptor: PlotDescriptor): boolean {
+  const props = descriptor.props as Readonly<Record<string, unknown>>;
+  if (props.data != null || props.transform != null) return true;
+  if (descriptor.kind !== "Bar" && descriptor.kind !== "Area") return false;
+  return (
+    (isChannelExpression(props.x) && props.x.kind === "bin") ||
+    (isChannelExpression(props.y) &&
+      (props.y.kind === "count" ||
+        props.y.kind === "sum" ||
+        props.y.kind === "mean"))
+  );
+}
+
+function buildSourceRowRecords<Row>(
+  sourceRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  exportRows: readonly SceneExportRow<Row>[],
+) {
+  const visibleSourceKeys = new Set<PlotKey>();
+  for (const record of exportRows) {
+    if (!record.visible) continue;
+    for (const key of record.sourceKeys) visibleSourceKeys.add(key);
+  }
+  return Object.freeze(
+    sourceRows.map((row, sourceIndex) => {
+      const key = readRowKey(row, sourceIndex, rowKey);
+      return Object.freeze({
+        row,
+        key,
+        sourceIndex,
+        visible: visibleSourceKeys.has(key),
+      });
+    }),
+  );
+}
+
+function prepareMark<Row>(
+  descriptor: PlotDescriptor<Record<string, unknown>>,
+  ordinal: number,
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByKey: ReadonlyMap<PlotKey, number>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+  omittedKeys: Set<PlotKey>,
+): PreparedMark<Row> {
+  const kind = descriptor.kind as MarkKind;
+  const props = descriptor.props;
+  const dataSource = props.data;
+  const markRows = Array.isArray(dataSource)
+    ? (dataSource as readonly Row[])
+    : typeof dataSource === "function"
+      ? ((dataSource as () => readonly Row[])() ?? [])
+      : rootRows;
+  const transforms = props.transform;
+  const transformList =
+    transforms == null
+      ? []
+      : Array.isArray(transforms)
+        ? transforms
+        : [transforms];
+  const partitionIndex = transformList.findIndex(
+    (candidate) =>
+      isRowTransform<Row>(candidate) && candidate.kind === "partition",
+  );
+  const partition =
+    partitionIndex < 0 ? undefined : transformList[partitionIndex];
+  if (kind === "Rect" && partition) {
+    const precedingTransforms = transformList
+      .slice(0, partitionIndex)
+      .filter(
+        (candidate): candidate is import("./model").RowTransform<Row> =>
+          isRowTransform<Row>(candidate) && candidate.kind !== "partition",
+      );
+    const partitionRowsInput = applyRowTransforms(
+      markRows,
+      precedingTransforms,
+    );
+    const partitioned = partitionRows(partitionRowsInput, {
+      id: partition.options.id,
+      parentId: partition.options.parentId,
+      children: partition.options.children,
+      value: partition.options.value,
+      padding: partition.options.padding as number | undefined,
+    });
+    return Object.freeze({
+      kind,
+      props,
+      ordinal,
+      directSourceIdentity: false,
+      data: Object.freeze(
+        partitioned.map((datum, index) => {
+          const source = sourceIdentity(
+            datum.row,
+            rootRows,
+            rowKey,
+            sourceIndexByRow,
+          );
+          return Object.freeze({
+            row: datum.row,
+            sourceIndex: source?.sourceIndex ?? index,
+            sourceKeys: Object.freeze(source ? [source.key] : []),
+            key: datum.id,
+            x: datum.x0,
+            x2: datum.x1,
+            y: datum.y0,
+            y2: datum.y1,
+            value: datum.value,
+            fillValue: readChannel<Row>(datum.row, index, props.fill),
+            strokeValue: readChannel<Row>(datum.row, index, props.stroke),
+            titleValue: readChannel<Row>(datum.row, index, props.title),
+            series: channelSeries(
+              readChannel<Row>(datum.row, index, props.fill),
+            ),
+            values: Object.freeze({
+              x: datum.x0,
+              x2: datum.x1,
+              y: datum.y0,
+              y2: datum.y1,
+              value: datum.value,
+              depth: datum.depth,
+            }),
+          });
+        }),
+      ),
+    });
+  }
+
+  const applicableTransforms = transformList.filter(
+    (candidate): candidate is import("./model").RowTransform<Row> =>
+      isRowTransform<Row>(candidate) && candidate.kind !== "partition",
+  );
+  const rows = applyRowTransforms(markRows, applicableTransforms);
+  if (
+    (kind === "Bar" || kind === "Area") &&
+    isChannelExpression(props.x) &&
+    props.x.kind === "bin"
+  ) {
+    return Object.freeze({
+      kind,
+      props,
+      ordinal,
+      directSourceIdentity: false,
+      data: prepareBinnedData(
+        rows,
+        rootRows,
+        rowKey,
+        sourceIndexByKey,
+        sourceIndexByRow,
+        props,
+        omittedKeys,
+      ),
+    });
+  }
+  if (
+    (kind === "Bar" || kind === "Area") &&
+    isChannelExpression(props.y) &&
+    (props.y.kind === "count" ||
+      props.y.kind === "sum" ||
+      props.y.kind === "mean")
+  ) {
+    return Object.freeze({
+      kind,
+      props,
+      ordinal,
+      directSourceIdentity: false,
+      data: prepareAggregatedData(
+        rows,
+        rootRows,
+        rowKey,
+        sourceIndexByKey,
+        sourceIndexByRow,
+        props,
+        omittedKeys,
+      ),
+    });
+  }
+
+  const evaluate = (input: unknown) =>
+    requiresSequenceEvaluation(input) ? evaluateChannel(rows, input) : null;
+  const fillInput = props.fill ?? props.category;
+  const evaluated = {
+    x: evaluate(props.x),
+    x2: evaluate(props.x2),
+    y: evaluate(props.y),
+    y2: evaluate(props.y2),
+    value: evaluate(props.value),
+    radius: evaluate(props.r),
+    fill: evaluate(fillInput),
+    stroke: evaluate(props.stroke),
+    title: evaluate(props.title),
+    text: evaluate(props.text),
+    defined: evaluate(props.defined),
+  };
+  const directSourceRows = rows === rootRows;
+  let prepared = rows.map((row, index): PreparedDatum<Row> => {
+    const sourceIndex = directSourceRows
+      ? index
+      : sourceIndexByRow.get(row);
+    const sourceKey =
+      sourceIndex === undefined
+        ? undefined
+        : readRowKey(rootRows[sourceIndex]!, sourceIndex, rowKey);
+    const key =
+      props.key == null
+        ? (sourceKey ?? safeKey(row, index, rowKey))
+        : safeKey(row, index, props.key);
+    const x = evaluatedValue(row, index, props.x, evaluated.x);
+    const x2 = evaluatedValue(row, index, props.x2, evaluated.x2);
+    const y = evaluatedValue(row, index, props.y, evaluated.y);
+    const y2 = evaluatedValue(row, index, props.y2, evaluated.y2);
+    const value = evaluatedValue(
+      row,
+      index,
+      props.value,
+      evaluated.value,
+    );
+    const radius = evaluatedValue(row, index, props.r, evaluated.radius);
+    const fillValue = evaluatedValue(
+      row,
+      index,
+      fillInput,
+      evaluated.fill,
+    );
+    const strokeValue = evaluatedValue(
+      row,
+      index,
+      props.stroke,
+      evaluated.stroke,
+    );
+    const titleValue = evaluatedValue(
+      row,
+      index,
+      props.title,
+      evaluated.title,
+    );
+    return {
+      row,
+      sourceIndex: sourceIndex ?? sourceIndexByKey.get(key) ?? -1,
+      sourceKeys: Object.freeze(sourceKey === undefined ? [] : [sourceKey]),
+      key,
+      x,
+      x2,
+      y,
+      y2,
+      value,
+      radius,
+      fillValue,
+      strokeValue,
+      titleValue,
+      textValue: evaluatedValue(row, index, props.text, evaluated.text),
+      series: resolveSeries(row, index, props),
+      defined:
+        kind === "Line"
+          ? props.defined == null ||
+            evaluatedValue(
+              row,
+              index,
+              props.defined,
+              evaluated.defined,
+            ) === true
+          : undefined,
+      values: Object.freeze({
+        x,
+        x2,
+        y,
+        y2,
+        value,
+      }),
+      visible: false,
+    };
+  });
+
+  const yOperation = isChannelExpression(props.y) ? props.y.kind : null;
+  let directSourceIdentity = directSourceRows && props.key == null;
+  if (
+    (kind === "Bar" || kind === "Area") &&
+    (props.stack || yOperation === "stack" || yOperation === "normalize")
+  ) {
+    prepared = applyPreparedStack(prepared, resolveStackOptions(props));
+    directSourceIdentity = false;
+  }
+  prepared = prepared.filter((datum) => {
+    const valid = requiredChannelsValid(kind, datum, props);
+    if (!valid) omittedKeys.add(datum.key);
+    // A deliberately undefined line datum is still needed as a run separator, even when
+    // the accessor is guarding a missing x/y channel.
+    return valid || (kind === "Line" && datum.defined === false);
+  });
+  return Object.freeze({
+    kind,
+    props,
+    ordinal,
+    directSourceIdentity,
+    data: Object.freeze(prepared),
+  });
+}
+
+function requiresSequenceEvaluation(input: unknown): boolean {
+  return (
+    isChannelExpression(input) &&
+    (input.kind === "moving-window" ||
+      input.kind === "moving-average" ||
+      input.kind === "regression")
+  );
+}
+
+function evaluatedValue<Row>(
+  row: Row,
+  index: number,
+  input: unknown,
+  evaluated: readonly unknown[] | null,
+): unknown {
+  if (evaluated) return evaluated[index];
+  return input == null ? undefined : readChannel<Row>(row, index, input);
+}
+
+function prepareBinnedData<Row>(
+  rows: readonly Row[],
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByKey: ReadonlyMap<PlotKey, number>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+  props: Readonly<Record<string, unknown>>,
+  omittedKeys: Set<PlotKey>,
+): readonly PreparedDatum<Row>[] {
+  const xExpression = props.x as {
+    input?: unknown;
+    options: Readonly<Record<string, unknown>>;
+  };
+  const rawX = rows.map((row, index) =>
+    readChannel<Row>(row, index, xExpression.input),
+  );
+  for (let index = 0; index < rawX.length; index += 1) {
+    const value = rawX[index];
+    const valid =
+      value instanceof Date
+        ? Number.isFinite(value.getTime())
+        : isFiniteNumber(value);
+    if (!valid)
+      omittedKeys.add(
+        sourceKeyForDatum(
+          rows[index]!,
+          index,
+          rootRows,
+          rowKey,
+          sourceIndexByRow,
+          props.key,
+        ),
+      );
+  }
+  const wasDate = rawX.some((value) => value instanceof Date);
+  const bins = createBins(
+    rawX.map((value) =>
+      value instanceof Date || typeof value === "number" ? value : null,
+    ),
+    xExpression.options,
+  );
+  const groups = new Map<
+    string,
+    { bin: (typeof bins)[number]; series: string | null; indices: number[] }
+  >();
+  for (const bin of bins) {
+    for (const index of bin.indices) {
+      const row = rows[index]!;
+      const series = resolveSeries(row, index, props);
+      const groupKey = `${bin.x0}:${bin.x1}:${series ?? ""}`;
+      const group = groups.get(groupKey) ?? { bin, series, indices: [] };
+      group.indices.push(index);
+      groups.set(groupKey, group);
+    }
+  }
+  const result: PreparedDatum<Row>[] = [];
+  const yExpression = isChannelExpression(props.y)
+    ? (props.y as import("./model").ChannelExpression<number, string>)
+    : null;
+  for (const group of groups.values()) {
+    const contributingIndices = aggregateContributionIndices(
+      rows,
+      group.indices,
+      yExpression,
+    );
+    const contributingIndexSet = new Set(contributingIndices);
+    for (const index of group.indices) {
+      if (!contributingIndexSet.has(index)) {
+        omittedKeys.add(
+          sourceKeyForDatum(
+            rows[index]!,
+            index,
+            rootRows,
+            rowKey,
+            sourceIndexByRow,
+            props.key,
+          ),
+        );
+      }
+    }
+    const rowIndex = contributingIndices[0] ?? group.indices[0]!;
+    const row = rows[rowIndex]!;
+    const value = aggregateIndices(rows, group.indices, yExpression);
+    const key = `${group.bin.x0}-${group.bin.x1}-${group.series ?? "all"}`;
+    const source = sourceIdentity(row, rootRows, rowKey, sourceIndexByRow);
+    const sourceKey = sourceKeyForDatum(
+      row,
+      rowIndex,
+      rootRows,
+      rowKey,
+      sourceIndexByRow,
+      props.key,
+    );
+    const sourceKeys = lineageKeys(
+      rows,
+      contributingIndices,
+      rootRows,
+      rowKey,
+      sourceIndexByRow,
+    );
+    if (!isFiniteNumber(value)) {
+      omittedKeys.add(sourceKey);
+      continue;
+    }
+    const x0 = wasDate ? new Date(group.bin.x0) : group.bin.x0;
+    const x1 = wasDate ? new Date(group.bin.x1) : group.bin.x1;
+    result.push(
+      Object.freeze({
+        row,
+        sourceIndex:
+          source?.sourceIndex ?? sourceIndexByKey.get(sourceKey) ?? -1,
+        sourceKeys,
+        key,
+        x: wasDate
+          ? new Date((group.bin.x0 + group.bin.x1) / 2)
+          : (group.bin.x0 + group.bin.x1) / 2,
+        y: value,
+        bin0: x0,
+        bin1: x1,
+        fillValue: readChannel<Row>(
+          row,
+          rowIndex,
+          props.fill ?? props.category,
+        ),
+        strokeValue: readChannel<Row>(row, rowIndex, props.stroke),
+        titleValue: readChannel<Row>(row, rowIndex, props.title),
+        series: group.series,
+        values: Object.freeze({ x0, x1, y: value, series: group.series }),
+      }),
+    );
+  }
+  return Object.freeze(
+    props.stack ||
+      yExpression?.kind === "stack" ||
+      yExpression?.kind === "normalize"
+      ? applyPreparedStack(result, resolveStackOptions(props))
+      : result,
+  );
+}
+
+function prepareAggregatedData<Row>(
+  rows: readonly Row[],
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByKey: ReadonlyMap<PlotKey, number>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+  props: Readonly<Record<string, unknown>>,
+  omittedKeys: Set<PlotKey>,
+): readonly PreparedDatum<Row>[] {
+  const groups = new Map<
+    string,
+    { x: unknown; series: string | null; indices: number[] }
+  >();
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index]!;
+    const x = readChannel<Row>(row, index, props.x);
+    if (!validScaleValue(x)) {
+      omittedKeys.add(
+        sourceKeyForDatum(
+          row,
+          index,
+          rootRows,
+          rowKey,
+          sourceIndexByRow,
+          props.key,
+        ),
+      );
+      continue;
+    }
+    const series = resolveSeries(row, index, props);
+    const groupKey = `${serializeValue(x)}:${series ?? ""}`;
+    const group = groups.get(groupKey) ?? { x, series, indices: [] };
+    group.indices.push(index);
+    groups.set(groupKey, group);
+  }
+  const yExpression = props.y as import("./model").ChannelExpression<
+    number,
+    string
+  >;
+  const result: PreparedDatum<Row>[] = [];
+  for (const group of groups.values()) {
+    const contributingIndices = aggregateContributionIndices(
+      rows,
+      group.indices,
+      yExpression,
+    );
+    const contributingIndexSet = new Set(contributingIndices);
+    for (const candidate of group.indices) {
+      if (!contributingIndexSet.has(candidate)) {
+        omittedKeys.add(
+          sourceKeyForDatum(
+            rows[candidate]!,
+            candidate,
+            rootRows,
+            rowKey,
+            sourceIndexByRow,
+            props.key,
+          ),
+        );
+      }
+    }
+    const index = contributingIndices[0] ?? group.indices[0]!;
+    const row = rows[index]!;
+    const source = sourceIdentity(row, rootRows, rowKey, sourceIndexByRow);
+    const sourceKey = sourceKeyForDatum(
+      row,
+      index,
+      rootRows,
+      rowKey,
+      sourceIndexByRow,
+      props.key,
+    );
+    const sourceKeys = lineageKeys(
+      rows,
+      contributingIndices,
+      rootRows,
+      rowKey,
+      sourceIndexByRow,
+    );
+    const y = aggregateIndices(rows, group.indices, yExpression);
+    if (!isFiniteNumber(y)) {
+      omittedKeys.add(sourceKey);
+      continue;
+    }
+    result.push(
+      Object.freeze({
+        row,
+        sourceIndex:
+          source?.sourceIndex ?? sourceIndexByKey.get(sourceKey) ?? -1,
+        sourceKeys,
+        key: `${serializeValue(group.x)}-${group.series ?? "all"}`,
+        x: group.x,
+        y,
+        fillValue: readChannel<Row>(row, index, props.fill ?? props.category),
+        strokeValue: readChannel<Row>(row, index, props.stroke),
+        titleValue: readChannel<Row>(row, index, props.title),
+        series: group.series,
+        values: Object.freeze({ x: group.x, y, series: group.series }),
+      }),
+    );
+  }
+  return Object.freeze(
+    props.stack
+      ? applyPreparedStack(result, resolveStackOptions(props))
+      : result,
+  );
+}
+
+function aggregateIndices<Row>(
+  rows: readonly Row[],
+  indices: readonly number[],
+  expression: import("./model").ChannelExpression<number, string> | null,
+): number {
+  if (!expression || expression.kind === "count") return indices.length;
+  let sum = 0;
+  let count = 0;
+  for (const index of indices) {
+    const value = readChannel<Row>(rows[index]!, index, expression.input);
+    if (!isFiniteNumber(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  if (count === 0) return Number.NaN;
+  return expression.kind === "mean" ? sum / count : sum;
+}
+
+function aggregateContributionIndices<Row>(
+  rows: readonly Row[],
+  indices: readonly number[],
+  expression: import("./model").ChannelExpression<number, string> | null,
+): readonly number[] {
+  if (!expression || expression.kind === "count") return indices;
+  return indices.filter((index) =>
+    isFiniteNumber(readChannel<Row>(rows[index]!, index, expression.input)),
+  );
+}
+
+function applyPreparedStack<Row>(
+  data: readonly PreparedDatum<Row>[],
+  options: StackOptions,
+): PreparedDatum<Row>[] {
+  const stacked = stackValues(
+    data.map((datum, index) => ({
+      key: serializeValue(datum.x),
+      series: datum.series ?? String(index),
+      value: Number(datum.y),
+      index,
+    })),
+    options,
+  );
+  return data.map((datum, index) => {
+    const stack = stacked[index];
+    return Object.freeze({
+      ...datum,
+      stack0: stack?.y0 ?? 0,
+      stack1: stack?.y1 ?? Number(datum.y),
+    });
+  });
+}
+
+function resolveStackOptions(
+  props: Readonly<Record<string, unknown>>,
+): StackOptions {
+  const yExpression = isChannelExpression(props.y) ? props.y : null;
+  const expressionOptions =
+    yExpression?.kind === "stack" ? yExpression.options : {};
+  const offset =
+    props.normalize || yExpression?.kind === "normalize"
+      ? "expand"
+      : expressionOptions.offset === "zero" ||
+          expressionOptions.offset === "expand" ||
+          expressionOptions.offset === "diverging"
+        ? expressionOptions.offset
+        : "diverging";
+  const order =
+    expressionOptions.order === "ascending" ||
+    expressionOptions.order === "descending" ||
+    expressionOptions.order === "inside-out"
+      ? expressionOptions.order
+      : "none";
+  return Object.freeze({ offset, order });
+}
+
+function requiredChannelsValid<Row>(
+  kind: MarkKind,
+  datum: PreparedDatum<Row>,
+  props: Readonly<Record<string, unknown>>,
+): boolean {
+  if (kind === "Arc") {
+    const bounded =
+      isFiniteNumber(props.min) &&
+      isFiniteNumber(props.max) &&
+      props.max > props.min;
+    return isFiniteNumber(datum.value) && (bounded || datum.value >= 0);
+  }
+  if (kind === "Text")
+    return validScaleValue(datum.x) && validScaleValue(datum.y);
+  if (kind === "Area") {
+    return (
+      validScaleValue(datum.x) &&
+      isFiniteNumber(datum.y) &&
+      (props.y2 == null || isFiniteNumber(datum.y2))
+    );
+  }
+  if (kind === "Rule") {
+    return [datum.x, datum.x2, datum.y, datum.y2].some(validScaleValue);
+  }
+  if (kind === "Rect") {
+    return (
+      validScaleValue(datum.x) &&
+      validScaleValue(datum.y) &&
+      (props.x2 == null || validScaleValue(datum.x2)) &&
+      (props.y2 == null || validScaleValue(datum.y2))
+    );
+  }
+  if (kind === "Cell")
+    return validScaleValue(datum.x) && validScaleValue(datum.y);
+  return validScaleValue(datum.x) && isFiniteNumber(datum.y);
+}
+
+function safeKey<Row>(row: Row, index: number, key: unknown): PlotKey {
+  return readRowKey(row, index, key as PlotRowKey<Row>);
+}
+
+function sourceIdentity<Row>(
+  row: Row,
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+): { readonly key: PlotKey; readonly sourceIndex: number } | null {
+  const sourceIndex = sourceIndexByRow.get(row);
+  return sourceIndex === undefined
+    ? null
+    : Object.freeze({
+        key: readRowKey(rootRows[sourceIndex]!, sourceIndex, rowKey),
+        sourceIndex,
+      });
+}
+
+function sourceKeyForDatum<Row>(
+  row: Row,
+  index: number,
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+  markKey: unknown,
+): PlotKey {
+  return (
+    sourceIdentity(row, rootRows, rowKey, sourceIndexByRow)?.key ??
+    safeKey(row, index, markKey ?? rowKey)
+  );
+}
+
+function lineageKeys<Row>(
+  rows: readonly Row[],
+  indices: readonly number[],
+  rootRows: readonly Row[],
+  rowKey: PlotRowKey<Row>,
+  sourceIndexByRow: ReadonlyMap<Row, number>,
+): readonly PlotKey[] {
+  const result = new Set<PlotKey>();
+  for (const index of indices) {
+    const source = sourceIdentity(
+      rows[index]!,
+      rootRows,
+      rowKey,
+      sourceIndexByRow,
+    );
+    if (source) result.add(source.key);
+  }
+  return Object.freeze([...result]);
+}
+
+function resolveSeries<Row>(
+  row: Row,
+  index: number,
+  props: Readonly<Record<string, unknown>>,
+): string | null {
+  const input =
+    props.stack === true
+      ? props.fill
+      : props.stack || props.fill || props.category || props.stroke;
+  if (!input || isConstant(input)) return null;
+  return channelSeries(readChannel<Row>(row, index, input));
+}
+
+function channelSeries(value: unknown): string | null {
+  return value == null || value instanceof Date ? null : String(value);
+}
+
+function isConstant(value: unknown): boolean {
+  return isChannelExpression(value) && value.kind === "constant";
+}
+
+function collectScaleUses<Row>(
+  preparedMarks: readonly PreparedMark<Row>[],
+): Map<string, ScaleUse> {
+  const uses = new Map<string, ScaleUse>();
+  const get = (name: string, channel: ScaleUse["channel"]): ScaleUse => {
+    const existing = uses.get(name);
+    if (existing) return existing;
+    const created: ScaleUse = {
+      name,
+      channel,
+      values: [],
+      band: false,
+      includeZero: false,
+    };
+    uses.set(name, created);
+    return created;
+  };
+
+  for (const mark of preparedMarks) {
+    const xName = String(mark.props.xScale ?? "x");
+    const yName = String(mark.props.yScale ?? "y");
+    const colorName = String(mark.props.colorScale ?? "color");
+    const horizontal =
+      mark.kind === "Bar" && mark.props.orientation === "horizontal";
+    const xUse = get(xName, "x");
+    const yUse = get(yName, "y");
+    if (horizontal) {
+      xUse.includeZero = true;
+      yUse.band = true;
+      if (isFiniteNumber(mark.props.min)) xUse.values.push(mark.props.min);
+      if (isFiniteNumber(mark.props.max)) xUse.values.push(mark.props.max);
+      for (const datum of mark.data) {
+        xUse.values.push(
+          boundMeterValue(datum.stack0 ?? 0, mark.props),
+          boundMeterValue(datum.stack1 ?? datum.y, mark.props),
+        );
+        yUse.values.push(datum.x);
+      }
+    } else if (mark.kind !== "Arc") {
+      xUse.band ||=
+        mark.kind === "Bar" ||
+        mark.kind === "Cell" ||
+        (mark.kind === "Rect" && mark.props.x2 == null);
+      yUse.band ||=
+        mark.kind === "Cell" ||
+        (mark.kind === "Rect" && mark.props.y2 == null);
+      yUse.includeZero ||= mark.kind === "Bar" || mark.kind === "Area";
+      if (mark.kind === "Bar") {
+        if (isFiniteNumber(mark.props.min)) yUse.values.push(mark.props.min);
+        if (isFiniteNumber(mark.props.max)) yUse.values.push(mark.props.max);
+      }
+      for (const datum of mark.data) {
+        xUse.values.push(datum.bin0 ?? datum.x, datum.bin1 ?? datum.x2);
+        yUse.values.push(
+          mark.kind === "Bar"
+            ? boundMeterValue(datum.stack0 ?? datum.y, mark.props)
+            : (datum.stack0 ?? datum.y),
+          mark.kind === "Bar"
+            ? boundMeterValue(datum.stack1 ?? datum.y2, mark.props)
+            : (datum.stack1 ?? datum.y2),
+        );
+      }
+    }
+
+    const colorValues: unknown[] = [];
+    for (const datum of mark.data) {
+      if (datum.fillValue != null) colorValues.push(datum.fillValue);
+      else if (mark.kind === "Cell" && datum.value != null)
+        colorValues.push(datum.value);
+      if (datum.strokeValue != null) colorValues.push(datum.strokeValue);
+    }
+    if (
+      colorValues.length > 0 &&
+      !isConstant(mark.props.fill) &&
+      !isConstant(mark.props.stroke)
+    ) {
+      get(colorName, "color").values.push(...colorValues);
+    }
+  }
+  for (const use of uses.values()) {
+    use.values.splice(
+      0,
+      use.values.length,
+      ...use.values.filter((value) => value !== undefined && value !== null),
+    );
+  }
+  return uses;
+}
+
+function collectInvalidLogSourceKeys<Row>(
+  preparedMarks: readonly PreparedMark<Row>[],
+  scales: Readonly<Record<string, ResolvedScale>>,
+  omittedKeys: Set<PlotKey>,
+): void {
+  const invalidFor = (
+    scaleName: string,
+    values: readonly unknown[],
+  ): boolean => {
+    const scale = scales[scaleName];
+    if (scale?.type !== "log") return false;
+    return values.some((value) => {
+      if (value == null) return false;
+      const mappedValue = scale.map(value as ScaleInput);
+      return (
+        typeof mappedValue !== "number" || !Number.isFinite(mappedValue)
+      );
+    });
+  };
+  const omit = (datum: PreparedDatum<Row>) => {
+    for (const key of datum.sourceKeys) omittedKeys.add(key);
+  };
+
+  for (const mark of preparedMarks) {
+    if (mark.kind === "Arc") continue;
+    const xName = String(mark.props.xScale ?? "x");
+    const yName = String(mark.props.yScale ?? "y");
+    const horizontal =
+      mark.kind === "Bar" && mark.props.orientation === "horizontal";
+    for (const datum of mark.data) {
+      const invalidX = horizontal
+        ? invalidFor(xName, [
+            boundMeterValue(datum.stack0 ?? 0, mark.props),
+            boundMeterValue(datum.stack1 ?? datum.y, mark.props),
+          ])
+        : invalidFor(xName, [
+            datum.bin0 ?? datum.x,
+            datum.bin1 ?? datum.x2,
+          ]);
+      const invalidY = horizontal
+        ? invalidFor(yName, [datum.x])
+        : invalidFor(yName, [
+            datum.stack0 ?? datum.y,
+            datum.stack1 ?? datum.y2,
+          ]);
+      if (invalidX || invalidY) omit(datum);
+    }
+  }
+}
+
+function resolveScales(
+  descriptors: readonly PlotDescriptor[],
+  uses: ReadonlyMap<string, ScaleUse>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  view: PlotView | undefined,
+): Record<string, ResolvedScale> {
+  const explicit = new Map<string, ScaleProps>();
+  for (const descriptor of descriptors) {
+    if (descriptor.kind !== "Scale") continue;
+    const props = descriptor.props as ScaleProps;
+    const name = props.name ?? props.channel ?? "x";
+    explicit.set(name, props);
+  }
+  const names = new Set([...uses.keys(), ...explicit.keys()]);
+  const result: Record<string, ResolvedScale> = {};
+  for (const name of names) {
+    const use = uses.get(name) ?? {
+      name,
+      channel: (explicit.get(name)?.channel ?? "x") as ScaleUse["channel"],
+      values: [],
+      band: false,
+      includeZero: false,
+    };
+    const props = explicit.get(name) ?? {};
+    let type = props.type ?? inferScaleType(use.values, use.channel);
+    if ((type === "band" || type === "point") && use.channel !== "color") {
+      type = use.band ? "band" : "point";
+    }
+    const primaryName = primaryScaleName(uses, explicit, use.channel);
+    const addressedView =
+      view?.scales?.[name] ??
+      (primaryName === name ? (use.channel === "x" ? view?.x : view?.y) : undefined);
+    // A view is a rendered-domain override. Unaddressed named scales retain
+    // their descriptor domains and all other scale state.
+    let domain = addressedView ? [...addressedView] : props.domain ? [...props.domain] : undefined;
+    if (
+      !domain &&
+      use.includeZero &&
+      ["linear", "power", "symlog"].includes(type)
+    ) {
+      const numbers = use.values.filter(isFiniteNumber);
+      if (numbers.length > 0) {
+        const minimum = Math.min(...numbers);
+        const maximum = Math.max(...numbers);
+        domain = [Math.min(0, minimum), Math.max(0, maximum)];
+      }
+    }
+    const range = props.range
+      ? [...props.range]
+      : use.channel === "x"
+        ? [plotArea.x, plotArea.x + plotArea.width]
+        : use.channel === "y"
+          ? [plotArea.y + plotArea.height, plotArea.y]
+          : type === "continuous-color"
+            ? ["#eff6ff", "#2563eb"]
+            : SERIES_COLORS;
+    result[name] = createScale({
+      ...props,
+      name,
+      channel: use.channel,
+      type,
+      domain: domain as readonly ScaleInput[] | undefined,
+      range,
+      values: use.values,
+      ...(addressedView ? { nice: false } : {}),
+      padding: props.padding ?? (type === "band" ? 0.12 : 0),
+      paddingInner: props.paddingInner ?? (type === "band" ? 0.12 : undefined),
+      paddingOuter: props.paddingOuter ?? (type === "band" ? 0.06 : undefined),
+    });
+  }
+  return result;
+}
+
+function primaryScaleName(
+  uses: ReadonlyMap<string, ScaleUse>,
+  explicit: ReadonlyMap<string, ScaleProps>,
+  channel: ScaleUse["channel"],
+): string | undefined {
+  if (explicit.has(channel)) return channel;
+  const preferred = channel === "x" ? ["bottom", "top"] : ["left", "right"];
+  for (const name of preferred) if (uses.get(name)?.channel === channel) return name;
+  return [...uses.values()].find((use) => use.channel === channel)?.name;
+}
+
+function resolveAxes(
+  descriptors: readonly PlotDescriptor[],
+  scales: Readonly<Record<string, ResolvedScale>>,
+  uses: ReadonlyMap<string, ScaleUse>,
+  cartesian: boolean,
+  locale = "en-US",
+): SceneAxis[] {
+  const explicit = descriptors.filter(
+    (descriptor) => descriptor.kind === "Axis",
+  );
+  const specs: AxisProps[] =
+    explicit.length > 0
+      ? explicit.map((descriptor) => descriptor.props as AxisProps)
+      : cartesian
+        ? (["x", "y"] as const).flatMap((axis): AxisProps[] => {
+            const scale = [...uses.values()].find(
+              (use) => use.channel === axis && scales[use.name] != null,
+            );
+            return scale
+              ? [
+                  {
+                    axis,
+                    scale: scale.name,
+                    orient: axis === "x" ? "bottom" : "left",
+                  },
+                ]
+              : [];
+          })
+        : [];
+  const result: SceneAxis[] = [];
+  for (let index = 0; index < specs.length; index += 1) {
+    const spec = specs[index]!;
+    const scaleName =
+      spec.scale ??
+      spec.axis ??
+      (spec.orient === "left" || spec.orient === "right" ? "y" : "x");
+    const scale = scales[scaleName];
+    if (!scale) continue;
+    const orientation =
+      spec.orient ??
+      (spec.axis === "y" || scaleName === "y" ? "left" : "bottom");
+    const ticks: SceneTick[] = [];
+    for (const value of scale.ticks(spec.tickCount ?? 5)) {
+      if (typeof value === "boolean") continue;
+      const mapped = scale.map(value);
+      if (typeof mapped !== "number" || !Number.isFinite(mapped)) continue;
+      ticks.push(
+        Object.freeze({
+          value,
+          position: mapped + (scale.bandwidth ?? 0) / 2,
+          label: spec.tickFormat?.(value) ?? formatTick(value, locale, scale),
+        }),
+      );
+    }
+    result.push(
+      Object.freeze({
+        id: `axis-${scaleName}-${orientation}-${index}`,
+        scale: scaleName,
+        orientation,
+        label: spec.label ?? null,
+        ticks: Object.freeze(ticks),
+        grid: spec.grid ?? false,
+      }),
+    );
+  }
+  return result;
+}
+
+function resolveGrids(
+  descriptors: readonly PlotDescriptor[],
+  scales: Readonly<Record<string, ResolvedScale>>,
+  axes: readonly SceneAxis[],
+  _plotArea: { x: number; y: number; width: number; height: number },
+): SceneGrid[] {
+  const specs = descriptors
+    .filter((descriptor) => descriptor.kind === "Grid")
+    .map(
+      (descriptor) =>
+        descriptor.props as {
+          scale?: string;
+          axis?: "x" | "y";
+          tickCount?: number;
+        },
+    );
+  for (const axis of axes) {
+    if (axis.grid)
+      specs.push({
+        scale: axis.scale,
+        axis:
+          axis.orientation === "left" || axis.orientation === "right"
+            ? "y"
+            : "x",
+      });
+  }
+  return specs.flatMap((spec, index) => {
+    const name = spec.scale ?? spec.axis ?? "y";
+    const scale = scales[name];
+    if (!scale) return [];
+    const positions = scale
+      .ticks(spec.tickCount ?? 5)
+      .map((value) => scale.map(value))
+      .filter(
+        (value): value is number =>
+          typeof value === "number" && Number.isFinite(value),
+      )
+      .map((value) => value + (scale.bandwidth ?? 0) / 2);
+    return [
+      Object.freeze({
+        id: `grid-${name}-${index}`,
+        scale: name,
+        axis: spec.axis ?? (name === "x" ? "x" : "y"),
+        positions: Object.freeze(positions),
+      }),
+    ];
+  });
+}
+
+function resolveLegends(
+  descriptors: readonly PlotDescriptor[],
+  scales: Readonly<Record<string, ResolvedScale>>,
+  uses: ReadonlyMap<string, ScaleUse>,
+): SceneLegend[] {
+  const explicit = descriptors.filter(
+    (descriptor) => descriptor.kind === "Legend",
+  );
+  const colorScales = [...uses.values()].filter(
+    (use) => use.channel === "color",
+  );
+  const specs: Record<string, unknown>[] =
+    explicit.length > 0
+      ? explicit.map(
+          (descriptor) => descriptor.props as Record<string, unknown>,
+        )
+      : colorScales.map(
+          (use) => ({ scale: use.name }) as Record<string, unknown>,
+        );
+  return specs.flatMap((spec) => {
+    const name = String(spec.scale ?? "color");
+    const scale = scales[name];
+    if (!scale) return [];
+    const items = scale.domain.map((value) =>
+      Object.freeze({
+        value: String(value instanceof Date ? value.toISOString() : value),
+        label: String(value instanceof Date ? value.toISOString() : value),
+        color: String(scale.map(value) ?? "transparent"),
+      }),
+    );
+    return [
+      Object.freeze({
+        scale: name,
+        label: typeof spec.label === "string" ? spec.label : null,
+        interactive: spec.interactive !== false,
+        position: isLegendPosition(spec.position) ? spec.position : "bottom",
+        items: Object.freeze(items),
+      }),
+    ];
+  });
+}
+
+function resolveInteractions(
+  descriptors: readonly PlotDescriptor[],
+  hasMarks: boolean,
+): SceneInteractions {
+  const tooltip = descriptors.find(
+    (descriptor) => descriptor.kind === "Tooltip",
+  );
+  const crosshair = descriptors.find(
+    (descriptor) => descriptor.kind === "Crosshair",
+  );
+  const zoom = descriptors.find((descriptor) => descriptor.kind === "Zoom");
+  const brush = descriptors.find((descriptor) => descriptor.kind === "Brush");
+  const tooltipProps = tooltip?.props as Record<string, unknown> | undefined;
+  const zoomProps = zoom?.props as Record<string, unknown> | undefined;
+  const brushProps = brush?.props as Record<string, unknown> | undefined;
+  return Object.freeze({
+    tooltip: Boolean(tooltip || hasMarks),
+    tooltipChannels: Array.isArray(tooltipProps?.channels)
+      ? Object.freeze(
+          tooltipProps.channels.filter(
+            (channel): channel is string => typeof channel === "string",
+          ),
+        )
+      : null,
+    tooltipFormat:
+      typeof tooltipProps?.format === "function"
+        ? (tooltipProps.format as (
+            record: Readonly<Record<string, unknown>>,
+          ) => string)
+        : null,
+    crosshair: crosshair ? toAxes(crosshair.props.axes) : null,
+    zoom: zoom
+      ? Object.freeze({
+          axes: toAxes(zoomProps?.axes),
+          min: positiveOr(zoomProps?.min, 1),
+          max: positiveOr(zoomProps?.max, 64),
+          wheel: zoomProps?.wheel !== false,
+          pinch: zoomProps?.pinch !== false,
+          pan: zoomProps?.pan !== false,
+        })
+      : null,
+    brush: brush
+      ? Object.freeze({
+          axis: toAxes(brushProps?.axis),
+          modifier: brushProps?.modifier === "none" ? "none" : "shift",
+        })
+      : null,
+  });
+}
+
+function compileMark<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+): { marks: SceneMark<Row>[]; hits: HitRegion<Row>[] } {
+  switch (mark.kind) {
+    case "Bar":
+      return compileBars(mark, scales, plotArea, startOrder);
+    case "Line":
+      return compileLines(mark, scales, plotArea, startOrder);
+    case "Area":
+      return compileAreas(mark, scales, plotArea, startOrder);
+    case "Point":
+      return compilePoints(mark, scales, plotArea, startOrder);
+    case "Arc":
+      return compileArcs(mark, scales, plotArea, startOrder);
+    case "Cell":
+      return compileCells(mark, scales, plotArea, startOrder);
+    case "Rect":
+      return compileRects(mark, scales, plotArea, startOrder);
+    case "Rule":
+      return compileRules(mark, scales, plotArea, startOrder);
+    case "Text":
+      return compileTexts(mark, scales, plotArea, startOrder);
+  }
+}
+
+function compileBars<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const horizontal = mark.props.orientation === "horizontal";
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const datum of mark.data) {
+    let x: number;
+    let y: number;
+    let width: number;
+    let height: number;
+    if (horizontal) {
+      const category = mapped(yScale, datum.x, true);
+      const value0 = mapped(
+        xScale,
+        boundMeterValue(datum.stack0 ?? 0, mark.props),
+      );
+      const value1 = mapped(
+        xScale,
+        boundMeterValue(datum.stack1 ?? datum.y, mark.props),
+      );
+      if (category == null || value0 == null || value1 == null) continue;
+      x = Math.min(value0, value1);
+      y = category - (yScale.bandwidth ? 0 : 5) + finiteOr(mark.props.inset, 0);
+      width = Math.abs(value1 - value0);
+      height = Math.max(
+        1,
+        (yScale.bandwidth ?? 10) - finiteOr(mark.props.inset, 0) * 2,
+      );
+    } else {
+      const left = mapped(xScale, datum.bin0 ?? datum.x, false);
+      const right =
+        datum.bin1 != null ? mapped(xScale, datum.bin1, false) : null;
+      const value0 = mapped(
+        yScale,
+        boundMeterValue(datum.stack0 ?? 0, mark.props),
+      );
+      const value1 = mapped(
+        yScale,
+        boundMeterValue(datum.stack1 ?? datum.y, mark.props),
+      );
+      if (left == null || value0 == null || value1 == null) continue;
+      const inset = finiteOr(mark.props.inset, 1);
+      const continuousUnbinned = right == null && xScale.bandwidth == null;
+      const nominalWidth = xScale.bandwidth ?? 10;
+      x = continuousUnbinned ? left - nominalWidth / 2 + inset : left + inset;
+      width = Math.max(
+        1,
+        (right == null ? nominalWidth : right - left) - inset * 2,
+      );
+      y = Math.min(value0, value1);
+      height = Math.abs(value1 - value0);
+    }
+    if (!intersectsPlot(x, y, width, height, plotArea)) continue;
+    const base = markBase(mark, datum, "bar", marks.length, scales);
+    const sceneMark = Object.freeze({
+      ...base,
+      kind: "bar" as const,
+      x,
+      y,
+      width,
+      height,
+      radius: Math.max(0, finiteOr(mark.props.radius, 2)),
+    });
+    marks.push(sceneMark);
+    hits.push(rectHit(sceneMark, datum, startOrder + hits.length));
+  }
+  return { marks, hits };
+}
+
+function compileLines<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const groups = groupBySeries(mark.data);
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const data of groups.values()) {
+    const dataByKey = new Map(data.map((datum) => [datum.key, datum]));
+    const rawSegments: ScenePoint[][] = [];
+    let currentSegment: ScenePoint[] = [];
+    const closeSegment = () => {
+      if (currentSegment.length > 0) rawSegments.push(currentSegment);
+      currentSegment = [];
+    };
+    for (const datum of data) {
+      if (datum.defined === false) {
+        closeSegment();
+        continue;
+      }
+      const x = mapped(xScale, datum.x, true);
+      const y = mapped(yScale, datum.y, true);
+      if (x == null || y == null || !xInPlot(x, plotArea)) {
+        closeSegment();
+        continue;
+      }
+      currentSegment.push({
+        x,
+        y,
+        sourceIndex: datum.sourceIndex,
+        key: datum.key,
+      });
+    }
+    closeSegment();
+    const segments = Object.freeze(
+      rawSegments.map((segment) => {
+        segment.sort((left, right) => left.x - right.x);
+        return Object.freeze([
+          ...downsamplePixelEnvelope(segment, plotArea.width),
+        ]);
+      }),
+    );
+    const points = Object.freeze(segments.flat());
+    if (points.length === 0) continue;
+    const first = dataByKey.get(points[0]!.key) ?? data[0]!;
+    const base = markBase(mark, first, "line", marks.length, scales);
+    const sceneMark = Object.freeze({
+      ...base,
+      kind: "line" as const,
+      fill: "none",
+      segments,
+      points,
+      curve: toCurve(mark.props.curve),
+      strokeWidth: Math.max(0.5, finiteOr(mark.props.strokeWidth, 2)),
+    });
+    marks.push(sceneMark);
+    for (const point of points) {
+      const datum = dataByKey.get(point.key) ?? first;
+      hits.push(
+        Object.freeze({
+          id: `${sceneMark.id}-hit-${hits.length}`,
+          shape: Object.freeze({
+            kind: "circle",
+            x: point.x,
+            y: point.y,
+            radius: 5,
+          }),
+          row: datum.row,
+          sourceIndex: datum.sourceIndex,
+          key: datum.key,
+          mark: "line",
+          title: titleFor(datum),
+          channels: datum.values,
+          series: datum.series,
+          order: startOrder + hits.length,
+        }),
+      );
+    }
+  }
+  return { marks, hits };
+}
+
+function compileAreas<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const data of groupBySeries(mark.data).values()) {
+    const mappedData: Array<{
+      point: ScenePoint;
+      baseline: ScenePoint;
+      datum: PreparedDatum<Row>;
+    }> = [];
+    for (const datum of data) {
+      const x = mapped(xScale, datum.x, true);
+      const y = mapped(yScale, datum.stack1 ?? datum.y, true);
+      const y0 = mapped(
+        yScale,
+        datum.stack0 ?? datum.y2 ?? finiteOr(mark.props.baseline, 0),
+        true,
+      );
+      if (x == null || y == null || y0 == null || !xInPlot(x, plotArea))
+        continue;
+      mappedData.push({
+        point: { x, y, sourceIndex: datum.sourceIndex, key: datum.key },
+        baseline: { x, y: y0, sourceIndex: datum.sourceIndex, key: datum.key },
+        datum,
+      });
+    }
+    mappedData.sort((left, right) => left.point.x - right.point.x);
+    const points = mappedData.map(({ point }) => point);
+    const baseline = mappedData.map((entry) => entry.baseline);
+    if (points.length === 0) continue;
+    const first = mappedData[0]!.datum;
+    const sceneMark = Object.freeze({
+      ...markBase(mark, first, "area", marks.length, scales),
+      kind: "area" as const,
+      opacity: Math.min(finiteOr(mark.props.opacity, 0.32), 1),
+      points: Object.freeze([
+        ...downsamplePixelEnvelope(points, plotArea.width),
+      ]),
+      baseline: Object.freeze([
+        ...downsamplePixelEnvelope(baseline, plotArea.width),
+      ]),
+      curve: toCurve(mark.props.curve),
+    });
+    marks.push(sceneMark);
+    for (let index = 0; index < points.length; index += 1) {
+      const point = points[index]!;
+      const bottom = baseline[index] ?? point;
+      const datum = mappedData[index]?.datum ?? first;
+      hits.push(
+        Object.freeze({
+          id: `${sceneMark.id}-hit-${index}`,
+          shape: Object.freeze({
+            kind: "rect",
+            x: point.x - 4,
+            y: Math.min(point.y, bottom.y),
+            width: 8,
+            height: Math.max(4, Math.abs(bottom.y - point.y)),
+          }),
+          row: datum.row,
+          sourceIndex: point.sourceIndex,
+          key: point.key,
+          mark: "area",
+          title: titleFor(datum),
+          channels: datum.values,
+          series: datum.series,
+          order: startOrder + hits.length,
+        }),
+      );
+    }
+  }
+  return { marks, hits };
+}
+
+function xInPlot(x: number, plotArea: { x: number; width: number }): boolean {
+  return x >= plotArea.x && x <= plotArea.x + plotArea.width;
+}
+
+function compilePoints<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  const occupied = mark.data.length > 10_000 ? new Set<number>() : null;
+  for (const datum of mark.data) {
+    const x = mapped(xScale, datum.x, true);
+    const y = mapped(yScale, datum.y, true);
+    if (x == null || y == null || !pointInPlot(x, y, plotArea)) continue;
+    if (occupied) {
+      const pixel = Math.floor(x) + Math.floor(y) * Math.ceil(plotArea.width);
+      if (occupied.has(pixel)) continue;
+      occupied.add(pixel);
+    }
+    const radius = Math.max(
+      1,
+      isFiniteNumber(datum.radius) ? datum.radius : finiteOr(mark.props.r, 3.5),
+    );
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "point", marks.length, scales),
+      kind: "point" as const,
+      x,
+      y,
+      radius,
+      shape: toPointShape(mark.props.shape),
+    });
+    marks.push(sceneMark);
+    hits.push(
+      Object.freeze({
+        id: `${sceneMark.id}-hit`,
+        shape: Object.freeze({
+          kind: "circle",
+          x,
+          y,
+          radius: Math.max(5, radius),
+        }),
+        row: datum.row,
+        sourceIndex: datum.sourceIndex,
+        key: datum.key,
+        mark: "point",
+        title: sceneMark.title,
+        channels: datum.values,
+        series: datum.series,
+        order: startOrder + hits.length,
+      }),
+    );
+  }
+  return { marks, hits };
+}
+
+function compileArcs<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const values = mark.data
+    .map((datum) => Math.max(0, Number(datum.value)))
+    .filter(Number.isFinite);
+  const boundedMin = isFiniteNumber(mark.props.min) ? mark.props.min : null;
+  const boundedMax = isFiniteNumber(mark.props.max) ? mark.props.max : null;
+  const bounded =
+    boundedMin !== null && boundedMax !== null && boundedMax > boundedMin;
+  const total = bounded
+    ? boundedMax - boundedMin
+    : values.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return emptyCompiled<Row>();
+  const start = finiteOr(mark.props.startAngle, -Math.PI / 2);
+  const end = finiteOr(mark.props.endAngle, start + Math.PI * 2);
+  const radius = Math.min(plotArea.width, plotArea.height) / 2;
+  const outerRadius = clampRadius(mark.props.outerRadius, radius, radius * 0.9);
+  const innerRadius = clampRadius(mark.props.innerRadius, outerRadius, 0);
+  const cx = plotArea.x + plotArea.width / 2;
+  const cy = plotArea.y + plotArea.height / 2;
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  let angle = start;
+  for (let index = 0; index < mark.data.length; index += 1) {
+    const datum = mark.data[index]!;
+    const rawValue = Number(datum.value);
+    const value = bounded
+      ? Math.max(0, Math.min(total, rawValue - boundedMin))
+      : Math.max(0, rawValue);
+    if (!Number.isFinite(value) || value === 0) continue;
+    const next = angle + ((end - start) * value) / total;
+    const direction = next >= angle ? 1 : -1;
+    const availableSpan = Math.abs(next - angle);
+    const requestedPad = Math.max(0, finiteOr(mark.props.padAngle, 0.01));
+    const pad = Math.min(requestedPad, Math.max(0, availableSpan - 1e-6));
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "arc", marks.length, scales),
+      kind: "arc" as const,
+      cx,
+      cy,
+      innerRadius,
+      outerRadius,
+      startAngle: angle + (direction * pad) / 2,
+      endAngle: next - (direction * pad) / 2,
+      padAngle: pad,
+      cornerRadius: Math.max(0, finiteOr(mark.props.cornerRadius, 0)),
+    });
+    marks.push(sceneMark);
+    hits.push(
+      Object.freeze({
+        id: `${sceneMark.id}-hit`,
+        shape: Object.freeze({
+          kind: "arc",
+          cx,
+          cy,
+          innerRadius,
+          outerRadius,
+          startAngle: sceneMark.startAngle,
+          endAngle: sceneMark.endAngle,
+        }),
+        row: datum.row,
+        sourceIndex: datum.sourceIndex,
+        key: datum.key,
+        mark: "arc",
+        title: sceneMark.title,
+        channels: datum.values,
+        series: datum.series,
+        order: startOrder + hits.length,
+      }),
+    );
+    angle = next;
+  }
+  return { marks, hits };
+}
+
+function compileCells<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  const inset = Math.max(0, finiteOr(mark.props.inset, 1));
+  for (const datum of mark.data) {
+    const x = mapped(xScale, datum.x, false);
+    const y = mapped(yScale, datum.y, false);
+    if (x == null || y == null) continue;
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "cell", marks.length, scales),
+      kind: "cell" as const,
+      x: x + inset,
+      y: y + inset,
+      width: Math.max(1, (xScale.bandwidth ?? 10) - inset * 2),
+      height: Math.max(1, (yScale.bandwidth ?? 10) - inset * 2),
+      radius: 1,
+    });
+    if (
+      !intersectsPlot(
+        sceneMark.x,
+        sceneMark.y,
+        sceneMark.width,
+        sceneMark.height,
+        plotArea,
+      )
+    )
+      continue;
+    marks.push(sceneMark);
+    hits.push(rectHit(sceneMark, datum, startOrder + hits.length));
+  }
+  return { marks, hits };
+}
+
+function compileRects<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const datum of mark.data) {
+    const x0 = mapped(xScale, datum.x, false);
+    const x1 =
+      datum.x2 == null ? x0 : mapped(xScale, datum.x2, true);
+    const y0 = mapped(yScale, datum.y, false);
+    const y1 =
+      datum.y2 == null ? y0 : mapped(yScale, datum.y2, true);
+    if (x0 == null || x1 == null || y0 == null || y1 == null) continue;
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "rect", marks.length, scales),
+      kind: "rect" as const,
+      x: Math.min(x0, x1),
+      y: Math.min(y0, y1),
+      width:
+        datum.x2 == null
+          ? Math.max(1, xScale.bandwidth ?? 0)
+          : Math.max(1, Math.abs(x1 - x0) + (xScale.bandwidth ?? 0)),
+      height:
+        datum.y2 == null
+          ? Math.max(1, yScale.bandwidth ?? 0)
+          : Math.max(1, Math.abs(y1 - y0) + (yScale.bandwidth ?? 0)),
+      radius: Math.max(0, finiteOr(mark.props.radius, 1)),
+    });
+    if (
+      !intersectsPlot(
+        sceneMark.x,
+        sceneMark.y,
+        sceneMark.width,
+        sceneMark.height,
+        plotArea,
+      )
+    )
+      continue;
+    marks.push(sceneMark);
+    hits.push(rectHit(sceneMark, datum, startOrder + hits.length));
+  }
+  return { marks, hits };
+}
+
+function compileRules<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const datum of mark.data) {
+    const x1 = datum.x == null ? plotArea.x : mapped(xScale, datum.x, true);
+    const x2 =
+      datum.x2 == null
+        ? datum.x == null
+          ? plotArea.x + plotArea.width
+          : x1
+        : mapped(xScale, datum.x2, true);
+    const y1 = datum.y == null ? plotArea.y : mapped(yScale, datum.y, true);
+    const y2 =
+      datum.y2 == null
+        ? datum.y == null
+          ? plotArea.y + plotArea.height
+          : y1
+        : mapped(yScale, datum.y2, true);
+    if (x1 == null || x2 == null || y1 == null || y2 == null) continue;
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "rule", marks.length, scales),
+      kind: "rule" as const,
+      x1,
+      y1,
+      x2,
+      y2,
+      strokeWidth: Math.max(0.5, finiteOr(mark.props.strokeWidth, 1)),
+      dash: Object.freeze(
+        Array.isArray(mark.props.dash)
+          ? mark.props.dash.filter(isFiniteNumber)
+          : [],
+      ),
+    });
+    marks.push(sceneMark);
+    hits.push(
+      Object.freeze({
+        id: `${sceneMark.id}-hit`,
+        shape: Object.freeze({ kind: "line", x1, y1, x2, y2, tolerance: 5 }),
+        row: datum.row,
+        sourceIndex: datum.sourceIndex,
+        key: datum.key,
+        mark: "rule",
+        title: sceneMark.title,
+        channels: datum.values,
+        series: datum.series,
+        order: startOrder + hits.length,
+      }),
+    );
+  }
+  return { marks, hits };
+}
+
+function compileTexts<Row>(
+  mark: PreparedMark<Row>,
+  scales: Readonly<Record<string, ResolvedScale>>,
+  plotArea: { x: number; y: number; width: number; height: number },
+  startOrder: number,
+) {
+  const xScale = scales[String(mark.props.xScale ?? "x")];
+  const yScale = scales[String(mark.props.yScale ?? "y")];
+  if (!xScale || !yScale) return emptyCompiled<Row>();
+  const marks: SceneMark<Row>[] = [];
+  const hits: HitRegion<Row>[] = [];
+  for (const datum of mark.data) {
+    const x = mapped(xScale, datum.x, true);
+    const y = mapped(yScale, datum.y, true);
+    if (x == null || y == null || !pointInPlot(x, y, plotArea)) continue;
+    const text = String(datum.textValue ?? "");
+    const sceneMark = Object.freeze({
+      ...markBase(mark, datum, "text", marks.length, scales),
+      kind: "text" as const,
+      x,
+      y,
+      text,
+      align: toTextAlign(mark.props.align),
+      baseline: toTextBaseline(mark.props.baseline),
+      font: typeof mark.props.font === "string" ? mark.props.font : null,
+    });
+    marks.push(sceneMark);
+    hits.push(
+      Object.freeze({
+        id: `${sceneMark.id}-hit`,
+        shape: Object.freeze({
+          kind: "rect",
+          x: textHitBounds(x, text, toTextAlign(mark.props.align)).x,
+          y: textHitBounds(x, text, toTextAlign(mark.props.align), y, toTextBaseline(mark.props.baseline)).y,
+          width: textHitBounds(x, text, toTextAlign(mark.props.align)).width,
+          height: textHitBounds(x, text, toTextAlign(mark.props.align), y, toTextBaseline(mark.props.baseline)).height,
+        }),
+        row: datum.row,
+        sourceIndex: datum.sourceIndex,
+        key: datum.key,
+        mark: "text",
+        title: sceneMark.title,
+        channels: datum.values,
+        series: datum.series,
+        order: startOrder + hits.length,
+      }),
+    );
+  }
+  return { marks, hits };
+}
+
+function textHitBounds(
+  x: number,
+  text: string,
+  align: CanvasTextAlign,
+  y = 0,
+  baseline: CanvasTextBaseline = "alphabetic",
+): { x: number; y: number; width: number; height: number } {
+  const width = Math.max(8, text.length * 7);
+  const left = align === "center" ? x - width / 2 : align === "right" || align === "end" ? x - width : x;
+  const top = baseline === "top" ? y : baseline === "middle" ? y - 8 : baseline === "bottom" ? y - 16 : y - 13;
+  return { x: left, y: top, width, height: 16 };
+}
+
+function markBase<Row>(
+  mark: PreparedMark<Row>,
+  datum: PreparedDatum<Row>,
+  kind: SceneMark<Row>["kind"],
+  index: number,
+  scales: Readonly<Record<string, ResolvedScale>>,
+): SceneMarkBase<Row> {
+  const colorScale = String(mark.props.colorScale ?? "color");
+  const defaultColor = SERIES_COLORS[mark.ordinal % SERIES_COLORS.length]!;
+  const fill = paint(
+    mark.props.fill ?? mark.props.category,
+    datum.fillValue ?? (kind === "cell" ? datum.value : undefined),
+    colorScale,
+    defaultColor,
+    scales,
+  );
+  const stroke = paint(
+    mark.props.stroke,
+    datum.strokeValue,
+    colorScale,
+    kind === "bar" || kind === "cell" || kind === "arc" || kind === "rect"
+      ? "none"
+      : defaultColor,
+    scales,
+  );
+  return {
+    id: `${kind}-${mark.ordinal}-${String(datum.key)}-${index}`,
+    key: datum.key,
+    sourceKeys: datum.sourceKeys,
+    sourceIndex: datum.sourceIndex,
+    row: datum.row,
+    fill: kind === "line" || kind === "rule" ? "none" : fill,
+    stroke,
+    opacity: Math.max(0, Math.min(1, finiteOr(mark.props.opacity, 1))),
+    title: titleFor(datum),
+    series: datum.series,
+    channels: datum.values,
+  };
+}
+
+function paint(
+  input: unknown,
+  value: unknown,
+  scaleName: string,
+  fallback: string,
+  scales: Readonly<Record<string, ResolvedScale>>,
+): string {
+  if (isConstant(input))
+    return String(
+      (input as { options: Record<string, unknown> }).options.value,
+    );
+  if (value != null) {
+    if (typeof value === "string" && isCssColor(value)) return value;
+    const mappedColor = validScaleValue(value)
+      ? scales[scaleName]?.map(value as ScaleInput)
+      : undefined;
+    if (typeof mappedColor === "string") return mappedColor;
+    const index = stableHash(String(value)) % SERIES_COLORS.length;
+    return SERIES_COLORS[index]!;
+  }
+  return fallback;
+}
+
+function rectHit<Row>(
+  mark: Extract<SceneMark<Row>, { kind: "bar" | "cell" | "rect" }>,
+  datum: PreparedDatum<Row>,
+  order: number,
+): HitRegion<Row> {
+  return Object.freeze({
+    id: `${mark.id}-hit`,
+    shape: Object.freeze({
+      kind: "rect",
+      x: mark.x,
+      y: mark.y,
+      width: mark.width,
+      height: mark.height,
+    }),
+    row: datum.row,
+    sourceIndex: datum.sourceIndex,
+    key: datum.key,
+    mark: mark.kind,
+    title: mark.title,
+    channels: datum.values,
+    series: datum.series,
+    order,
+  });
+}
+
+function mapped(
+  scale: ResolvedScale,
+  value: unknown,
+  center = false,
+): number | null {
+  if (!validScaleValue(value) && typeof value !== "boolean") return null;
+  const result = scale.map(value as ScaleInput);
+  return typeof result === "number" && Number.isFinite(result)
+    ? result + (center ? (scale.bandwidth ?? 0) / 2 : 0)
+    : null;
+}
+
+function groupBySeries<Row>(data: readonly PreparedDatum<Row>[]) {
+  const groups = new Map<string, PreparedDatum<Row>[]>();
+  for (const datum of data) {
+    const key = datum.series ?? "__default__";
+    const group = groups.get(key) ?? [];
+    group.push(datum);
+    groups.set(key, group);
+  }
+  return groups;
+}
+
+function titleFor<Row>(datum: PreparedDatum<Row>): string {
+  if (datum.titleValue != null) return String(datum.titleValue);
+  return Object.entries(datum.values)
+    .filter(([, value]) => value != null)
+    .map(([key, value]) => `${key}: ${formatValue(value)}`)
+    .join(", ");
+}
+
+function defaultSummary<Row>(
+  label: string,
+  context: PlotSummaryContext<Row>,
+): string {
+  const omitted =
+    context.omittedRowCount > 0
+      ? ` ${context.omittedRowCount} row${context.omittedRowCount === 1 ? " was" : "s were"} omitted because required values were missing or invalid.`
+      : "";
+  return `${label} contains ${context.visibleRowCount} visible data point${context.visibleRowCount === 1 ? "" : "s"} from ${context.sourceRowCount} source row${context.sourceRowCount === 1 ? "" : "s"}.${omitted}`;
+}
+
+function formatTick(
+  value: ScaleValue,
+  locale: string,
+  scale: ResolvedScale,
+): string {
+  if (value instanceof Date) {
+    const dates = scale.domain.filter(
+      (candidate): candidate is Date => candidate instanceof Date,
+    );
+    const span =
+      dates.length < 2
+        ? Number.POSITIVE_INFINITY
+        : Math.abs(dates[dates.length - 1]!.getTime() - dates[0]!.getTime());
+    const timeZone = scale.type === "utc" ? "UTC" : undefined;
+    if (span < 2 * 60 * 1000) {
+      return new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23",
+        timeZone,
+      }).format(value);
+    }
+    if (span < 24 * 60 * 60 * 1000) {
+      return new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZone,
+      }).format(value);
+    }
+    if (span < 90 * 24 * 60 * 60 * 1000) {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+        timeZone,
+      }).format(value);
+    }
+    return new Intl.DateTimeFormat(locale, {
+      month: "short",
+      year: "numeric",
+      timeZone,
+    }).format(value);
+  }
+  if (typeof value === "number")
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 4 }).format(
+      value,
+    );
+  return value;
+}
+
+function formatValue(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : "missing";
+  return String(value);
+}
+
+function serializeValue(value: unknown): string {
+  return value instanceof Date
+    ? `date:${value.getTime()}`
+    : `${typeof value}:${String(value)}`;
+}
+
+function stableHash(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function isCssColor(value: string): boolean {
+  return /^(?:#|rgb|hsl|oklch|lab|lch|color\(|var\(|transparent$|currentcolor$)/i.test(
+    value,
+  );
+}
+
+function intersectsPlot(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  plot: { x: number; y: number; width: number; height: number },
+): boolean {
+  return !(
+    x + width < plot.x ||
+    x > plot.x + plot.width ||
+    y + height < plot.y ||
+    y > plot.y + plot.height
+  );
+}
+
+function pointInPlot(
+  x: number,
+  y: number,
+  plot: { x: number; y: number; width: number; height: number },
+): boolean {
+  return (
+    x >= plot.x &&
+    x <= plot.x + plot.width &&
+    y >= plot.y &&
+    y <= plot.y + plot.height
+  );
+}
+
+function emptyCompiled<Row>(): {
+  marks: SceneMark<Row>[];
+  hits: HitRegion<Row>[];
+} {
+  return { marks: [], hits: [] };
+}
+
+function boundMeterValue(
+  value: unknown,
+  props: Readonly<Record<string, unknown>>,
+): unknown {
+  if (!isFiniteNumber(value)) return value;
+  const minimum = isFiniteNumber(props.min)
+    ? props.min
+    : Number.NEGATIVE_INFINITY;
+  const maximum = isFiniteNumber(props.max)
+    ? props.max
+    : Number.POSITIVE_INFINITY;
+  return Math.max(
+    Math.min(minimum, maximum),
+    Math.min(Math.max(minimum, maximum), value),
+  );
+}
+
+function finiteOr(value: unknown, fallback: number): number {
+  return isFiniteNumber(value) ? value : fallback;
+}
+
+function positiveOr(value: unknown, fallback: number): number {
+  return isFiniteNumber(value) && value > 0 ? value : fallback;
+}
+
+function clampRadius(
+  value: unknown,
+  maximum: number,
+  fallback: number,
+): number {
+  const resolved = finiteOr(value, fallback);
+  return Math.max(
+    0,
+    Math.min(maximum, resolved <= 1 ? resolved * maximum : resolved),
+  );
+}
+
+function toCurve(value: unknown): "linear" | "step" | "monotone" {
+  return value === "step" || value === "monotone" ? value : "linear";
+}
+
+function toPointShape(value: unknown): "circle" | "square" | "diamond" {
+  return value === "square" || value === "diamond" ? value : "circle";
+}
+
+function toTextAlign(value: unknown): CanvasTextAlign {
+  return ["left", "right", "center", "start", "end"].includes(String(value))
+    ? (value as CanvasTextAlign)
+    : "center";
+}
+
+function toTextBaseline(value: unknown): CanvasTextBaseline {
+  return [
+    "top",
+    "hanging",
+    "middle",
+    "alphabetic",
+    "ideographic",
+    "bottom",
+  ].includes(String(value))
+    ? (value as CanvasTextBaseline)
+    : "middle";
+}
+
+function toAxes(value: unknown): "x" | "y" | "xy" {
+  return value === "x" || value === "y" ? value : "xy";
+}
+
+function isLegendPosition(
+  value: unknown,
+): value is "top" | "right" | "bottom" | "left" {
+  return (
+    value === "top" ||
+    value === "right" ||
+    value === "bottom" ||
+    value === "left"
+  );
+}

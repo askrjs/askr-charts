@@ -1,384 +1,353 @@
-# Charting
+# Charting contract
 
-`@askrjs/charts` is the CSS-first chart package for Askr product UI. It
-provides dashboard charts: recognizable visual summaries that are composable,
-responsive, themeable, and useful without introducing a full analytics plotting
-engine or depending on `@askrjs/themes`.
+`@askrjs/charts` 0.1 is a typed plotting engine for Askr product interfaces. A plot is compiled from JSX descriptors into one immutable scene. The mounted renderer paints that scene to Canvas 2D, while PNG, SVG, and data exports read the same resolved scene.
 
-Import the default chart surface styles:
+The visible renderer is Canvas 2D. SVG is an export format, not a mounted renderer or a graphical SSR fallback.
 
-```css
-@import "@askrjs/charts/default";
+## Package boundary
+
+```tsx
+import { createPlot, movingAverage } from "@askrjs/charts";
+import "@askrjs/charts/styles";
 ```
 
-## Positioning
-
-`askr-charts` should feel like clean, fast, composable product charts that
-developers can drop into dashboards without thinking.
+- Import JavaScript and public types from `@askrjs/charts`.
+- Import styles once from `@askrjs/charts/styles`.
+- Do not import `components`, `core`, `default`, per-chart CSS, templates, or generator paths; they were removed without compatibility wrappers.
+- Keep product card, page, loading, and error composition in the application. The plot owns plotting semantics and interaction state.
+
+## Factory and child contract
+
+Create a namespace once per row contract, at module scope:
+
+```tsx
+type MetricRow = { id: string; at: Date; value: number };
+
+const MetricPlot = createPlot<MetricRow>();
+```
+
+The returned namespace is stable and factory-bound. A root accepts its own primitives, fragments, arrays, getters without arguments, and conditional `null` or boolean children. It rejects DOM nodes, arbitrary components, text children, circular child structures, and primitives created by another `createPlot()` call.
+
+## Root
+
+`Root` requires `data`, `rowKey`, and `label`.
+
+| Prop                                | Contract                                                                          |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `data`                              | `readonly Row[]` or a reactive `() => readonly Row[]` getter                      |
+| `rowKey`                            | A row field or `(row, index) => string \| number`; keys must be unique and finite |
+| `label`                             | Required accessible name for the plot                                             |
+| `title`, `description`              | Visible semantic heading and supporting text                                      |
+| `summary`                           | Text or a callback receiving source, transformed, omitted, and visible counts     |
+| `empty`                             | Empty-state message when no renderable rows remain                                |
+| `width`, `height`                   | Explicit resolved size; otherwise the mounted root responds to its container      |
+| `class`, `className`, `style`, `id` | Structural application hooks                                                      |
+| `meter`                             | `{ role: "meter", min, max, value, valueText? }` for bounded bars and arcs        |
+| `view`, `onViewChange`              | Controlled visible x/y domains                                                    |
+| `defaultView`                       | Initial uncontrolled visible domains                                              |
+| `selection`, `onSelectionChange`    | Controlled selection as stable row keys                                           |
+| `defaultSelection`                  | Initial uncontrolled selection                                                    |
+| `onActivate`                        | Drill-down callback receiving the activated row and stable key                    |
+| `followLatest`                      | Row-count or time window for live plots                                           |
+| `apiRef`                            | Callback ref or `{ current }` object receiving `PlotApi<Row>` after mount         |
+| `locale`                            | Locale used by inferred formatting                                                |
+| `diagnostics`                       | Enable development diagnostics for omitted or invalid values                      |
+
+Summary callbacks can keep accessibility truthful when data is omitted:
+
+```tsx
+<MetricPlot.Root
+  data={rows}
+  rowKey="id"
+  label="Request latency"
+  diagnostics
+  summary={({ visibleRowCount, omittedRowCount }) =>
+    `${visibleRowCount} visible points; ${omittedRowCount} rows omitted.`
+  }
+>
+  <MetricPlot.Line x="at" y="value" />
+</MetricPlot.Root>
+```
+
+## Channels and expressions
+
+A channel accepts one of three forms:
+
+1. a typed row field name;
+2. an accessor `(row, index) => value | null | undefined`;
+3. a channel expression.
+
+```tsx
+<MetricPlot.Point
+  x="at"
+  y={(row) => row.value / 1_000}
+  title={(row) => `${row.value} µs`}
+/>
+```
+
+Bare strings always identify row fields. Wrap a literal string in `constant(...)` so a color, label, or other channel is not mistaken for a field:
+
+```tsx
+import { constant } from "@askrjs/charts";
+
+<MetricPlot.Line x="at" y="value" stroke={constant("#2563eb")} />;
+```
+
+The expression helpers are immutable descriptors:
+
+| Helper                          | Purpose                                                                           |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `constant(value)`               | Encode a literal channel value, especially a literal string                       |
+| `bin(input, options?)`          | Bin a numeric or `Date` channel by thresholds, interval, or explicit domain       |
+| `count()`                       | Count rows in the current bin or group                                            |
+| `sum(input)`                    | Sum finite numeric values in the current bin or group                             |
+| `mean(input)`                   | Average finite numeric values in the current bin or group                         |
+| `group(input)`                  | Declare the grouping channel for a compound aggregate                             |
+| `stack(input, options?)`        | Stack a numeric channel with zero, diverging, or expand offset and a stable order |
+| `normalize(input)`              | Normalize a numeric channel to proportional values                                |
+| `movingWindow(input, options)`  | Rolling `sum`, `mean`, `min`, or `max`; choose window size and partial behavior   |
+| `movingAverage(input, options)` | Rolling mean shorthand                                                            |
+| `regression(input, options?)`   | Linear regression over row index or an explicit x channel                         |
+
+The reference histogram/trend composition uses typed fields and expressions together:
+
+```tsx
+<LatencyPlot.Bar
+  x={bin("latencyMs", { thresholds: 20 })}
+  y={count()}
+  fill="outcome"
+  stack="outcome"
+/>
+<LatencyPlot.Line x="timestamp" y={movingAverage("p95", { window: 7 })} />
+<LatencyPlot.Point x="timestamp" y="p95" />
+```
+
+`Bar.stack` and `Area.stack` select the categorical series field. Their `normalize` shorthand produces proportional stacks. The `stack(...)` and `normalize(...)` channel expressions are useful when the numeric channel itself is composed explicitly.
+
+## Row transforms and immutable updates
+
+Mark-level transforms run before layout and do not mutate source rows:
+
+| Helper                                                     | Purpose                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------- |
+| `filterRows(predicate)`                                    | Keep rows matching a typed predicate                          |
+| `sortRows({ by, direction? })`                             | Stable ascending or descending sort by field/accessor         |
+| `partition({ id, parentId?, children?, value, padding? })` | Convert flat-parent or nested hierarchy into rectangle layout |
+
+```tsx
+<MetricPlot.Line
+  transform={[
+    filterRows<MetricRow>((row) => row.value >= 0),
+    sortRows<MetricRow>({ by: "at", direction: "ascending" }),
+  ]}
+  x="at"
+  y="value"
+/>
+```
+
+Use the pure update helpers for live arrays:
+
+| Helper                                  | Behavior                                                       |
+| --------------------------------------- | -------------------------------------------------------------- |
+| `appendPlotRows(rows, additions)`       | Append one or many rows                                        |
+| `upsertPlotRows(rows, updates, rowKey)` | Replace matching keys and append new keys; rejects duplicates  |
+| `removePlotRows(rows, keys, rowKey)`    | Remove stable keys; a predicate form does not require `rowKey` |
+| `trimPlotRows(rows, countOrWindow)`     | Retain the latest row count or a `Date`-field time window      |
+
+Unchanged operations may return the original array; changed results are frozen.
+
+## Scales and defaults
+
+When scales are not declared, the compiler infers useful defaults from channel values and mark context:
+
+- numeric positions: `linear`
+- `Date` positions: local `time`
+- categorical bar/cell positions: `band`
+- categorical line/area/point positions: `point`
+- categorical color: `ordinal-color`
+- numeric or temporal color: `continuous-color`
+
+Cartesian marks also receive default axes and tooltip behavior. Explicit `Scale`, `Axis`, `Grid`, `Legend`, or `Tooltip` children replace the corresponding inferred choice.
+
+Supported scale types are:
+
+| Type               | Important options                                                        |
+| ------------------ | ------------------------------------------------------------------------ |
+| `band`             | `padding`, `paddingInner`, `paddingOuter`, `reverse`                     |
+| `point`            | `padding`, `paddingOuter`, `reverse`                                     |
+| `linear`           | `domain`, `range`, `nice`, `clamp`, `reverse`                            |
+| `power`            | Linear options plus `exponent`                                           |
+| `log`              | Linear options plus `base`; only strictly positive values are valid      |
+| `symlog`           | Linear options plus the linear-region `constant`; supports signed values |
+| `time`             | Local calendar ticks for `Date` values                                   |
+| `utc`              | UTC calendar ticks for `Date` values                                     |
+| `ordinal-color`    | Categorical domain and string color range                                |
+| `continuous-color` | Numeric or temporal domain and interpolated string color range           |
+
+Use named scales when marks need independent domains or units:
+
+```tsx
+<ServicePlot.Root data={rows} rowKey="id" label="Traffic and latency">
+  <ServicePlot.Scale name="time" channel="x" type="utc" />
+  <ServicePlot.Scale name="requests" channel="y" type="linear" nice />
+  <ServicePlot.Scale
+    name="latency"
+    channel="y"
+    type="symlog"
+    constant={10}
+    nice
+  />
+
+  <ServicePlot.Bar x="timestamp" y="requests" xScale="time" yScale="requests" />
+  <ServicePlot.Line x="timestamp" y="p95" xScale="time" yScale="latency" />
+
+  <ServicePlot.Axis scale="time" orient="bottom" label="Time (UTC)" />
+  <ServicePlot.Axis scale="requests" orient="left" label="Requests" />
+  <ServicePlot.Axis scale="latency" orient="right" label="P95 latency (ms)" />
+</ServicePlot.Root>
+```
+
+Use actual `Date` instances for temporal inference. Normalize transport strings before passing rows to the plot. Select `utc` explicitly when calendar boundaries must not depend on the viewer's local time zone.
+
+## Marks
+
+Every mark accepts optional mark-local `data`, `transform`, named `xScale`, `yScale`, and `colorScale`, plus `fill`, `stroke`, `opacity`, `title`, `key`, and `hidden`.
+
+| Mark    | Required channels             | Main use                                                       |
+| ------- | ----------------------------- | -------------------------------------------------------------- |
+| `Bar`   | `x`, numeric `y`              | Vertical/horizontal bars, histograms, stacks, bounded progress |
+| `Line`  | `x`, numeric `y`              | Trends with linear, step, or monotone curves                   |
+| `Area`  | `x`, numeric `y`              | Filled trends, ranges through `y2`, and stacked areas          |
+| `Point` | `x`, numeric `y`              | Scatter, trend points, variable radius, timeline milestones    |
+| `Arc`   | numeric `value`               | Pie, donut, and bounded gauge compositions                     |
+| `Cell`  | `x`, `y`                      | Heatmaps with optional numeric `value` color channel           |
+| `Rect`  | optional `x`, `x2`, `y`, `y2` | Ranges and `partition(...)` flame layouts                      |
+| `Rule`  | optional `x`, `x2`, `y`, `y2` | Reference lines, intervals, timeline spans                     |
+| `Text`  | `x`, `y`, `text`              | Labels and annotations                                         |
 
-The library optimizes for:
-
-- Product UI dashboards, similar in feel to GitHub, Vercel, Stripe, and Linear
-- Recognition within one second
-- Semantic HTML with CSS variables and layout-driven rendering
-- Good defaults over broad configuration
-- Tooltips as enhancement, not the source of basic meaning
+Common family compositions:
 
-The library does not aim to be:
+- Cartesian: `Bar`, `Line`, `Area`, and `Point`
+- Pie: `Arc innerRadius={0}`
+- Donut: `Arc` with a positive `innerRadius`
+- Gauge: bounded `Arc` plus root meter semantics
+- Heatmap: `Cell`
+- Flame graph: `Rect transform={partition(...)}`
+- Timeline: `Rule`, `Point`, and `Text`
+- Progress: bounded `Bar` plus root meter semantics
 
-- A full analytics platform
-- A D3 replacement
-- A scientific plotting engine
-- An infinitely configurable chart system
+See [examples/mark-families.tsx](./examples/mark-families.tsx) for all nine marks.
 
-## Contract Surface
+## Interaction descriptors
 
-Shape-contract charts define data contracts, visual grammar, behavior
-guarantees, and acceptance criteria:
-
-| Chart             | Visual target                                          | Live example                                                             |
-| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `AreaChart`       | Filled trend over time                                 | `../my-app/src/components/examples/charts/area-chart-example.tsx`        |
-| `BarChart`        | Discrete category comparison via bars                  | `../my-app/src/components/examples/charts/bar-chart-example.tsx`         |
-| `LineChart`       | Trend lines across an ordered axis                     | `../my-app/src/components/examples/charts/line-chart-example.tsx`        |
-| `DonutChart`      | Circular part-to-whole with a center void              | `../my-app/src/components/examples/charts/donut-chart-example.tsx`       |
-| `PieChart`        | Solid circular part-to-whole composition               | `../my-app/src/components/examples/charts/pie-chart-example.tsx`         |
-| `StackedBarChart` | Bars split into stacked segments                       | `../my-app/src/components/examples/charts/stacked-bar-chart-example.tsx` |
-| `Sparkline`       | Tiny minimal trend with no axes or legend              | `../my-app/src/components/examples/charts/sparkline-example.tsx`         |
-| `Heatmap`         | Grid of colored intensity cells                        | `../my-app/src/components/examples/charts/heatmap-example.tsx`           |
-| `Timeline`        | Ordered sequence of events or intervals                | `../my-app/src/components/examples/charts/timeline-example.tsx`          |
-| `FlameGraph`      | Hierarchical stacked rectangles for cost visualization | `../my-app/src/components/examples/charts/flame-graph-example.tsx`       |
-| `ProgressMeter`   | Linear progress fill versus max                        | `../my-app/src/components/examples/charts/progress-meter-example.tsx`    |
-| `RadialGauge`     | Circular scalar gauge                                  | `../my-app/src/components/examples/charts/radial-gauge-example.tsx`      |
-
-Supporting primitives are not shape-contract charts:
-
-- `ChartShell`: layout, sizing, responsiveness, and theming hooks
-- `ChartPanel`: dashboard card wrapper for title, description, and layout
-- `ChartLegend`: shared legend rendering
-- `ChartEmptyState`: loading, empty, and error presentation
-
-## Shared Behavior
-
-All charts render from state supplied by the caller. They do not fetch data.
-
-Supported states are:
-
-- `loading`: reserved layout or skeleton through surrounding composition
-- `loaded`: chart renders from the provided data
-- `empty`: render `ChartEmptyState`
-- `error`: render `ChartEmptyState` with an error variant
-- `stale`: keep old data visible and pair it with a subtle loading indicator
-
-Tooltips:
-
-- Trigger on hover, focus, and touch-capable pointer movement
-- Include label, value, series when available, and formatted value
-- Anchor to the nearest data element
-- Must be keyboard reachable where the data element is interactive
-- Must never be required for basic understanding
-
-Animation:
-
-- Progressive enhancement only
-- Initial render uses a subtle reveal
-- Updates should transition from the previous value where CSS can express it
-- Add/remove and empty/data transitions should fade or resize without layout jumps
-- Reduced motion disables chart animation by default
-- Motion must explain change, not decorate
-
-## Public Hooks
-
-Stable hooks and contract points:
-
-- `data-slot="chart-shell"`
-- `data-slot="chart-panel"`
-- `data-slot="chart-legend"`
-- `data-slot="chart-empty-state"`
-- `data-slot="chart-graphic"`
-- `data-slot="chart-summary"`
-- `data-slot="chart-table"`
-
-Core CSS variables:
-
-- `--ak-chart-color-primary`
-- `--ak-chart-color-muted`
-- `--ak-chart-gap`
-- `--ak-chart-radius`
-- `--ak-chart-font-size`
-
-Chart CSS must remain self-sufficient. Broader Askr theme tokens may feed chart
-tokens through chart-specific overrides such as `--ak-color-chart-primary`, but
-display styles should use chart-owned `--ak-chart-*` variables as their
-contract.
-
-Responsive rules:
-
-- Build chart shells mobile first.
-- Use `data-slot` hooks instead of internal DOM selectors
-- Keep selectors low-specificity so consumers can override them with one rule
-- The default chart package standardizes responsive layout at `48rem` and `64rem`
-
-## Shape Contracts
-
-### AreaChart
-
-Purpose: show a filled trend over ordered points when the exact values matter
-less than the overall movement.
-
-Real-world comparison: Vercel usage cards and Stripe balance trend panels.
-
-Visual grammar: a continuous filled series with connected points, a quiet
-baseline, and enough horizontal rhythm to read as time or sequence. It must not
-read as a histogram or a row of independent blocks.
-
-Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `color`. Supports `min`, `max`,
-`summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-points, and use `grow` animation by default. Empty and error states should be
-composed with `ChartEmptyState`.
-
-Non-goals: no multi-series area plotting, no precise axis engine, no stacked
-area mode.
-
-### BarChart
-
-Purpose: compare discrete categories through horizontal bars.
-
-Real-world comparison: Stripe breakdown rows and GitHub repository language
-bars.
-
-Visual grammar: one bar per category, stable tracks, visible labels, and clear
-relative length. The default `bar` variant is horizontal; `histogram` renders
-vertical bins for compact distribution views. Zero values must stay zero width
-or zero height.
-
-Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `color`. Supports `min`, `max`,
-`variant`, `labelDensity`, `summary`, `valueFormatter`, `animate`, and
-`animation`.
-
-States and behavior: render a summary and fallback table, expose focusable
-tooltip-ready rows, and use `grow` animation by default.
-
-Non-goals: no grouped bars, no axis-heavy analytical layout, no multi-series
-histograms.
-
-### LineChart
-
-Purpose: show trend movement across ordered points with the line as the primary
-mark.
-
-Real-world comparison: Vercel analytics trend cards and GitHub traffic graphs.
-
-Visual grammar: connected points and sloped segments across a quiet plotting
-area. The chart must read as a line first, without area fill or bar-like stems.
-
-Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `color`. Supports `min`, `max`,
-`summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-points, and use `reveal` animation by default.
-
-Non-goals: no precise interpolation engine, no multi-axis plotting, no dense
-scientific time-series rendering.
-
-### DonutChart
-
-Purpose: show part-to-whole composition in a compact circular form.
-
-Real-world comparison: Stripe payment-method mix cards and GitHub language
-composition widgets.
-
-Visual grammar: segmented circular ring, consistent ring thickness, surface
-colored separators that do not read as data, a clear center total badge, and
-legend rows with compact share rails. Segment labels are secondary but must be
-readable without opening tooltips.
-
-Data shape: accepts object or tuple segment inputs with `label`, `value`,
-optional color, and optional `description`. Supports `labelDensity`, `summary`,
-`valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-segments and legend items, and use `sweep` animation by default.
-
-Non-goals: no nested donuts, no polar analytical charting, no tiny segments
-that depend on tooltip-only understanding.
-
-### PieChart
-
-Purpose: show part-to-whole composition as a solid circular disc when the center
-value treatment of a donut would add visual noise.
-
-Real-world comparison: dashboard issue share, work-state, and incident share
-widgets.
-
-Visual grammar: segmented circular disc, consistent slice boundaries, and a
-legend-style list for labels and values. It must read as a solid share chart,
-not as a radial gauge or a donut with a missing center label.
-
-Data shape: accepts object or tuple segment inputs with `label`, `value`,
-optional color, and optional `description`. Supports `labelDensity`,
-`summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-segments and legend items, and use `sweep` animation by default.
-
-Non-goals: no exploded slices, no nested pies, no polar analytical charting, no
-tiny segments that depend on tooltip-only understanding.
-
-### StackedBarChart
-
-Purpose: compare totals while preserving each bar's internal composition.
-
-Real-world comparison: Linear issue status breakdowns and GitHub project status
-bars.
-
-Visual grammar: one horizontal track per category, split into proportional
-segments with stable boundaries and concise labels.
-
-Data shape: accepts rows with `label` and `segments`; each segment has `label`,
-`value`, optional `description`, and optional `color`. Supports `summary`,
-`valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-segments, and use `grow` animation by default. Zero-value segments stay zero
-width.
-
-Non-goals: no grouped stacked combinations, no waterfall behavior, no
-spreadsheet-style table replacement.
-
-### Sparkline
-
-Purpose: show a tiny trend inside dense product UI.
-
-Real-world comparison: GitHub repository insight sparklines and Stripe metric
-delta cards.
-
-Visual grammar: minimal inline trend with small points or columns, no axes, no
-legend, and no surrounding chart chrome.
-
-Data shape: accepts value chart object or tuple inputs with `label`, `value`,
-optional `description`, and optional `color`. Supports `min`, `max`,
-`summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-points, and use `fade` animation by default.
-
-Non-goals: no labels-first charting, no large plotting stage, no analytical
-axis treatment.
-
-### Heatmap
-
-Purpose: show intensity across two categorical dimensions.
-
-Real-world comparison: GitHub contribution grids and operational activity
-heatmaps.
-
-Visual grammar: dense grid of equally sized cells where color intensity carries
-the value. Missing combinations render as zero-value cells.
-
-Data shape: accepts object inputs with `x`, `y`, `value`, optional
-`description`, and optional `color`, or tuple inputs. Supports `min`,
-`max`, `summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-cells, and use `fade` animation by default.
-
-Non-goals: no calendar-specific layout contract, no continuous image heatmap,
-no axis measurement engine.
-
-### Timeline
-
-Purpose: show an ordered sequence of events or intervals.
-
-Real-world comparison: Linear activity timelines and deployment event timelines.
-
-Visual grammar: compact vertical or inline sequence with markers, short labels,
-and bounded item rhythm. It must not look like an oversized bulleted list.
-
-Data shape: accepts items with `label`, optional `value`, optional
-`description`, and optional `accentColor`. Supports `labelDensity`, `summary`,
-`animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-milestones, and use `slide` animation by default.
-
-Non-goals: no full project management timeline, no gantt chart, no unbounded
-long-form event feed.
-
-### FlameGraph
-
-Purpose: show hierarchical cost or time distribution.
-
-Real-world comparison: Chrome DevTools profiler flame charts and Sentry
-performance traces.
-
-Visual grammar: stacked rows of proportional rectangles where depth maps to
-hierarchy and width maps to cost. Layout should resize stably without chaotic
-motion.
-
-Data shape: accepts nested frames with `label`, `value`, optional
-`description`, optional `color`, and optional `children`. Supports
-`summary`, `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose tooltip-ready
-frames, and use `grow` animation by default.
-
-Non-goals: no profiler-grade navigation, no zoom stack, no canvas-style
-large-trace renderer.
-
-### ProgressMeter
-
-Purpose: show scalar progress against a max value.
-
-Real-world comparison: quota usage bars, rollout completion meters, and
-deployment progress indicators.
-
-Visual grammar: bounded linear track, proportional fill, clear value text, and
-compact description when supplied.
-
-Data shape: accepts `label`, `value`, optional `max`, optional `description`,
-optional `summary`, optional `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render semantic `role="meter"` metadata and a summary,
-and use `grow` animation by default. Zero values stay zero width.
-
-Non-goals: no stacked progress, no trend history, no circular gauge behavior.
-
-### RadialGauge
-
-Purpose: show one scalar value as circular progress.
-
-Real-world comparison: uptime/SLO gauge cards and quota utilization rings.
-
-Visual grammar: compact circular dial, consistent ring thickness, bounded arc,
-and center value. It should read as a scalar gauge, not a donut breakdown.
-
-Data shape: accepts `label`, `value`, optional `max`, optional `description`,
-optional `summary`, optional `valueFormatter`, `animate`, and `animation`.
-
-States and behavior: render a summary and fallback table, expose a conic dial,
-and use `sweep` animation by default.
-
-Non-goals: no multi-segment gauge, no speedometer needle, no precise polar
-axis.
-
-## Testing Expectations
-
-Every shape-contract chart must pass:
-
-- Recognizable instantly
-- Works without tooltip
-- Looks correct inside a dashboard card
-- Handles small, medium, and moderate datasets where the chart type supports it
-- Exposes a semantic graphic or meter role with accessible labeling
-- Provides a summary and fallback table or equivalent text structure
-- Emits chart-specific animation hooks when animation is enabled
-- Keeps tooltip targets focusable where item-level tooltip content exists
-
-Generated chart presets live under `src/charts/<name>/`.
-Use `npm run new:chart -- <chart-name>` to clone the template.
+| Primitive   | Contract                                                                |
+| ----------- | ----------------------------------------------------------------------- |
+| `Legend`    | Named scale, label, position, and optional interactive filtering        |
+| `Tooltip`   | Optional channel list and formatter for the resolved channel record     |
+| `Crosshair` | x, y, or xy inspection guide                                            |
+| `Zoom`      | x, y, or xy zoom with wheel, pinch, and pan toggles plus min/max extent |
+| `Brush`     | x, y, or xy brush; Shift is the default product-safe modifier choice    |
+
+Primary drag pans when pan is enabled. Wheel and pinch zoom the enabled axes. Shift-drag brushing avoids stealing ordinary page gestures. Pointer and keyboard inspection share the same hit records, and `onActivate(row, key)` is the drill-down seam.
+
+Interactive legends filter their color scale without rewriting caller data. Stable row keys retain selection when rows are updated.
+
+## View, selection, and follow-latest
+
+`PlotView` contains optional x and y domain tuples plus `scales`, a map of named coordinate-scale domains. `x` and `y` are deterministic primary-scale aliases; a named `scales` entry takes precedence for that scale. Use `defaultView` for uncontrolled state or `view` plus `onViewChange` when a route, URL, or shared owner controls navigation.
+
+`PlotSelection` is `{ keys: readonly (string | number)[] }`. Use `defaultSelection` for local state or `selection` plus `onSelectionChange` for controlled state.
+
+`followLatest` accepts:
+
+- a number as row-count shorthand;
+- `{ rows: number }`;
+- `{ durationMs, field }`, where `field` is a `Date` field or accessor.
+
+User pan or zoom pauses following. It stays paused until `PlotApi.resumeLive()` is called, so new data never unexpectedly pulls an operator away from an inspected range.
+
+## Plot API and exports
+
+`apiRef` receives this mounted API:
+
+```ts
+interface PlotApi<Row> {
+  resetView(): void;
+  resumeLive(): void;
+  exportPng(options?: PlotPngExportOptions): Promise<Blob>;
+  exportSvg(options?: PlotSvgExportOptions): string;
+  exportData(options?: PlotDataExportOptions): string;
+  readonly rows: readonly Row[];
+}
+```
+
+PNG and SVG export options select `view: "current" | "full"`, a resolved background, and whether transient overlays are included. PNG also accepts `pixelRatio`. Hover, crosshair, and brush overlays are excluded by default.
+
+Data export selects:
+
+- `view: "current" | "full"`;
+- `rows: "source" | "transformed"`;
+- `scope: "all" | "visible" | "selected"`;
+- `format: "csv" | "json"`.
+
+PNG and SVG require a mounted plot with resolved dimensions. SVG references fonts rather than embedding them. Export does not create a visible SVG renderer.
+
+## Signed, missing, and log data
+
+- Finite negative values remain negative through domains, stacks, symlog scales, summaries, and exports.
+- Diverging stacks keep positive and negative accumulators on opposite sides of zero.
+- Expand stacks normalize positive and negative totals independently.
+- `null`, `undefined`, invalid dates, and `NaN` or infinite numbers are missing.
+- A false `Line.defined` accessor result is a real path break, including when it guards a missing channel value.
+- Aggregates and moving windows skip missing numeric values rather than adding zero.
+- A log scale omits zero and negative inputs because they are outside its domain. Use `symlog` when signed or zero-adjacent values are meaningful.
+- Development diagnostics and accessible summaries expose omitted counts.
+
+## SSR and accessibility
+
+Server rendering emits the reserved region, title, description, legend, summary, empty state when applicable, and keyboard/data instructions. It does not emit graphical marks.
+
+After hydration, the root mounts a base canvas for the scene and an overlay canvas for transient interaction. “View data” materializes the full transformed DOM table on demand rather than duplicating every row in the initial document.
+
+Without JavaScript, users retain the semantic label, summary, legend, and instructions but do not see graphical marks or the on-demand table. Do not make a tooltip or canvas pixel the only source of essential information.
+
+Bounded progress and gauge compositions must set `meter` on the root so the semantic minimum, maximum, current value, and optional value text remain available independently of the canvas.
+
+## Rendering and motion
+
+The renderer accounts for device-pixel ratio, responsive resize, font readiness, reduced motion, and chart-token/theme changes. It uses viewport culling, line downsampling, point batching, visible-bar culling, and a spatial hit index for dense scenes. Above the visible-mark animation threshold, the renderer favors one reduced-cost scene transition over per-mark motion.
+
+Motion is progressive enhancement. Reduced-motion preferences disable nonessential transitions while preserving state changes.
+
+## Styling
+
+The stylesheet is self-contained and also consumes compatible Askr theme tokens when present. Prefer overriding chart tokens over internal selectors:
+
+- layout: `--ak-chart-height`, `--ak-chart-gap`, `--ak-chart-padding`, `--ak-chart-radius`
+- type: `--ak-chart-font-family`, `--ak-chart-font-family-mono`, `--ak-chart-font-size`
+- series: `--ak-chart-series-1` through `--ak-chart-series-10`
+- surfaces: `--ak-chart-bg`, `--ak-chart-surface`, `--ak-chart-surface-muted`, `--ak-chart-border`
+- interaction: `--ak-chart-focus-ring`, `--ak-chart-selection`, `--ak-chart-crosshair`
+- motion: `--ak-chart-transition-duration`, `--ak-chart-transition-easing`
+
+Structural `data-slot="plot-*"` hooks are stable application/testing seams. Do not depend on canvas-internal geometry or generated scene IDs for product CSS.
+
+## Clean-break migration table
+
+| Old component or entrypoint             | Primitive replacement                                      |
+| --------------------------------------- | ---------------------------------------------------------- |
+| `AreaChart`                             | `Plot.Area`                                                |
+| `BarChart`                              | `Plot.Bar`                                                 |
+| `LineChart`                             | `Plot.Line` plus optional `Plot.Point`                     |
+| `DonutChart`, `PieChart`, `RadialGauge` | `Plot.Arc` with radius/bounds choices                      |
+| `StackedBarChart`                       | `Plot.Bar stack="series"`                                  |
+| `Sparkline`                             | Compact `Plot.Line` or `Plot.Area` composition             |
+| `Heatmap`                               | `Plot.Cell`                                                |
+| `Timeline`                              | `Plot.Rule`, `Plot.Point`, `Plot.Text`                     |
+| `FlameGraph`                            | `Plot.Rect` plus `partition(...)`                          |
+| `ProgressMeter`                         | Bounded `Plot.Bar` plus root meter semantics               |
+| `ChartLegend`                           | `Plot.Legend`                                              |
+| `ChartShell`, `ChartPanel`              | `Plot.Root` inside app-owned layout/card chrome            |
+| `ChartEmptyState`                       | `Root empty`; route-owned loading/error UI remains outside |
+| `/components`, `/core`                  | Root `@askrjs/charts` export                               |
+| `/default`, root CSS, per-chart CSS     | `@askrjs/charts/styles`                                    |

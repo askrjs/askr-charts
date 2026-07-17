@@ -1,12 +1,13 @@
 {
   "name": "@askrjs/charts",
-  "version": "0.0.3",
-  "description": "CSS-first chart primitives that pair with Askr themes.",
+  "version": "0.1.0",
+  "description": "Typed Canvas 2D plots and SVG export for Askr applications.",
   "keywords": [
     "askr",
+    "canvas",
     "charts",
-    "css",
-    "design-tokens",
+    "plotting",
+    "visualization",
     "vite-plus"
   ],
   "homepage": "https://github.com/askrjs/askr-charts#readme",
@@ -24,87 +25,56 @@
   },
   "files": [
     "dist",
-    "src",
-    "templates",
-    "scripts/new-chart.js",
     "CHARTING.md",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "type": "module",
   "sideEffects": [
-    "**/*.css"
+    "./dist/styles.css"
   ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.css",
-    "./default": "./src/charts/default/index.css",
-    "./components": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js"
-    },
-    "./default/bar-chart.css": "./src/charts/default/styles/display/bar-chart.css",
-    "./default/area-chart.css": "./src/charts/default/styles/display/area-chart.css",
-    "./default/donut-chart.css": "./src/charts/default/styles/display/donut-chart.css",
-    "./default/flame-graph.css": "./src/charts/default/styles/display/flame-graph.css",
-    "./default/heatmap.css": "./src/charts/default/styles/display/heatmap.css",
-    "./default/line-chart.css": "./src/charts/default/styles/display/line-chart.css",
-    "./default/pie-chart.css": "./src/charts/default/styles/display/pie-chart.css",
-    "./default/progress-meter.css": "./src/charts/default/styles/display/progress-meter.css",
-    "./default/radial-gauge.css": "./src/charts/default/styles/display/radial-gauge.css",
-    "./default/sparkline.css": "./src/charts/default/styles/display/sparkline.css",
-    "./default/stacked-bar-chart.css": "./src/charts/default/styles/display/stacked-bar-chart.css",
-    "./default/timeline.css": "./src/charts/default/styles/display/timeline.css",
-    "./default/tokens.css": "./src/charts/default/tokens.css",
-    "./default/typography.css": "./src/charts/default/styles/base/typography.css",
-    "./default/utilities.css": "./src/charts/default/styles/base/utilities.css",
-    "./default/layout.css": "./src/charts/default/styles/layout/layout.css",
-    "./default/responsive-layout.css": "./src/charts/default/styles/layout/responsive-layout.css",
-    "./default/chart.css": "./src/charts/default/styles/display/chart.css",
-    "./default/legend.css": "./src/charts/default/styles/display/legend.css",
-    "./default/series.css": "./src/charts/default/styles/data/series.css",
-    "./default/tooltip.css": "./src/charts/default/styles/overlays/tooltip.css",
-    "./templates/*": "./templates/*",
+    "./styles": "./dist/styles.css",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "new:chart": "node ./scripts/new-chart.js",
-    "verify:chart-contract-docs": "node ./scripts/verify-chart-contract-docs.js",
-    "verify:token-contract": "node ./scripts/verify-token-contract.js",
-    "verify:responsive": "vp test run -c vitest.test.unit.config.ts tests/responsive-contract.test.ts",
-    "verify:slots": "node ./scripts/verify-slot-coverage.js",
     "bench": "npm run bench:tier1 && npm run bench:tier2 && npm run bench:tier3 && npm run bench:tier4",
-    "bench:tier1": "vp test bench --run --reporter=default --config vitest.bench.tier1.config.ts",
-    "bench:tier2": "vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
-    "bench:tier3": "vp test bench --run --reporter=default --config vitest.bench.tier3.config.ts",
-    "bench:tier4": "vp test bench --run --reporter=default --config vitest.bench.tier4.config.ts",
+    "bench:tier1": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier1.config.ts",
+    "bench:tier2": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
+    "bench:tier3": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench.tier3.config.ts",
+    "bench:tier4": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench.tier4.config.ts",
     "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser",
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
     "test:browser": "vp test run -c vitest.test.browser.config.ts",
+    "test:types": "npm run build && tsc -p tsconfig.types.json --noEmit",
+    "test:installed": "npm run build && node tests/installed-smoke.mjs",
     "test:publint": "publint",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build:types": "tsc -p tsconfig.pack.json --emitDeclarationOnly --outDir dist",
-    "build": "vp pack && npm run build:types && npm run verify:token-contract && npm run verify:responsive && npm run verify:slots && npm run verify:chart-contract-docs",
+    "build": "vp pack",
     "pack:check": "npm pack --ignore-scripts --dry-run --json",
-    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:publint && npm run pack:check",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:types && npm run test:installed && npm run test:publint && npm run pack:check",
     "prepack": "npm run build",
     "prepublishOnly": "npm run check",
     "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": "file:../askr",
-    "@askrjs/vite": "file:../askr-vite",
-    "@tsdown/css": "0.22.2",
+    "@askrjs/askr": ">=0.0.52 <0.1.0",
+    "@askrjs/vite": ">=0.0.5 <0.1.0",
     "@types/node": "^25.9.2",
     "@vitest/browser-playwright": "4.1.10",
+    "cross-env": "^10.1.0",
     "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
     "publint": "^0.3.21",
@@ -112,7 +82,7 @@
     "vite-plus": "^0.2.4"
   },
   "peerDependencies": {
-    "@askrjs/askr": ">=0.0.53 <0.1.0"
+    "@askrjs/askr": ">=0.0.52 <0.1.0"
   },
   "engines": {
     "node": ">=18"
