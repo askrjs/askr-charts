@@ -40,14 +40,14 @@ The returned namespace is stable and factory-bound. A root accepts its own primi
 | `title`, `headingLevel`, `description` | Visible semantic heading, configurable level, and supporting text                 |
 | `summary`                              | Text or a callback receiving source, transformed, omitted, and visible counts     |
 | `empty`                                | Empty-state message when no renderable rows remain                                |
-| `width`, `height`                      | SSR/initial fallbacks; mounted width responds to its container                     |
+| `width`, `height`                      | SSR/initial fallbacks; mounted width responds to its container                    |
 | `class`, `style`, `id`                 | Structural application hooks                                                      |
 | `meter`                                | `{ role: "meter", min, max, value, valueText? }` for bounded bars and arcs        |
 | `view`, `onViewChange`                 | Controlled visible x/y domains                                                    |
 | `defaultView`                          | Initial uncontrolled visible domains                                              |
 | `selection`, `onSelectionChange`       | Controlled selection as stable row keys                                           |
 | `defaultSelection`                     | Initial uncontrolled selection                                                    |
-| `onActivate`                           | Drill-down callback receiving row, key, and immutable interaction target           |
+| `onActivate`                           | Drill-down callback receiving row, key, and immutable interaction target          |
 | `followLatest`                         | Row-count or time window for live plots                                           |
 | `onApiChange`                          | Callback receiving `PlotApi<Row>` after mount and `null` after cleanup            |
 | `locale`                               | Locale used by inferred formatting                                                |
@@ -233,7 +233,7 @@ See [examples/mark-families.tsx](./examples/mark-families.tsx) for all nine mark
 | Primitive   | Contract                                                                |
 | ----------- | ----------------------------------------------------------------------- |
 | `Legend`    | Named scale, label, position, and optional interactive filtering        |
-| `Tooltip`   | Structured values with auto, nearest-mark, or shared nearest-x mode      |
+| `Tooltip`   | Structured values with auto, nearest-mark, or shared nearest-x mode     |
 | `Crosshair` | x, y, or xy inspection guide                                            |
 | `Select`    | Single or toggle selection before optional activation                   |
 | `Zoom`      | x, y, or xy zoom with wheel, pinch, and pan toggles plus min/max extent |

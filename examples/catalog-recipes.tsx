@@ -22,7 +22,12 @@ const rows: readonly RecipeRow[] = [
 export function CatalogRecipes() {
   return (
     <>
-      <RecipePlot.Root data={rows} rowKey="id" label="Grouped and stacked service volume" height={240}>
+      <RecipePlot.Root
+        data={rows}
+        rowKey="id"
+        label="Grouped and stacked service volume"
+        height={240}
+      >
         <RecipePlot.Scale name="grouped-x" channel="x" type="band" />
         <RecipePlot.Bar
           x={(row) => `${row.group} · ${row.series}`}
@@ -34,7 +39,12 @@ export function CatalogRecipes() {
         <RecipePlot.Legend interactive label="Service" />
       </RecipePlot.Root>
 
-      <RecipePlot.Root data={rows.filter(({ series }) => series === "API")} rowKey="id" label="Compact request sparkline" height={160}>
+      <RecipePlot.Root
+        data={rows.filter(({ series }) => series === "API")}
+        rowKey="id"
+        label="Compact request sparkline"
+        height={160}
+      >
         <RecipePlot.Scale name="spark-x" channel="x" type="point" />
         <RecipePlot.Scale name="spark-y" channel="y" type="power" exponent={0.75} />
         <RecipePlot.Area x="group" y="value" xScale="spark-x" yScale="spark-y" />
@@ -44,7 +54,14 @@ export function CatalogRecipes() {
       <RecipePlot.Root data={rows} rowKey="id" label="Logarithmic service bubble plot" height={240}>
         <RecipePlot.Scale name="bubble-x" channel="x" type="log" domain={[1, 12]} />
         <RecipePlot.Scale name="bubble-y" channel="y" type="symlog" constant={2} />
-        <RecipePlot.Point x="value" y="target" r="weight" xScale="bubble-x" yScale="bubble-y" fill="series" />
+        <RecipePlot.Point
+          x="value"
+          y="target"
+          r="weight"
+          xScale="bubble-x"
+          yScale="bubble-y"
+          fill="series"
+        />
         <RecipePlot.Tooltip mode="mark" channels={["value", "target", "weight", "series"]} />
       </RecipePlot.Root>
 

@@ -698,9 +698,7 @@ function transitionEasing(element: Element, progress: number): number {
   if (easing === "linear") return progress;
   if (easing === "ease-in") return progress * progress;
   if (easing === "ease-in-out")
-    return progress < 0.5
-      ? 2 * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    return progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
   return 1 - Math.pow(1 - progress, 3);
 }
 
@@ -947,7 +945,8 @@ function onWheel<Row>(state: ControllerState<Row>, event: WheelEvent): void {
   const point = eventPoint(state.overlayCanvas, event);
   if (!pointInPlotArea(state.scene, point)) return;
   event.preventDefault();
-  const modeMultiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? state.scene.height : 1;
+  const modeMultiplier =
+    event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? state.scene.height : 1;
   const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY * modeMultiplier * 0.002)));
   zoomAt(state, point.x, point.y, factor, true);
 }
@@ -1108,10 +1107,15 @@ function toggleFocusedSelection<Row>(state: ControllerState<Row>, hit: HitRegion
   setSelection(state, keys);
 }
 
-function sourceKeysForHit<Row>(state: ControllerState<Row>, hit: HitRegion<Row>): readonly PlotKey[] {
+function sourceKeysForHit<Row>(
+  state: ControllerState<Row>,
+  hit: HitRegion<Row>,
+): readonly PlotKey[] {
   if (hit.sourceKeys && hit.sourceKeys.length > 0) return hit.sourceKeys;
   return (
-    state.scene.transformedRows.find((candidate) => candidate.key === hit.key)?.sourceKeys ?? [hit.key]
+    state.scene.transformedRows.find((candidate) => candidate.key === hit.key)?.sourceKeys ?? [
+      hit.key,
+    ]
   );
 }
 
@@ -1233,7 +1237,8 @@ function panScale(
   const rangeStop = numericValue(scale.range[scale.range.length - 1]);
   const domainStart = numericValue(domain[0]);
   const domainStop = numericValue(domain[1]);
-  if (rangeStart == null || rangeStop == null || domainStart == null || domainStop == null) return domain;
+  if (rangeStart == null || rangeStop == null || domainStart == null || domainStop == null)
+    return domain;
   const pixelDelta = startPixel - currentPixel;
   const shiftedStart = numericValue(scale.invert(rangeStart + pixelDelta));
   const shiftedStop = numericValue(scale.invert(rangeStop + pixelDelta));
@@ -1433,15 +1438,20 @@ function hideTooltip<Row>(state: ControllerState<Row>): void {
   if (state.tooltip.hidden) return;
   if (state.tooltipHideTimer != null) clearTimeout(state.tooltipHideTimer);
   const tooltip = state.tooltip;
-  state.tooltipHideTimer = setTimeout(() => {
-    tooltip.hidden = true;
-    state.tooltipHideTimer = null;
-  }, prefersReducedMotion(state) ? 0 : transitionDurationMs(state.host));
+  state.tooltipHideTimer = setTimeout(
+    () => {
+      tooltip.hidden = true;
+      state.tooltipHideTimer = null;
+    },
+    prefersReducedMotion(state) ? 0 : transitionDurationMs(state.host),
+  );
 }
 
 function formatTooltipValue(value: unknown, locale?: string): string {
   if (value instanceof Date)
-    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(value);
+    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
+      value,
+    );
   if (value == null) return "missing";
   if (typeof value === "number" && !Number.isFinite(value)) return "missing";
   if (typeof value === "number") return new Intl.NumberFormat(locale).format(value);
@@ -1642,11 +1652,20 @@ function paintTransientChrome<Row>(
   const axes = state.scene.axes.map((axis) => {
     const horizontal = axis.orientation === "top" || axis.orientation === "bottom";
     const transform = horizontal ? x : y;
-    return { ...axis, ticks: axis.ticks.map((tick) => ({ ...tick, position: tick.position * transform.scale + transform.translate })) };
+    return {
+      ...axis,
+      ticks: axis.ticks.map((tick) => ({
+        ...tick,
+        position: tick.position * transform.scale + transform.translate,
+      })),
+    };
   });
   const grids = state.scene.grids.map((grid) => {
     const transform = grid.axis === "x" ? x : y;
-    return { ...grid, positions: grid.positions.map((position) => position * transform.scale + transform.translate) };
+    return {
+      ...grid,
+      positions: grid.positions.map((position) => position * transform.scale + transform.translate),
+    };
   });
   const context = state.chromeCanvas.getContext("2d");
   if (context) renderPlotChrome(context, { ...state.scene, axes, grids }, state.theme);

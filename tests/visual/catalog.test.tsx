@@ -26,22 +26,35 @@ describe("visual catalog baselines", () => {
         document.body.append(container);
         createIsland({ root: container, component: VisualCatalog });
         await document.fonts.ready;
-        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
 
         const roots = [...container.querySelectorAll<HTMLElement>('[data-slot="plot-root"]')];
         expect(container.querySelectorAll("[data-visual-case]")).toHaveLength(4);
         expect(roots).toHaveLength(14);
-        expect(roots.every((root) => Number(root.querySelector<HTMLElement>('[data-slot="plot-frame"]')?.dataset.markCount) > 0)).toBe(true);
+        expect(
+          roots.every(
+            (root) =>
+              Number(
+                root.querySelector<HTMLElement>('[data-slot="plot-frame"]')?.dataset.markCount,
+              ) > 0,
+          ),
+        ).toBe(true);
 
         for (const root of roots) {
-          const label = root.querySelector('[data-slot="plot-graphic"]')?.getAttribute("aria-label");
+          const label = root
+            .querySelector('[data-slot="plot-graphic"]')
+            ?.getAttribute("aria-label");
           if (!label) throw new Error("Visual recipe is missing its accessible label.");
           const locator = page.elementLocator(root);
           root.scrollIntoView({ block: "start" });
           await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
           await expect
             .element(locator)
-            .toMatchScreenshot(`${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${theme}-${width}`);
+            .toMatchScreenshot(
+              `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${theme}-${width}`,
+            );
         }
       });
     }

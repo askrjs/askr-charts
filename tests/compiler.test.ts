@@ -263,10 +263,16 @@ describe("scale and diagnostic defaults", () => {
   it("should reject invalid tooltip and select modes given malformed descriptors", () => {
     const rows = Object.freeze([{ id: "a", x: 1, y: 2 }]);
     expect(() =>
-      compile(rows, [descriptor("Point", { x: "x", y: "y" }), descriptor("Tooltip", { mode: "near" })]),
+      compile(rows, [
+        descriptor("Point", { x: "x", y: "y" }),
+        descriptor("Tooltip", { mode: "near" }),
+      ]),
     ).toThrow(/Invalid Tooltip mode/);
     expect(() =>
-      compile(rows, [descriptor("Point", { x: "x", y: "y" }), descriptor("Select", { mode: "many" })]),
+      compile(rows, [
+        descriptor("Point", { x: "x", y: "y" }),
+        descriptor("Select", { mode: "many" }),
+      ]),
     ).toThrow(/Invalid Select mode/);
   });
 

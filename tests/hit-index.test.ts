@@ -71,12 +71,20 @@ describe("spatial hit index", () => {
   it("should match polyline polygon and measured text geometry given exact shapes", () => {
     const polyline = region("polyline", {
       kind: "polyline",
-      points: [{ x: 5, y: 5 }, { x: 20, y: 15 }, { x: 35, y: 5 }],
+      points: [
+        { x: 5, y: 5 },
+        { x: 20, y: 15 },
+        { x: 35, y: 5 },
+      ],
       tolerance: 2,
     });
     const polygon = region("polygon", {
       kind: "polygon",
-      points: [{ x: 45, y: 5 }, { x: 65, y: 5 }, { x: 55, y: 25 }],
+      points: [
+        { x: 45, y: 5 },
+        { x: 65, y: 5 },
+        { x: 55, y: 25 },
+      ],
     });
     const text = region("text", { kind: "text", x: 70, y: 8, width: 20, height: 12 });
     const index = createHitIndex([polyline, polygon, text], { width: 100, height: 40 });

@@ -58,7 +58,8 @@ export function createHitIndex<Row>(
     }
     matches.sort(
       (left, right) =>
-        right.order - left.order || distanceToShape(left.shape, x, y) - distanceToShape(right.shape, x, y),
+        right.order - left.order ||
+        distanceToShape(left.shape, x, y) - distanceToShape(right.shape, x, y),
     );
     return Object.freeze(matches);
   };
@@ -121,9 +122,17 @@ function shapeIntersectsRect(
         segmentIntersectsRect(shape.x1, shape.y1, shape.x2, shape.y2, rect)
       );
     case "arc": {
-      if (contains(shape, rect.x0, rect.y0) || contains(shape, rect.x1, rect.y0) ||
-          contains(shape, rect.x0, rect.y1) || contains(shape, rect.x1, rect.y1)) return true;
-      const steps = Math.max(8, Math.ceil(Math.abs(shape.endAngle - shape.startAngle) / (Math.PI / 16)));
+      if (
+        contains(shape, rect.x0, rect.y0) ||
+        contains(shape, rect.x1, rect.y0) ||
+        contains(shape, rect.x0, rect.y1) ||
+        contains(shape, rect.x1, rect.y1)
+      )
+        return true;
+      const steps = Math.max(
+        8,
+        Math.ceil(Math.abs(shape.endAngle - shape.startAngle) / (Math.PI / 16)),
+      );
       for (const radius of [shape.innerRadius, shape.outerRadius]) {
         for (let index = 0; index <= steps; index += 1) {
           const angle = shape.startAngle + ((shape.endAngle - shape.startAngle) * index) / steps;
@@ -143,10 +152,7 @@ function shapeIntersectsRect(
       return (
         shape.points.some(
           (point) =>
-            point.x >= rect.x0 &&
-            point.x <= rect.x1 &&
-            point.y >= rect.y0 &&
-            point.y <= rect.y1,
+            point.x >= rect.x0 && point.x <= rect.x1 && point.y >= rect.y0 && point.y <= rect.y1,
         ) ||
         pointInPolygon(shape.points, rect.x0, rect.y0) ||
         shape.points.some((point, index) => {
@@ -169,7 +175,8 @@ function segmentIntersectsRect(
   if (
     (x1 >= rect.x0 && x1 <= rect.x1 && y1 >= rect.y0 && y1 <= rect.y1) ||
     (x2 >= rect.x0 && x2 <= rect.x1 && y2 >= rect.y0 && y2 <= rect.y1)
-  ) return true;
+  )
+    return true;
   const edges = [
     [rect.x0, rect.y0, rect.x1, rect.y0],
     [rect.x1, rect.y0, rect.x1, rect.y1],
@@ -180,8 +187,14 @@ function segmentIntersectsRect(
 }
 
 function segmentsCross(
-  ax: number, ay: number, bx: number, by: number,
-  cx: number, cy: number, dx: number, dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  dx: number,
+  dy: number,
 ): boolean {
   const orient = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) =>
     (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
@@ -237,15 +250,40 @@ function transformShape(
       const x1 = x(shape.x + shape.width);
       const y0 = y(shape.y);
       const y1 = y(shape.y + shape.height);
-      return { kind: "rect", x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) };
+      return {
+        kind: "rect",
+        x: Math.min(x0, x1),
+        y: Math.min(y0, y1),
+        width: Math.abs(x1 - x0),
+        height: Math.abs(y1 - y0),
+      };
     }
     case "circle":
-      return { kind: "circle", x: x(shape.x), y: y(shape.y), radius: shape.radius * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)) };
+      return {
+        kind: "circle",
+        x: x(shape.x),
+        y: y(shape.y),
+        radius: shape.radius * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)),
+      };
     case "line":
-      return { kind: "line", x1: x(shape.x1), y1: y(shape.y1), x2: x(shape.x2), y2: y(shape.y2), tolerance: shape.tolerance * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)) };
+      return {
+        kind: "line",
+        x1: x(shape.x1),
+        y1: y(shape.y1),
+        x2: x(shape.x2),
+        y2: y(shape.y2),
+        tolerance:
+          shape.tolerance * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)),
+      };
     case "arc": {
       const radialScale = (Math.abs(transform.scaleX) + Math.abs(transform.scaleY)) / 2;
-      return { ...shape, cx: x(shape.cx), cy: y(shape.cy), innerRadius: shape.innerRadius * radialScale, outerRadius: shape.outerRadius * radialScale };
+      return {
+        ...shape,
+        cx: x(shape.cx),
+        cy: y(shape.cy),
+        innerRadius: shape.innerRadius * radialScale,
+        outerRadius: shape.outerRadius * radialScale,
+      };
     }
     case "polyline":
     case "polygon":
@@ -255,7 +293,13 @@ function transformShape(
       const x1 = x(shape.x + shape.width);
       const y0 = y(shape.y);
       const y1 = y(shape.y + shape.height);
-      return { kind: "text", x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) };
+      return {
+        kind: "text",
+        x: Math.min(x0, x1),
+        y: Math.min(y0, y1),
+        width: Math.abs(x1 - x0),
+        height: Math.abs(y1 - y0),
+      };
     }
   }
 }
@@ -332,7 +376,9 @@ function distanceToShape(shape: HitShape, x: number, y: number): number {
     case "line":
       return pointSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2);
     case "arc":
-      return Math.abs(Math.hypot(x - shape.cx, y - shape.cy) - (shape.innerRadius + shape.outerRadius) / 2);
+      return Math.abs(
+        Math.hypot(x - shape.cx, y - shape.cy) - (shape.innerRadius + shape.outerRadius) / 2,
+      );
     case "rect": {
       const dx = Math.max(shape.x - x, 0, x - (shape.x + shape.width));
       const dy = Math.max(shape.y - y, 0, y - (shape.y + shape.height));
@@ -442,7 +488,9 @@ function contains(shape: HitShape, x: number, y: number): boolean {
     case "polygon":
       return pointInPolygon(shape.points, x, y);
     case "text":
-      return x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height;
+      return (
+        x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height
+      );
   }
 }
 
@@ -471,16 +519,12 @@ function polylineDistance(
   x: number,
   y: number,
 ): number {
-  if (points.length < 2)
-    return points[0] ? Math.hypot(x - points[0].x, y - points[0].y) : Infinity;
+  if (points.length < 2) return points[0] ? Math.hypot(x - points[0].x, y - points[0].y) : Infinity;
   let distance = Infinity;
   for (let index = 0; index < points.length - 1; index += 1) {
     const first = points[index]!;
     const second = points[index + 1]!;
-    distance = Math.min(
-      distance,
-      pointSegmentDistance(x, y, first.x, first.y, second.x, second.y),
-    );
+    distance = Math.min(distance, pointSegmentDistance(x, y, first.x, first.y, second.x, second.y));
   }
   return distance;
 }
@@ -495,7 +539,7 @@ function pointInPolygon(
     const currentPoint = points[index]!;
     const previousPoint = points[previous]!;
     if (
-      (currentPoint.y > y) !== (previousPoint.y > y) &&
+      currentPoint.y > y !== previousPoint.y > y &&
       x <
         ((previousPoint.x - currentPoint.x) * (y - currentPoint.y)) /
           (previousPoint.y - currentPoint.y) +
