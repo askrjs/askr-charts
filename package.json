@@ -1,6 +1,6 @@
 {
   "name": "@askrjs/charts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Typed Canvas 2D plots and SVG export for Askr applications.",
   "keywords": [
     "askr",
@@ -63,13 +63,13 @@
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
     "test:browser": "vp test run -c vitest.test.browser.config.ts",
     "test:types": "npm run build && tsc -p tsconfig.types.json --noEmit",
-    "test:installed": "npm run build && node tests/installed-smoke.mjs",
+    "test:installed": "npm run build && node tests/installed-smoke.js",
     "test:publint": "publint",
     "fmt": "vp fmt .",
     "lint": "vp lint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "vp pack",
-    "pack:check": "npm pack --ignore-scripts --dry-run --json",
+    "pack:check": "node tests/package-artifacts.js",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:types && npm run test:installed && npm run test:publint && npm run pack:check",
     "prepack": "npm run build",
     "prepublishOnly": "npm run check",

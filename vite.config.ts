@@ -10,7 +10,7 @@ export default defineConfig({
     platform: "neutral",
     tsconfig: "tsconfig.pack.json",
     dts: true,
-    sourcemap: true,
+    sourcemap: "hidden",
     clean: true,
     unbundle: true,
     copy: [
