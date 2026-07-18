@@ -11,7 +11,4 @@ export const sharedVitestConfig = defineConfig({
     },
     jsxInject: "import { jsx, jsxs, Fragment } from '@askrjs/askr/jsx-runtime';",
   },
-  resolve: {
-    preserveSymlinks: true,
-  },
 });

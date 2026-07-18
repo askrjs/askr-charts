@@ -1,13 +1,11 @@
 import { askr } from "@askrjs/vite";
 import { playwright } from "vite-plus/test/browser-playwright";
-import { defineConfig } from "vite-plus";
-import { sharedVitestConfig } from "./vitest.test.shared";
+import { defineConfig } from "vite-plus/test/config";
 
-const browserConfig = {
-  ...sharedVitestConfig,
+export default defineConfig({
   plugins: [askr()],
   test: {
-    ...sharedVitestConfig.test,
+    globals: true,
     passWithNoTests: true,
     api: {
       host: "127.0.0.1",
@@ -24,6 +22,11 @@ const browserConfig = {
     },
     include: ["tests/browser/**/*.test.tsx"],
   },
-} as unknown as Parameters<typeof defineConfig>[0];
-
-export default defineConfig(browserConfig);
+  oxc: {
+    jsx: {
+      runtime: "automatic",
+      importSource: "@askrjs/askr",
+    },
+    jsxInject: "import { jsx, jsxs, Fragment } from '@askrjs/askr/jsx-runtime';",
+  },
+});
