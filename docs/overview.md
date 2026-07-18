@@ -91,7 +91,9 @@ Categorical strings are never guessed to be literal colors. Use `constant(...)` 
 After hydration, the root mounts two canvases:
 
 - a base canvas for stable scene marks;
-- an overlay canvas for hover, crosshair, brush, and other transient interaction.
+- a chrome canvas for adaptive axes and grids;
+- a clipped marks canvas that alone receives transient gesture transforms;
+- an overlay canvas for hover, focus, crosshair, brush, and other transient interaction.
 
 The renderer responds to container size, device-pixel ratio, font readiness, reduced motion, and chart-token/theme changes. Dense scenes use culling, line envelopes, point batching, and a spatial hit index. Transient overlays are omitted from exports unless explicitly requested.
 

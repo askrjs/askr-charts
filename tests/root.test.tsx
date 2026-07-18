@@ -87,7 +87,8 @@ describe("plot root", () => {
     const html = renderToStringSync(Example);
 
     expect(html).toContain('data-slot="plot-frame"');
-    expect(html).toContain('data-slot="plot-canvas-base"');
+    expect(html).toContain('data-slot="plot-canvas-chrome"');
+    expect(html).toContain('data-slot="plot-canvas-marks"');
     expect(html).toContain("Request volume");
     expect(html).toContain("Requests contains 2 visible data points");
     expect(html).toContain("Use the arrow keys to inspect marks");
@@ -122,7 +123,7 @@ describe("plot root", () => {
       component: () => <Example onApiChange={(value) => value && (api = value)} />,
     });
 
-    expect(container.querySelectorAll("canvas")).toHaveLength(2);
+    expect(container.querySelectorAll("canvas")).toHaveLength(3);
     expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe("Requests");
     const frame = container.querySelector<HTMLElement>('[data-slot="plot-frame"]');
     const graphic = container.querySelector<HTMLElement>('[data-slot="plot-graphic"]');

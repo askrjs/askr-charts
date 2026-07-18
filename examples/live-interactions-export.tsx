@@ -97,15 +97,15 @@ export function LiveInteractionsExport() {
         onViewChange={(next) => setView(next)}
         selection={selection()}
         onSelectionChange={(next) => setSelection(next)}
-        onActivate={(row) => setSelection({ keys: [row.id] })}
         followLatest={{ durationMs: 5 * 60_000, field: "timestamp" }}
         onApiChange={(next) => setApi(next)}
       >
         <LivePlot.Line x="timestamp" y="latencyMs" stroke="service" />
         <LivePlot.Point x="timestamp" y="latencyMs" fill="service" />
         <LivePlot.Legend interactive label="Service" />
-        <LivePlot.Tooltip channels={["timestamp", "latencyMs", "service"]} />
+        <LivePlot.Tooltip mode="x" channels={["timestamp", "latencyMs", "service"]} />
         <LivePlot.Crosshair axes="xy" />
+        <LivePlot.Select mode="toggle" />
         <LivePlot.Zoom axes="xy" wheel pinch pan />
         <LivePlot.Brush axis="x" modifier="shift" />
       </LivePlot.Root>

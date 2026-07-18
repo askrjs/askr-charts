@@ -67,7 +67,7 @@ describe("tier4 Chromium Canvas 2D acceptance", () => {
       try {
         await flushCanvasPaint();
         const frame = root.querySelector<HTMLElement>('[data-slot="plot-frame"]');
-        const base = root.querySelector<HTMLCanvasElement>('[data-slot="plot-canvas-base"]');
+        const base = root.querySelector<HTMLCanvasElement>('[data-slot="plot-canvas-marks"]');
         if (!frame || !base || frame.dataset.markCount !== "4" || base.width === 0) {
           throw new Error("The 100k plot did not complete its Canvas paint.");
         }

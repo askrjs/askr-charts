@@ -54,6 +54,16 @@ describe("canvas scene transitions", () => {
     expect(halfway.segments.map((segment) => segment[0]?.x)).toEqual([10, 120]);
     expect(halfway.points.map(({ key }) => key)).toEqual(["a", "b"]);
   });
+
+  it("should count path vertices as weighted geometry units given the keyed transition cutoff", () => {
+    const points = Array.from({ length: MAX_KEYED_TRANSITION_MARKS + 1 }, (_, index) =>
+      scenePoint(String(index), index, index % 10),
+    );
+    const previous = line("line-0-series-0", [points]);
+    const next = line("line-0-series-1", [points.map((point) => ({ ...point, y: point.y + 1 }))]);
+
+    expect(resolveSceneTransitionMode([previous], [next], new Set(), false)).toBe("single");
+  });
 });
 
 function point(id: string, key: string | number, x: number, y: number): ScenePointMark<Row> {

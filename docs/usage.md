@@ -289,12 +289,15 @@ See [mark-families.tsx](../examples/mark-families.tsx) for one typed source file
   format={(record) => `${record.outcome}: ${record.latencyMs} ms`}
 />
 <RequestPlot.Crosshair axes="xy" />
+<RequestPlot.Select mode="toggle" />
 <RequestPlot.Legend scale="outcomes" interactive position="bottom" />
 <RequestPlot.Zoom axes="xy" wheel pinch pan min={1} max={64} />
 <RequestPlot.Brush axis="x" modifier="shift" />
 ```
 
 Wheel and pinch zoom the enabled axes. Primary drag pans when enabled. Shift-drag brushing avoids taking ordinary drag gestures from the page. Arrow keys inspect marks; Enter or Space activates the focused mark; plus and minus zoom; Home resets the view; and Shift plus an arrow pans. With brushing enabled, Shift+Space toggles the focused row in the selection. Keyboard inspection reads the same hit records as pointer inspection.
+
+`Select` makes pointer and keyboard activation update selection before `onActivate`. Aggregated marks select all contributing source keys. Tooltip `mode="x"` inspects the nearest aligned Cartesian cohort; `mode="mark"` stays on one mark; `auto` chooses by family.
 
 Use `onActivate` for product drill-down:
 
@@ -442,7 +445,7 @@ Tooltips must not carry the only copy of an important value. Use root meter sema
 
 ## Styling and sizing
 
-Use `width` and `height` for deterministic embedded or export dimensions. Otherwise let the root observe its container. Override chart tokens at an app boundary:
+Use `width` as the SSR/initial fallback and `height` for deterministic structural height. Mounted width always observes its container. Override chart tokens at an app boundary:
 
 ```css
 .operations-plot {

@@ -40,14 +40,14 @@ The returned namespace is stable and factory-bound. A root accepts its own primi
 | `title`, `headingLevel`, `description` | Visible semantic heading, configurable level, and supporting text                 |
 | `summary`                              | Text or a callback receiving source, transformed, omitted, and visible counts     |
 | `empty`                                | Empty-state message when no renderable rows remain                                |
-| `width`, `height`                      | Explicit resolved size; otherwise the mounted root responds to its container      |
+| `width`, `height`                      | SSR/initial fallbacks; mounted width responds to its container                     |
 | `class`, `style`, `id`                 | Structural application hooks                                                      |
 | `meter`                                | `{ role: "meter", min, max, value, valueText? }` for bounded bars and arcs        |
 | `view`, `onViewChange`                 | Controlled visible x/y domains                                                    |
 | `defaultView`                          | Initial uncontrolled visible domains                                              |
 | `selection`, `onSelectionChange`       | Controlled selection as stable row keys                                           |
 | `defaultSelection`                     | Initial uncontrolled selection                                                    |
-| `onActivate`                           | Drill-down callback receiving the activated row and stable key                    |
+| `onActivate`                           | Drill-down callback receiving row, key, and immutable interaction target           |
 | `followLatest`                         | Row-count or time window for live plots                                           |
 | `onApiChange`                          | Callback receiving `PlotApi<Row>` after mount and `null` after cleanup            |
 | `locale`                               | Locale used by inferred formatting                                                |
@@ -233,12 +233,13 @@ See [examples/mark-families.tsx](./examples/mark-families.tsx) for all nine mark
 | Primitive   | Contract                                                                |
 | ----------- | ----------------------------------------------------------------------- |
 | `Legend`    | Named scale, label, position, and optional interactive filtering        |
-| `Tooltip`   | Optional channel list and formatter for the resolved channel record     |
+| `Tooltip`   | Structured values with auto, nearest-mark, or shared nearest-x mode      |
 | `Crosshair` | x, y, or xy inspection guide                                            |
+| `Select`    | Single or toggle selection before optional activation                   |
 | `Zoom`      | x, y, or xy zoom with wheel, pinch, and pan toggles plus min/max extent |
 | `Brush`     | x, y, or xy brush; Shift is the default product-safe modifier choice    |
 
-Primary drag pans when pan is enabled. Wheel and pinch zoom the enabled axes. Shift-drag brushing avoids stealing ordinary page gestures. Arrow keys inspect marks; Enter or Space activates the focused mark; plus and minus zoom; Home resets the view; and Shift plus an arrow pans. With brushing enabled, Shift+Space toggles the focused row in the selection. Pointer and keyboard inspection share the same hit records, and `onActivate(row, key)` is the drill-down seam.
+Primary drag pans when pan is enabled. Wheel and pinch zoom the enabled axes. Shift-drag brushing avoids stealing ordinary page gestures. Arrow keys inspect marks; Enter or Space activates the focused mark; plus and minus zoom; Home resets the view; and Shift plus an arrow pans. With `Select`, pointer and keyboard activation update selection first and pass the same immutable `PlotInteractionTarget` to `onActivate(row, key, target)`. Background click and Escape clear selection.
 
 Interactive legends filter their color scale without rewriting caller data. Stable row keys retain selection when rows are updated.
 
@@ -299,7 +300,7 @@ CSV export neutralizes string cells that spreadsheet applications could interpre
 
 Server rendering emits the reserved region, title, description, legend, summary, empty state when applicable, and keyboard/data instructions. It does not emit graphical marks.
 
-After hydration, the root mounts a base canvas for the scene and an overlay canvas for transient interaction. “View data” materializes the full transformed DOM table on demand rather than duplicating every row in the initial document.
+After hydration, the root mounts separate chrome, clipped-mark, and transient-overlay canvases. “View data” materializes the full transformed DOM table on demand rather than duplicating every row in the initial document.
 
 Without JavaScript, users retain the semantic label, summary, legend, and instructions but do not see graphical marks or the on-demand table. Do not make a tooltip or canvas pixel the only source of essential information.
 

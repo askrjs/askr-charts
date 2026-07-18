@@ -8,6 +8,7 @@ import type {
   PlotView,
   PrimitiveKind,
   ScaleProps,
+  ScaleDomainValue,
   ScaleValue,
   StackOptions,
 } from "./model";
@@ -1443,16 +1444,26 @@ function resolveAxes(
         `Axis for ${axisChannel}-channel scale ${scaleName} cannot use ${orientation} orientation.`,
       );
     }
+    const horizontal = orientation === "top" || orientation === "bottom";
+    const numericRange = scale.range.filter((value): value is number => typeof value === "number");
+    const rangeSpan = numericRange.length > 1
+      ? Math.abs(numericRange[numericRange.length - 1]! - numericRange[0]!)
+      : 320;
+    const adaptiveTickCount = Math.max(2, Math.round(rangeSpan / (horizontal ? 80 : 48)));
+    const rawTicks = scale.ticks(spec.tickCount ?? adaptiveTickCount);
+    const tickValues = collisionAwareTickValues(rawTicks, scale, horizontal, rangeSpan);
     const ticks: SceneTick[] = [];
-    for (const value of scale.ticks(spec.tickCount ?? 5)) {
+    for (const value of tickValues) {
       if (typeof value === "boolean") continue;
       const mapped = scale.map(value);
       if (typeof mapped !== "number" || !Number.isFinite(mapped)) continue;
+      const rawLabel = spec.tickFormat?.(value) ?? formatTick(value, locale, scale);
+      const available = horizontal ? Math.max(24, rangeSpan / Math.max(1, tickValues.length)) : 120;
       ticks.push(
         Object.freeze({
           value,
           position: mapped + (scale.bandwidth ?? 0) / 2,
-          label: spec.tickFormat?.(value) ?? formatTick(value, locale, scale),
+          label: ellipsizeTick(rawLabel, available),
         }),
       );
     }
@@ -1468,6 +1479,27 @@ function resolveAxes(
     );
   }
   return result;
+}
+
+function collisionAwareTickValues(
+  values: readonly ScaleDomainValue[],
+  scale: ResolvedScale,
+  horizontal: boolean,
+  rangeSpan: number,
+): readonly ScaleDomainValue[] {
+  if (!horizontal || (scale.type !== "band" && scale.type !== "point") || values.length <= 2)
+    return values;
+  const spacing = rangeSpan / Math.max(1, values.length - 1);
+  const widest = Math.max(...values.map((value) => String(value).length * 7 + 12));
+  const step = Math.max(1, Math.ceil(widest / Math.max(1, spacing)));
+  if (step === 1) return values;
+  const retained = values.filter((_value, index) => index === 0 || index === values.length - 1 || index % step === 0);
+  return Object.freeze(retained);
+}
+
+function ellipsizeTick(label: string, availablePixels: number): string {
+  const characters = Math.max(4, Math.floor(availablePixels / 7));
+  return label.length <= characters ? label : `${label.slice(0, Math.max(1, characters - 1))}…`;
 }
 
 function resolveGrids(
@@ -1613,10 +1645,12 @@ function resolveInteractions(
 ): SceneInteractions {
   const tooltip = singletonDescriptor(descriptors, "Tooltip");
   const crosshair = singletonDescriptor(descriptors, "Crosshair");
+  const select = singletonDescriptor(descriptors, "Select");
   const zoom = singletonDescriptor(descriptors, "Zoom");
   const brush = singletonDescriptor(descriptors, "Brush");
   const tooltipProps = tooltip?.props as Record<string, unknown> | undefined;
   const crosshairProps = crosshair?.props as Record<string, unknown> | undefined;
+  const selectProps = select?.props as Record<string, unknown> | undefined;
   const zoomProps = zoom?.props as Record<string, unknown> | undefined;
   const brushProps = brush?.props as Record<string, unknown> | undefined;
   if (
@@ -1628,6 +1662,17 @@ function resolveInteractions(
   }
   if (tooltipProps?.format != null && typeof tooltipProps.format !== "function") {
     throw new TypeError("Tooltip format must be a function.");
+  }
+  if (
+    tooltipProps?.mode != null &&
+    tooltipProps.mode !== "auto" &&
+    tooltipProps.mode !== "mark" &&
+    tooltipProps.mode !== "x"
+  ) {
+    throw new TypeError(`Invalid Tooltip mode ${String(tooltipProps.mode)}.`);
+  }
+  if (selectProps?.mode != null && selectProps.mode !== "single" && selectProps.mode !== "toggle") {
+    throw new TypeError(`Invalid Select mode ${String(selectProps.mode)}.`);
   }
   const crosshairAxes = crosshair
     ? resolveAxesOption(crosshairProps?.axes, "Crosshair axes")
@@ -1654,6 +1699,8 @@ function resolveInteractions(
   }
   return Object.freeze({
     tooltip: Boolean(tooltip || hasMarks),
+    tooltipMode:
+      tooltipProps?.mode === "mark" || tooltipProps?.mode === "x" ? tooltipProps.mode : "auto",
     tooltipChannels: Array.isArray(tooltipProps?.channels)
       ? Object.freeze([...tooltipProps.channels] as string[])
       : null,
@@ -1662,6 +1709,9 @@ function resolveInteractions(
         ? (tooltipProps.format as (record: Readonly<Record<string, unknown>>) => string)
         : null,
     crosshair: crosshair ? crosshairAxes : null,
+    select: select
+      ? Object.freeze({ mode: selectProps?.mode === "toggle" ? "toggle" : "single" })
+      : null,
     zoom: zoom
       ? Object.freeze({
           axes: zoomAxes,
@@ -1837,16 +1887,23 @@ function compileLines<Row>(
       strokeWidth: Math.max(0.5, finiteOr(mark.props.strokeWidth, 2)),
     });
     marks.push(sceneMark);
-    for (const point of points) {
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
+      const point = points[pointIndex]!;
       const datum = dataByKey.get(point.key) ?? first;
+      const previous = points[pointIndex - 1];
+      const next = points[pointIndex + 1];
+      const polyline = [
+        previous ? { x: (previous.x + point.x) / 2, y: (previous.y + point.y) / 2 } : point,
+        point,
+        next ? { x: (next.x + point.x) / 2, y: (next.y + point.y) / 2 } : point,
+      ];
       hits.push(
         Object.freeze({
           id: `${sceneMark.id}-hit-${hits.length}`,
           shape: Object.freeze({
-            kind: "circle",
-            x: point.x,
-            y: point.y,
-            radius: 5,
+            kind: "polyline",
+            points: Object.freeze(polyline),
+            tolerance: 5,
           }),
           row: datum.row,
           sourceIndex: datum.sourceIndex,
@@ -1910,15 +1967,21 @@ function compileAreas<Row>(
       const point = entry.point;
       const bottom = entry.baseline;
       const datum = entry.datum;
+      const previous = sampledData[index - 1];
+      const next = sampledData[index + 1];
+      const leftX = previous ? (previous.point.x + point.x) / 2 : point.x - 4;
+      const rightX = next ? (next.point.x + point.x) / 2 : point.x + 4;
       hits.push(
         Object.freeze({
           id: `${sceneMark.id}-hit-${index}`,
           shape: Object.freeze({
-            kind: "rect",
-            x: point.x - 4,
-            y: Math.min(point.y, bottom.y),
-            width: 8,
-            height: Math.max(4, Math.abs(bottom.y - point.y)),
+            kind: "polygon",
+            points: Object.freeze([
+              { x: leftX, y: point.y },
+              { x: rightX, y: point.y },
+              { x: rightX, y: bottom.y },
+              { x: leftX, y: bottom.y },
+            ]),
           }),
           row: datum.row,
           sourceIndex: point.sourceIndex,
@@ -2416,7 +2479,7 @@ function compileTexts<Row>(
       Object.freeze({
         id: `${sceneMark.id}-hit`,
         shape: Object.freeze({
-          kind: "rect",
+          kind: "text",
           x: textHitBounds(x, text, toTextAlign(mark.props.align)).x,
           y: textHitBounds(
             x,
@@ -2544,6 +2607,8 @@ function rectHit<Row>(
     row: datum.row,
     sourceIndex: datum.sourceIndex,
     key: datum.key,
+    sourceKeys: datum.sourceKeys,
+    markId: mark.id,
     mark: mark.kind,
     title: mark.title,
     channels: datum.values,
@@ -2710,7 +2775,7 @@ function validateAxisSpec(spec: AxisProps): void {
 
 function singletonDescriptor(
   descriptors: readonly PlotDescriptor[],
-  kind: "Tooltip" | "Crosshair" | "Zoom" | "Brush",
+  kind: "Tooltip" | "Crosshair" | "Select" | "Zoom" | "Brush",
 ): PlotDescriptor | undefined {
   const matches = descriptors.filter((descriptor) => descriptor.kind === kind);
   if (matches.length > 1) {

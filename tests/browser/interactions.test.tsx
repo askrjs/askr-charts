@@ -8,6 +8,7 @@ import {
   createPlot,
   type PlotApi,
   type PlotKey,
+  type PlotInteractionTarget,
   type PlotSelection,
   type PlotView,
 } from "../../src";
@@ -58,6 +59,7 @@ describe("plot interactions and live rows", () => {
     const tooltip = required<HTMLElement>(container, '[data-slot="plot-tooltip"]');
     const point = firstPoint(api.exportSvg());
     dispatchPointer(overlay, "pointermove", point.x, point.y, { pointerId: 1 });
+    await flushPaint();
     expect(tooltip.hidden).toBe(false);
     expect(tooltip.textContent).toContain("y: 4");
     expect(tooltip.dataset.open).toBe("true");
@@ -165,6 +167,60 @@ describe("plot interactions and live rows", () => {
     expect(container.querySelectorAll('[data-slot="plot-data-table"] tbody tr').length).toBe(4);
   });
 
+  it("should select before activation and expose the immutable target given pointer and keyboard gestures", async () => {
+    const events: string[] = [];
+    const targets: PlotInteractionTarget<Row>[] = [];
+    container = mount(
+      <InteractivePlot
+        select="toggle"
+        onSelection={(selection) => events.push(`selection:${selection.keys.join(",")}`)}
+        onActivate={(_row, key, target) => {
+          events.push(`activate:${key}`);
+          targets.push(target);
+        }}
+      />,
+    );
+    await flushPaint();
+    let api!: PlotApi<Row>;
+    cleanupApp(container);
+    container.remove();
+    container = mount(
+      <InteractivePlot
+        select="toggle"
+        onApiChange={(value) => value && (api = value)}
+        onSelection={(selection) => events.push(`selection:${selection.keys.join(",")}`)}
+        onActivate={(_row, key, target) => {
+          events.push(`activate:${key}`);
+          targets.push(target);
+        }}
+      />,
+    );
+    await flushPaint();
+    const point = firstPoint(api.exportSvg());
+    const overlay = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-overlay"]');
+    overlay.dispatchEvent(
+      new MouseEvent("click", {
+        clientX: overlay.getBoundingClientRect().left + point.x,
+        clientY: overlay.getBoundingClientRect().top + point.y,
+        bubbles: true,
+      }),
+    );
+
+    expect(events.slice(-2)).toEqual(["selection:a", "activate:a"]);
+    expect(targets[0]).toMatchObject({ key: "a", sourceKeys: ["a"], origin: "pointer" });
+    expect(Object.isFrozen(targets[0])).toBe(true);
+
+    const graphic = required<HTMLElement>(container, '[data-slot="plot-graphic"]');
+    graphic.focus();
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(events.slice(-2)).toEqual(["selection:", "activate:a"]);
+    expect(targets[1]?.origin).toBe("keyboard");
+
+    graphic.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(events[events.length - 1]).toBe("selection:");
+  });
+
   it("should retain stable keys and repaint given an appended live batch", async () => {
     let api!: PlotApi<Row>;
     let append!: () => void;
@@ -240,13 +296,15 @@ function InteractivePlot({
   onView,
   onSelection,
   onActivate,
+  select,
   followLatest = { rows: 10 },
 }: {
   data?: readonly Row[] | (() => readonly Row[]);
   onApiChange?: (api: PlotApi<Row> | null) => void;
   onView?: (view: PlotView) => void;
   onSelection?: (selection: PlotSelection) => void;
-  onActivate?: (row: Row, key: PlotKey) => void;
+  onActivate?: (row: Row, key: PlotKey, target: PlotInteractionTarget<Row>) => void;
+  select?: "single" | "toggle";
   followLatest?: { rows: number };
 }) {
   return (
@@ -269,6 +327,7 @@ function InteractivePlot({
       <Plot.Legend interactive />
       <Plot.Tooltip />
       <Plot.Crosshair axes="xy" />
+      {select ? <Plot.Select mode={select} /> : null}
       <Plot.Zoom axes="xy" wheel pinch pan />
       <Plot.Brush axis="xy" modifier="shift" />
     </Plot.Root>

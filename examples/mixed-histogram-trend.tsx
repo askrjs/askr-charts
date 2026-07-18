@@ -49,7 +49,6 @@ export function MixedHistogramTrend() {
       label="Latency distribution and P95 trend"
       title="Request latency"
       description="Histogram bins by outcome with the rolling P95 trend on UTC time."
-      diagnostics
       summary={({ sourceRowCount, omittedRowCount }) =>
         `${sourceRowCount} requests; ${omittedRowCount} invalid measurements omitted.`
       }

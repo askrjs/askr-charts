@@ -70,9 +70,10 @@ describe("mounted canvas transitions", () => {
     const element = <TransitionExample />;
     createIsland({ root: container, component: () => element });
     await flushPaint();
+    await delay(140);
 
     let frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    let canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+    let canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
     expect(frame.dataset.animationMode).toBe("none");
     expect(frame.hasAttribute("data-animation-running")).toBe(false);
     legendButton(container, "api").click();
@@ -91,7 +92,7 @@ describe("mounted canvas transitions", () => {
     expect(plotApi?.rows).toHaveLength(3);
 
     frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
     expect(frame.dataset.animationMode, JSON.stringify({ ...frame.dataset })).toBe("keyed");
     expect(frame.getAttribute("data-animation-running")).toBe("true");
     expect(legendButton(container, "api").getAttribute("aria-pressed")).toBe("false");
@@ -112,7 +113,7 @@ describe("mounted canvas transitions", () => {
     ]);
     await flushPaint();
     frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
     expect(frame.dataset.animationMode).toBe("none");
     expect(frame.hasAttribute("data-animation-running")).toBe(false);
 
@@ -123,7 +124,7 @@ describe("mounted canvas transitions", () => {
     ]);
     await flushPaint();
     frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+    canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
     expect(frame.getAttribute("data-animation-running")).toBe("true");
 
     cleanupApp(container);

@@ -51,6 +51,7 @@ export function createPlot<Row>(): PlotFactory<Row> {
     Legend: createDescriptorComponent(factory, "Legend"),
     Tooltip: createDescriptorComponent(factory, "Tooltip"),
     Crosshair: createDescriptorComponent(factory, "Crosshair"),
+    Select: createDescriptorComponent(factory, "Select"),
     Zoom: createDescriptorComponent(factory, "Zoom"),
     Brush: createDescriptorComponent(factory, "Brush"),
   });
@@ -155,8 +156,15 @@ function renderRoot<Row>(
             aria-valuetext={meter?.valueText}
           >
             <canvas
-              data-slot="plot-canvas-base"
-              className="ak-plot-canvas ak-plot-canvas-base"
+              data-slot="plot-canvas-chrome"
+              className="ak-plot-canvas ak-plot-canvas-chrome"
+              width={sceneWidth}
+              height={sceneHeight}
+              aria-hidden="true"
+            />
+            <canvas
+              data-slot="plot-canvas-marks"
+              className="ak-plot-canvas ak-plot-canvas-marks"
               width={sceneWidth}
               height={sceneHeight}
               aria-hidden="true"

@@ -72,9 +72,11 @@ describe("tier3 runtime acceptance hot paths", () => {
     () => {
       queryOffset = (queryOffset + 37) % lineScene.hits.length;
       const shape = lineScene.hits[queryOffset]!.shape;
-      if (shape.kind !== "circle")
-        throw new Error("The line scene produced a non-point hit shape.");
-      consume(hitIndex.query(shape.x, shape.y));
+      if (shape.kind !== "polyline")
+        throw new Error("The line scene produced a non-polyline hit shape.");
+      const point = shape.points[Math.floor(shape.points.length / 2)];
+      if (!point) throw new Error("The line hit polyline is empty.");
+      consume(hitIndex.query(point.x, point.y));
     },
     sampledOptions,
   );

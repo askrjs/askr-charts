@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createHitIndex } from "../src/hit-index";
+import { createHitIndex, projectHitRegions, transformHitRegions } from "../src/hit-index";
 import type { HitRegion, HitShape, SceneMark } from "../src/scene-model";
 
 interface Row {
@@ -66,6 +66,25 @@ describe("spatial hit index", () => {
     expect(index.query(80, 11.5)?.id).toBe("line");
     expect(index.query(30, 60)).toBeNull();
     expect(index.query(80, 13)).toBeNull();
+  });
+
+  it("should match polyline polygon and measured text geometry given exact shapes", () => {
+    const polyline = region("polyline", {
+      kind: "polyline",
+      points: [{ x: 5, y: 5 }, { x: 20, y: 15 }, { x: 35, y: 5 }],
+      tolerance: 2,
+    });
+    const polygon = region("polygon", {
+      kind: "polygon",
+      points: [{ x: 45, y: 5 }, { x: 65, y: 5 }, { x: 55, y: 25 }],
+    });
+    const text = region("text", { kind: "text", x: 70, y: 8, width: 20, height: 12 });
+    const index = createHitIndex([polyline, polygon, text], { width: 100, height: 40 });
+
+    expect(index.query(20, 15)?.id).toBe("polyline");
+    expect(index.query(55, 12)?.id).toBe("polygon");
+    expect(index.query(80, 14)?.id).toBe("text");
+    expect(index.query(55, 28)).toBeNull();
   });
 
   it("should honor wrapped and complete angular spans given ring sectors when querying arcs", () => {
@@ -141,6 +160,55 @@ describe("spatial hit index", () => {
 
     expect(result.map(({ id }) => id)).toEqual(["first", "second"]);
     expect(Object.isFrozen(result)).toBe(true);
+  });
+
+  it("should reject a bounds-only circle overlap given an exact rectangular brush", () => {
+    const circle = region("circle", { kind: "circle", x: 10, y: 10, radius: 8 });
+    const index = createHitIndex([circle], { width: 40, height: 40 });
+
+    expect(index.queryRect(16, 16, 20, 20)).toEqual([]);
+    expect(index.queryRect(14, 14, 20, 20).map(({ id }) => id)).toEqual(["circle"]);
+  });
+
+  it("should align hit geometry to the interpolated presented frame", () => {
+    const hit = region("point-hit", { kind: "circle", x: 90, y: 20, radius: 5 });
+    const mark: SceneMark<Row> = {
+      id: "point-0-point-hit-0",
+      key: "point-hit",
+      sourceIndex: 0,
+      row: { id: "point-hit" },
+      kind: "point",
+      fill: "#2563eb",
+      stroke: "none",
+      opacity: 1,
+      title: "point-hit",
+      series: null,
+      channels: {},
+      x: 45,
+      y: 20,
+      radius: 4,
+      shape: "circle",
+    };
+
+    const projected = projectHitRegions([hit], [mark]);
+    const index = createHitIndex(projected, { width: 100, height: 50 });
+
+    expect(index.query(45, 20)?.key).toBe("point-hit");
+    expect(index.query(90, 20)).toBeNull();
+  });
+
+  it("should apply the gesture transform identically to hit geometry", () => {
+    const hit = region("point", { kind: "circle", x: 20, y: 30, radius: 4 });
+    const transformed = transformHitRegions([hit], {
+      scaleX: 2,
+      scaleY: 0.5,
+      translateX: 10,
+      translateY: 5,
+    });
+    const index = createHitIndex(transformed, { width: 100, height: 100 });
+
+    expect(index.query(50, 20)?.key).toBe("point");
+    expect(index.query(20, 30)).toBeNull();
   });
 
   it("should return empty matches given non-finite coordinates when querying a point", () => {

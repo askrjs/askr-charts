@@ -1,6 +1,10 @@
 import { defineConfig } from "vite-plus";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
+  resolve: {
+    alias: { "@askrjs/charts": fileURLToPath(new URL("./src/index.ts", import.meta.url)) },
+  },
   pack: {
     entry: {
       index: "src/index.ts",
