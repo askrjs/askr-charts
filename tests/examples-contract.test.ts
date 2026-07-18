@@ -7,6 +7,8 @@ const examples = [
   "examples/mixed-histogram-trend.tsx",
   "examples/mark-families.tsx",
   "examples/live-interactions-export.tsx",
+  "examples/catalog.tsx",
+  "examples/catalog-recipes.tsx",
 ].map((file) => resolve(workspace, file));
 
 describe("local plot examples", () => {

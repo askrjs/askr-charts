@@ -156,6 +156,19 @@ export interface PlotSelection {
   keys: readonly PlotKey[];
 }
 
+export type PlotInteractionOrigin = "pointer" | "keyboard";
+
+export interface PlotInteractionTarget<Row> {
+  readonly row: Row;
+  readonly key: PlotKey;
+  readonly sourceKeys: readonly PlotKey[];
+  readonly markKind: "bar" | "line" | "area" | "point" | "arc" | "cell" | "rect" | "rule" | "text";
+  readonly markId: string;
+  readonly series: string | null;
+  readonly channels: Readonly<Record<string, unknown>>;
+  readonly origin: PlotInteractionOrigin;
+}
+
 export interface FollowLatestRows {
   rows: number;
 }
@@ -229,7 +242,7 @@ export interface RootProps<Row> {
   selection?: PlotSelection;
   defaultSelection?: PlotSelection;
   onSelectionChange?: (selection: PlotSelection) => void;
-  onActivate?: (row: Row, key: PlotKey) => void;
+  onActivate?: (row: Row, key: PlotKey, target: PlotInteractionTarget<Row>) => void;
   followLatest?: FollowLatest<Row>;
   onApiChange?: (api: PlotApi<Row> | null) => void;
   locale?: string;
@@ -392,6 +405,11 @@ export interface LegendProps {
 export interface TooltipProps {
   channels?: readonly string[];
   format?: (record: Readonly<Record<string, unknown>>) => string;
+  mode?: "auto" | "mark" | "x";
+}
+
+export interface SelectProps {
+  mode?: "single" | "toggle";
 }
 
 export interface CrosshairProps {
@@ -433,6 +451,7 @@ export interface PlotFactory<Row> {
   readonly Legend: PrimitiveComponent<LegendProps>;
   readonly Tooltip: PrimitiveComponent<TooltipProps>;
   readonly Crosshair: PrimitiveComponent<CrosshairProps>;
+  readonly Select: PrimitiveComponent<SelectProps>;
   readonly Zoom: PrimitiveComponent<ZoomProps>;
   readonly Brush: PrimitiveComponent<BrushProps>;
 }

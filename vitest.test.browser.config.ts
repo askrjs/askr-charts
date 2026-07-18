@@ -1,11 +1,16 @@
 import { askr } from "@askrjs/vite";
 import { playwright } from "vite-plus/test/browser-playwright";
 import { defineConfig } from "vite-plus/test/config";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
+  resolve: {
+    alias: { "@askrjs/charts": fileURLToPath(new URL("./src/index.ts", import.meta.url)) },
+  },
   plugins: [askr()],
   test: {
     globals: true,
+    setupFiles: ["tests/browser/setup.ts"],
     passWithNoTests: true,
     api: {
       host: "127.0.0.1",
@@ -14,7 +19,7 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwright(),
-      instances: [{ browser: "chromium" }],
+      instances: [{ browser: "chromium" }, { browser: "firefox" }, { browser: "webkit" }],
       api: {
         host: "127.0.0.1",
         port: 0,

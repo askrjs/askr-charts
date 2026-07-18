@@ -46,7 +46,7 @@ export function interpolateSceneMarks<Row>(
       used.add(prior);
       result.push(interpolateMark(prior, mark, amount));
     } else {
-      result.push(withOpacity(mark, mark.opacity * amount));
+      result.push(enteringMark(mark, amount));
     }
   }
 
@@ -64,9 +64,50 @@ function countVisibleMarks<Row>(
 ): number {
   let count = 0;
   for (const mark of marks) {
-    if (!mark.series || !hiddenSeries.has(mark.series)) count += 1;
+    if (!mark.series || !hiddenSeries.has(mark.series)) count += geometryWeight(mark);
   }
   return count;
+}
+
+function geometryWeight<Row>(mark: SceneMark<Row>): number {
+  if (mark.kind === "line")
+    return Math.max(1, mark.segments.reduce((sum, segment) => sum + segment.length, 0));
+  if (mark.kind === "area") return Math.max(1, mark.points.length + mark.baseline.length);
+  return 1;
+}
+
+function enteringMark<Row>(mark: SceneMark<Row>, amount: number): SceneMark<Row> {
+  const opacity = mark.opacity * amount;
+  switch (mark.kind) {
+    case "bar":
+      return { ...mark, opacity, y: mark.y + mark.height * (1 - amount), height: mark.height * amount };
+    case "cell":
+    case "rect":
+      return {
+        ...mark,
+        opacity,
+        x: mark.x + (mark.width * (1 - amount)) / 2,
+        y: mark.y + (mark.height * (1 - amount)) / 2,
+        width: mark.width * amount,
+        height: mark.height * amount,
+      };
+    case "point":
+      return { ...mark, opacity, radius: mark.radius * amount };
+    case "arc":
+      return { ...mark, opacity, endAngle: mark.startAngle + (mark.endAngle - mark.startAngle) * amount };
+    case "rule":
+      return { ...mark, opacity, x2: mark.x1 + (mark.x2 - mark.x1) * amount, y2: mark.y1 + (mark.y2 - mark.y1) * amount };
+    case "line": {
+      const segments = mark.segments.map((segment) => segment.slice(0, Math.max(1, Math.ceil(segment.length * amount))));
+      return { ...mark, opacity, segments, points: segments.flat() };
+    }
+    case "area": {
+      const length = Math.max(1, Math.ceil(mark.points.length * amount));
+      return { ...mark, opacity, points: mark.points.slice(0, length), baseline: mark.baseline.slice(0, length) };
+    }
+    case "text":
+      return { ...mark, opacity };
+  }
 }
 
 function marksVisuallyChanged<Row>(

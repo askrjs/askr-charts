@@ -127,6 +127,22 @@ export type HitShape =
       readonly x2: number;
       readonly y2: number;
       readonly tolerance: number;
+    }
+  | {
+      readonly kind: "polyline";
+      readonly points: readonly { readonly x: number; readonly y: number }[];
+      readonly tolerance: number;
+    }
+  | {
+      readonly kind: "polygon";
+      readonly points: readonly { readonly x: number; readonly y: number }[];
+    }
+  | {
+      readonly kind: "text";
+      readonly x: number;
+      readonly y: number;
+      readonly width: number;
+      readonly height: number;
     };
 
 export interface HitRegion<Row> {
@@ -135,6 +151,8 @@ export interface HitRegion<Row> {
   readonly row: Row;
   readonly sourceIndex: number;
   readonly key: PlotKey;
+  readonly sourceKeys?: readonly PlotKey[];
+  readonly markId?: string;
   readonly mark: SceneMark<Row>["kind"];
   readonly title: string;
   readonly channels: Readonly<Record<string, unknown>>;
@@ -180,9 +198,11 @@ export interface SceneLegend {
 
 export interface SceneInteractions {
   readonly tooltip: boolean;
+  readonly tooltipMode: "auto" | "mark" | "x";
   readonly tooltipChannels?: readonly string[] | null;
   readonly tooltipFormat?: ((record: Readonly<Record<string, unknown>>) => string) | null;
   readonly crosshair: "x" | "y" | "xy" | null;
+  readonly select: { readonly mode: "single" | "toggle" } | null;
   readonly zoom: {
     readonly axes: "x" | "y" | "xy";
     readonly min: number;

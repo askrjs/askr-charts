@@ -1,11 +1,13 @@
 import { compilePlotScene } from "./compiler";
 import type { PlotDescriptor } from "./descriptors";
 import { serializePlotData, serializePlotSvg } from "./export";
-import { createHitIndex, type HitIndex } from "./hit-index";
+import { createHitIndex, projectHitRegions, transformHitRegions, type HitIndex } from "./hit-index";
 import type {
   FollowLatest,
   PlotApi,
   PlotDataExportOptions,
+  PlotInteractionOrigin,
+  PlotInteractionTarget,
   PlotKey,
   PlotPngExportOptions,
   PlotRowKey,
@@ -17,6 +19,8 @@ import type {
 } from "./model";
 import {
   renderInteractionOverlay,
+  renderPlotChrome,
+  renderPlotMarks,
   renderPlotScene,
   resizeCanvas,
   resolvePlotTheme,
@@ -75,9 +79,11 @@ interface DragState {
 
 interface ControllerState<Row> {
   host: HTMLElement;
-  baseCanvas: HTMLCanvasElement;
+  chromeCanvas: HTMLCanvasElement;
+  marksCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
   tooltip: HTMLElement | null;
+  tooltipHideTimer: ReturnType<typeof setTimeout> | null;
   config: PlotRuntimeConfig<Row>;
   scene: PlotScene<Row>;
   hitIndex: HitIndex<Row>;
@@ -88,6 +94,7 @@ interface ControllerState<Row> {
   focusIndex: number;
   focusKeyToRestore: PlotKey | null;
   hover: HitRegion<Row> | null;
+  hoverCohort: readonly HitRegion<Row>[];
   drag: DragState | null;
   pointers: Map<number, { x: number; y: number }>;
   pinchDistance: number | null;
@@ -101,6 +108,8 @@ interface ControllerState<Row> {
   compileQueued: boolean;
   compileDeferredForGesture: boolean;
   frameHandle: number | null;
+  inspectionFrameHandle: number | null;
+  pendingInspectionPoint: { x: number; y: number } | null;
   pendingDataTransition: boolean;
   hasPaintedScene: boolean;
   transitionScene: PlotScene<Row> | null;
@@ -116,7 +125,8 @@ export function createPlotController<Row>(
   host: HTMLElement,
   config: PlotRuntimeConfig<Row>,
 ): PlotController<Row> {
-  const baseCanvas = requireCanvas(host, "plot-canvas-base");
+  const chromeCanvas = requireCanvas(host, "plot-canvas-chrome");
+  const marksCanvas = requireCanvas(host, "plot-canvas-marks");
   const overlayCanvas = requireCanvas(host, "plot-canvas-overlay");
   const initialWidth = measureWidth(host, config.props.width);
   const initialHeight = measureHeight(host, config.props.height);
@@ -145,9 +155,11 @@ export function createPlotController<Row>(
   const api = createApi(state);
   Object.assign(state, {
     host,
-    baseCanvas,
+    chromeCanvas,
+    marksCanvas,
     overlayCanvas,
     tooltip: host.querySelector('[data-slot="plot-tooltip"]'),
+    tooltipHideTimer: null,
     config,
     scene: initialScene,
     hitIndex: createHitIndex([], {
@@ -163,6 +175,7 @@ export function createPlotController<Row>(
     focusIndex: -1,
     focusKeyToRestore: runtimeSnapshot?.focusedKey ?? null,
     hover: null,
+    hoverCohort: Object.freeze([]),
     drag: null,
     pointers: new Map<number, { x: number; y: number }>(),
     pinchDistance: null,
@@ -176,6 +189,8 @@ export function createPlotController<Row>(
     compileQueued: false,
     compileDeferredForGesture: false,
     frameHandle: null,
+    inspectionFrameHandle: null,
+    pendingInspectionPoint: null,
     pendingDataTransition: false,
     hasPaintedScene: config.transitionFromScene !== undefined,
     transitionScene: null,
@@ -290,6 +305,9 @@ function bindController<Row>(state: ControllerState<Row>): void {
   listen(state, overlay, "pointerdown", (event) => onPointerDown(state, event as PointerEvent));
   listen(state, overlay, "pointerup", (event) => onPointerUp(state, event as PointerEvent));
   listen(state, overlay, "pointercancel", (event) => onPointerCancel(state, event as PointerEvent));
+  listen(state, overlay, "lostpointercapture", (event) =>
+    onPointerCancel(state, event as PointerEvent),
+  );
   listen(state, overlay, "pointerleave", (event) => onPointerLeave(state, event as PointerEvent));
   listen(state, overlay, "click", (event) => onClick(state, event as MouseEvent));
   listen(state, state.host, "keydown", (event) => onKeyDown(state, event as KeyboardEvent));
@@ -426,6 +444,7 @@ function installSceneAndPaint<Row>(
   previousSceneOverride?: PlotScene<Row>,
 ): void {
   const previousPaintedScene = previousSceneOverride ?? state.transitionScene ?? state.scene;
+  const wasPainted = state.hasPaintedScene;
   const focusedKey =
     state.focusKeyToRestore ??
     (state.focusIndex >= 0 ? (filteredHits(state)[state.focusIndex]?.key ?? null) : null);
@@ -440,7 +459,8 @@ function installSceneAndPaint<Row>(
   }
   state.theme = resolvePlotTheme(state.host);
   const ratio = devicePixelRatioValue();
-  resizeCanvas(state.baseCanvas, width, height, ratio);
+  resizeCanvas(state.chromeCanvas, width, height, ratio);
+  resizeCanvas(state.marksCanvas, width, height, ratio);
   resizeCanvas(state.overlayCanvas, width, height, ratio);
   state.scene = Object.freeze({ ...state.scene, pixelRatio: ratio });
   if (state.config.props.view === undefined && state.internalView === undefined) {
@@ -452,9 +472,9 @@ function installSceneAndPaint<Row>(
   clearCanvasTransform(state);
   state.host.setAttribute("data-mark-count", String(state.scene.marks.length));
   const transitionMode =
-    animateDataUpdate && state.hasPaintedScene
+    animateDataUpdate || !wasPainted
       ? resolveSceneTransitionMode(
-          previousPaintedScene.marks,
+          wasPainted ? previousPaintedScene.marks : [],
           state.scene.marks,
           state.hiddenSeries,
           prefersReducedMotion(state),
@@ -463,7 +483,10 @@ function installSceneAndPaint<Row>(
   state.hasPaintedScene = true;
   setTransitionMode(state, transitionMode);
   if (transitionMode === "keyed") {
-    startKeyedSceneTransition(state, previousPaintedScene, state.scene);
+    const previous = wasPainted
+      ? previousPaintedScene
+      : ({ ...state.scene, marks: Object.freeze([]), hits: Object.freeze([]) } as PlotScene<Row>);
+    startKeyedSceneTransition(state, previous, state.scene);
   } else {
     paintBaseScene(state, state.scene);
     if (transitionMode === "single") startWholeCanvasTransition(state);
@@ -532,9 +555,11 @@ function paintBase<Row>(state: ControllerState<Row>): void {
 }
 
 function paintBaseScene<Row>(state: ControllerState<Row>, scene: PlotScene<Row>): void {
-  const context = state.baseCanvas.getContext("2d");
-  if (!context) return;
-  renderPlotScene(context, scene, state.theme, {
+  const chrome = state.chromeCanvas.getContext("2d");
+  const marks = state.marksCanvas.getContext("2d");
+  if (chrome) renderPlotChrome(chrome, scene, state.theme);
+  if (!marks) return;
+  renderPlotMarks(marks, scene, state.theme, {
     hiddenSeries: state.hiddenSeries,
     selectedKeys: selectionKeys(state),
   });
@@ -567,7 +592,7 @@ function startKeyedSceneTransition<Row>(
   const step = (timestamp: number) => {
     if (state.destroyed) return;
     const linearProgress = Math.max(0, Math.min(1, (timestamp - startedAt) / duration));
-    const easedProgress = 1 - Math.pow(1 - linearProgress, 3);
+    const easedProgress = transitionEasing(state.host, linearProgress);
     paintKeyedTransitionFrame(state, next, previousMarks, nextMarks, easedProgress);
     if (linearProgress < 1) {
       state.transitionFrameHandle = requestAnimationFrame(step);
@@ -575,6 +600,11 @@ function startKeyedSceneTransition<Row>(
     }
     state.transitionFrameHandle = null;
     state.transitionScene = null;
+    setTransitionMode(state, "none");
+    state.hitIndex = createHitIndex(state.scene.hits, {
+      width: state.scene.width,
+      height: state.scene.height,
+    });
     state.host.removeAttribute("data-animation-running");
   };
   state.transitionFrameHandle = requestAnimationFrame(step);
@@ -591,8 +621,11 @@ function paintKeyedTransitionFrame<Row>(
     ...next,
     marks: interpolateSceneMarks(previousMarks, nextMarks, progress),
   } as PlotScene<Row>;
-  state.transitionScene = frameScene;
-  paintBaseScene(state, frameScene);
+  const hits = projectHitRegions(next.hits, frameScene.marks);
+  const presentedScene = Object.freeze({ ...frameScene, hits });
+  state.transitionScene = presentedScene;
+  state.hitIndex = createHitIndex(hits, { width: next.width, height: next.height });
+  paintBaseScene(state, presentedScene);
 }
 
 function visibleTransitionMarks<Row>(
@@ -605,12 +638,12 @@ function visibleTransitionMarks<Row>(
 
 function startWholeCanvasTransition<Row>(state: ControllerState<Row>): void {
   const duration = transitionDurationMs(state.host);
-  const animate = state.baseCanvas.animate;
+  const animate = state.marksCanvas.animate;
   if (duration <= 0 || typeof animate !== "function") {
     setTransitionMode(state, "none");
     return;
   }
-  const animation = animate.call(state.baseCanvas, [{ opacity: 0.72 }, { opacity: 1 }], {
+  const animation = animate.call(state.marksCanvas, [{ opacity: 0.72 }, { opacity: 1 }], {
     duration,
     easing: "cubic-bezier(0.22, 1, 0.36, 1)",
   });
@@ -659,6 +692,18 @@ function transitionDurationMs(element: Element): number {
   return 160;
 }
 
+function transitionEasing(element: Element, progress: number): number {
+  if (typeof getComputedStyle !== "function") return 1 - Math.pow(1 - progress, 3);
+  const easing = getComputedStyle(element).getPropertyValue("--ak-chart-transition-easing").trim();
+  if (easing === "linear") return progress;
+  if (easing === "ease-in") return progress * progress;
+  if (easing === "ease-in-out")
+    return progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+  return 1 - Math.pow(1 - progress, 3);
+}
+
 function animationNow(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
@@ -688,8 +733,10 @@ function interactionOverlayState<Row>(state: ControllerState<Row>): PlotInteract
       : null;
   const focused = filteredHits(state)[state.focusIndex];
   return {
+    clip: state.scene.plotArea,
     crosshair,
     brush,
+    hover: state.hoverCohort.map((hit) => hit.shape),
     focus: focused ? { ...hitCenter(focused), radius: 6 } : null,
   };
 }
@@ -733,13 +780,40 @@ function onPointerMove<Row>(state: ControllerState<Row>, event: PointerEvent): v
     return;
   }
 
-  state.hover = queryVisibleHit(state, point.x, point.y);
-  updateTooltip(state, point.x, point.y);
-  paintOverlay(state);
+  schedulePointerInspection(state, point);
+}
+
+function schedulePointerInspection<Row>(
+  state: ControllerState<Row>,
+  point: { x: number; y: number },
+): void {
+  state.pendingInspectionPoint = point;
+  if (state.inspectionFrameHandle != null) return;
+  const inspect = () => {
+    state.inspectionFrameHandle = null;
+    const pending = state.pendingInspectionPoint;
+    state.pendingInspectionPoint = null;
+    if (!pending || state.destroyed) return;
+    const cohort = inspectionHits(state, pending.x, pending.y);
+    state.hoverCohort = cohort;
+    state.hover = cohort[0] ?? null;
+    state.host.dataset.cursor = state.hover
+      ? state.config.props.onActivate || state.scene.interactions.select
+        ? "action"
+        : "inspect"
+      : "default";
+    updateTooltip(state, pending.x, pending.y);
+    paintOverlay(state);
+  };
+  state.inspectionFrameHandle =
+    typeof requestAnimationFrame === "function"
+      ? requestAnimationFrame(inspect)
+      : (setTimeout(inspect, 0) as unknown as number);
 }
 
 function onPointerDown<Row>(state: ControllerState<Row>, event: PointerEvent): void {
   const point = eventPoint(state.overlayCanvas, event);
+  if (!pointInPlotArea(state.scene, point)) return;
   state.suppressClick = false;
   state.pointers.set(event.pointerId, point);
   try {
@@ -861,6 +935,8 @@ function onPointerLeave<Row>(state: ControllerState<Row>, event: PointerEvent): 
   }
   if (!state.drag) {
     state.hover = null;
+    state.hoverCohort = Object.freeze([]);
+    state.host.dataset.cursor = "default";
     hideTooltip(state);
     paintOverlay(state);
   }
@@ -868,9 +944,11 @@ function onPointerLeave<Row>(state: ControllerState<Row>, event: PointerEvent): 
 
 function onWheel<Row>(state: ControllerState<Row>, event: WheelEvent): void {
   if (!state.scene.interactions.zoom?.wheel || !hasContinuousZoomAxis(state)) return;
-  event.preventDefault();
   const point = eventPoint(state.overlayCanvas, event);
-  const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY * 0.002)));
+  if (!pointInPlotArea(state.scene, point)) return;
+  event.preventDefault();
+  const modeMultiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? state.scene.height : 1;
+  const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY * modeMultiplier * 0.002)));
   zoomAt(state, point.x, point.y, factor, true);
 }
 
@@ -904,7 +982,8 @@ function onClick<Row>(state: ControllerState<Row>, event: MouseEvent): void {
   }
   const point = eventPoint(state.overlayCanvas, event);
   const hit = queryVisibleHit(state, point.x, point.y);
-  if (hit) state.config.props.onActivate?.(hit.row, hit.key);
+  if (hit) activateHit(state, hit, "pointer");
+  else if (state.scene.interactions.select) setSelection(state, new Set());
 }
 
 function onKeyDown<Row>(state: ControllerState<Row>, event: KeyboardEvent): void {
@@ -951,17 +1030,48 @@ function onKeyDown<Row>(state: ControllerState<Row>, event: KeyboardEvent): void
     const hit = hits[state.focusIndex];
     if (hit) {
       event.preventDefault();
-      state.config.props.onActivate?.(hit.row, hit.key);
+      activateHit(state, hit, "keyboard");
     }
   } else if (event.key === "Escape") {
     state.focusIndex = -1;
     state.hover = null;
+    state.hoverCohort = Object.freeze([]);
+    if (state.scene.interactions.select) setSelection(state, new Set());
     hideTooltip(state);
     paintOverlay(state);
   } else if (zoom && event.key === "Home") {
     event.preventDefault();
     resetView(state);
   }
+}
+
+function activateHit<Row>(
+  state: ControllerState<Row>,
+  hit: HitRegion<Row>,
+  origin: PlotInteractionOrigin,
+): void {
+  const sourceKeys = sourceKeysForHit(state, hit);
+  const select = state.scene.interactions.select;
+  if (select) {
+    const keys = select.mode === "toggle" ? new Set(selectionKeys(state)) : new Set<PlotKey>();
+    const allSelected = sourceKeys.every((key) => keys.has(key));
+    for (const key of sourceKeys) {
+      if (select.mode === "toggle" && allSelected) keys.delete(key);
+      else keys.add(key);
+    }
+    setSelection(state, keys);
+  }
+  const target: PlotInteractionTarget<Row> = Object.freeze({
+    row: hit.row,
+    key: hit.key,
+    sourceKeys,
+    markKind: hit.mark,
+    markId: hit.markId ?? hit.id.replace(/-hit(?:-\d+)?$/, ""),
+    series: hit.series,
+    channels: hit.channels,
+    origin,
+  });
+  state.config.props.onActivate?.(hit.row, hit.key, target);
 }
 
 function panWithKeyboard<Row>(
@@ -989,14 +1099,20 @@ function panWithKeyboard<Row>(
 
 function toggleFocusedSelection<Row>(state: ControllerState<Row>, hit: HitRegion<Row>): void {
   const keys = new Set(selectionKeys(state));
-  const record = state.scene.transformedRows.find((candidate) => candidate.key === hit.key);
-  const sourceKeys = record?.sourceKeys ?? [hit.key];
+  const sourceKeys = sourceKeysForHit(state, hit);
   const selected = sourceKeys.every((key) => keys.has(key));
   for (const key of sourceKeys) {
     if (selected) keys.delete(key);
     else keys.add(key);
   }
   setSelection(state, keys);
+}
+
+function sourceKeysForHit<Row>(state: ControllerState<Row>, hit: HitRegion<Row>): readonly PlotKey[] {
+  if (hit.sourceKeys && hit.sourceKeys.length > 0) return hit.sourceKeys;
+  return (
+    state.scene.transformedRows.find((candidate) => candidate.key === hit.key)?.sourceKeys ?? [hit.key]
+  );
 }
 
 function zoomAt<Row>(
@@ -1057,7 +1173,6 @@ function zoomScale(
   const rangeSpan = rangeStop - rangeStart;
   if (rangeSpan === 0 || stop === start) return domain;
   const fraction = Math.max(0, Math.min(1, (pixel - rangeStart) / rangeSpan));
-  const center = start + (stop - start) * fraction;
   const fullStart = numericValue(fullDomain?.[0]);
   const fullStop = numericValue(fullDomain?.[1]);
   const fullSpan =
@@ -1066,8 +1181,11 @@ function zoomScale(
   const upperSpan = fullSpan / Math.max(1, minimumZoom);
   const span = Math.max(lowerSpan, Math.min(upperSpan, Math.abs(stop - start) * factor));
   const direction = stop >= start ? 1 : -1;
-  const nextStart = center - direction * span * fraction;
-  const nextStop = nextStart + direction * span;
+  const requestedFactor = span / Math.abs(stop - start);
+  const invertedStart = scale.invert?.(pixel + (rangeStart - pixel) * requestedFactor);
+  const invertedStop = scale.invert?.(pixel + (rangeStop - pixel) * requestedFactor);
+  const nextStart = numericValue(invertedStart) ?? start + direction * span * -fraction;
+  const nextStop = numericValue(invertedStop) ?? nextStart + direction * span;
   const bounded = clampViewDomain(nextStart, nextStop, fullStart, fullStop);
   return [restoreValue(domain[0], bounded[0]), restoreValue(domain[1], bounded[1])];
 }
@@ -1111,21 +1229,32 @@ function panScale(
   currentPixel: number,
 ): readonly [ScaleValue, ScaleValue] | undefined {
   if (!scale?.invert || !domain) return domain;
-  const startValue = scale.invert(startPixel);
-  const currentValue = scale.invert(currentPixel);
-  const start = numericValue(startValue);
-  const current = numericValue(currentValue);
+  const rangeStart = numericValue(scale.range[0]);
+  const rangeStop = numericValue(scale.range[scale.range.length - 1]);
   const domainStart = numericValue(domain[0]);
   const domainStop = numericValue(domain[1]);
-  if (start == null || current == null || domainStart == null || domainStop == null) return domain;
-  const delta = start - current;
+  if (rangeStart == null || rangeStop == null || domainStart == null || domainStop == null) return domain;
+  const pixelDelta = startPixel - currentPixel;
+  const shiftedStart = numericValue(scale.invert(rangeStart + pixelDelta));
+  const shiftedStop = numericValue(scale.invert(rangeStop + pixelDelta));
+  if (shiftedStart == null || shiftedStop == null) return domain;
   const bounded = clampViewDomain(
-    domainStart + delta,
-    domainStop + delta,
+    shiftedStart,
+    shiftedStop,
     numericValue(fullDomain?.[0]),
     numericValue(fullDomain?.[1]),
   );
   return [restoreValue(domain[0], bounded[0]), restoreValue(domain[1], bounded[1])];
+}
+
+function pointInPlotArea<Row>(scene: PlotScene<Row>, point: { x: number; y: number }): boolean {
+  const area = scene.plotArea;
+  return (
+    point.x >= area.x &&
+    point.x <= area.x + area.width &&
+    point.y >= area.y &&
+    point.y <= area.y + area.height
+  );
 }
 
 function setView<Row>(
@@ -1232,22 +1361,37 @@ function updateTooltip<Row>(state: ControllerState<Row>, x: number, y: number): 
     return;
   }
   const channels = state.scene.interactions.tooltipChannels;
-  const record = Object.fromEntries(
-    Object.entries(state.hover.channels).filter(
-      ([channel]) => channels == null || channels.includes(channel),
-    ),
-  );
+  const record = tooltipRecord(state.hover, channels);
   const formatted = state.scene.interactions.tooltipFormat?.(Object.freeze(record));
+  if (state.tooltipHideTimer != null) clearTimeout(state.tooltipHideTimer);
+  state.tooltipHideTimer = null;
   tooltip.hidden = false;
   tooltip.dataset.open = "true";
   tooltip.setAttribute("aria-hidden", "false");
-  tooltip.textContent =
-    formatted ??
-    (channels == null
-      ? state.hover.title
-      : Object.entries(record)
-          .map(([channel, value]) => `${channel}: ${formatTooltipValue(value)}`)
-          .join(", "));
+  if (formatted != null) {
+    tooltip.textContent = formatted;
+  } else {
+    const heading = document.createElement("strong");
+    heading.className = "ak-plot-tooltip-heading";
+    heading.dataset.slot = "plot-tooltip-heading";
+    heading.textContent = state.hover.title;
+    const rows = document.createElement("dl");
+    rows.className = "ak-plot-tooltip-values";
+    rows.dataset.slot = "plot-tooltip-values";
+    const cohort = state.hoverCohort.length > 0 ? state.hoverCohort : [state.hover];
+    for (const hit of cohort) {
+      const values = tooltipRecord(hit, channels);
+      const entries = Object.entries(values);
+      for (const [channel, value] of entries) {
+        const term = document.createElement("dt");
+        const detail = document.createElement("dd");
+        term.textContent = hit.series ? `${hit.series} · ${channel}: ` : `${channel}: `;
+        detail.textContent = formatTooltipValue(value, state.config.props.locale);
+        rows.append(term, detail);
+      }
+    }
+    tooltip.replaceChildren(heading, rows);
+  }
   const frame = tooltip.offsetParent instanceof HTMLElement ? tooltip.offsetParent : state.host;
   const frameWidth = frame.clientWidth || state.scene.width;
   const frameHeight = frame.clientHeight || state.scene.height;
@@ -1259,6 +1403,17 @@ function updateTooltip<Row>(state: ControllerState<Row>, x: number, y: number): 
   tooltip.style.transform = "none";
   tooltip.style.left = `${Math.max(8, left)}px`;
   tooltip.style.top = `${Math.max(8, top)}px`;
+}
+
+function tooltipRecord<Row>(
+  hit: HitRegion<Row>,
+  channels: readonly string[] | null | undefined,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(hit.channels).filter(
+      ([channel]) => channels == null || channels.includes(channel),
+    ),
+  );
 }
 
 function announceFocusedHit<Row>(state: ControllerState<Row>, hit: HitRegion<Row> | null): void {
@@ -1273,16 +1428,52 @@ function announceFocusedHit<Row>(state: ControllerState<Row>, hit: HitRegion<Row
 
 function hideTooltip<Row>(state: ControllerState<Row>): void {
   if (!state.tooltip) return;
-  state.tooltip.hidden = true;
   state.tooltip.removeAttribute("data-open");
   state.tooltip.setAttribute("aria-hidden", "true");
+  if (state.tooltip.hidden) return;
+  if (state.tooltipHideTimer != null) clearTimeout(state.tooltipHideTimer);
+  const tooltip = state.tooltip;
+  state.tooltipHideTimer = setTimeout(() => {
+    tooltip.hidden = true;
+    state.tooltipHideTimer = null;
+  }, prefersReducedMotion(state) ? 0 : transitionDurationMs(state.host));
 }
 
-function formatTooltipValue(value: unknown): string {
-  if (value instanceof Date) return value.toISOString();
+function formatTooltipValue(value: unknown, locale?: string): string {
+  if (value instanceof Date)
+    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(value);
   if (value == null) return "missing";
   if (typeof value === "number" && !Number.isFinite(value)) return "missing";
+  if (typeof value === "number") return new Intl.NumberFormat(locale).format(value);
   return String(value);
+}
+
+function inspectionHits<Row>(
+  state: ControllerState<Row>,
+  x: number,
+  y: number,
+): readonly HitRegion<Row>[] {
+  const direct = queryVisibleHit(state, x, y);
+  const mode = state.scene.interactions.tooltipMode;
+  if (mode === "mark" || (mode === "auto" && direct && !isSharedXMark(direct))) {
+    return Object.freeze(direct ? [direct] : []);
+  }
+  const area = state.scene.plotArea;
+  if (x < area.x || x > area.x + area.width || y < area.y || y > area.y + area.height) {
+    return Object.freeze([]);
+  }
+  const candidates = filteredHits(state).filter(isSharedXMark);
+  if (candidates.length === 0) return Object.freeze(direct ? [direct] : []);
+  let nearestX = Number.POSITIVE_INFINITY;
+  for (const hit of candidates) nearestX = Math.min(nearestX, Math.abs(hitCenter(hit).x - x));
+  const cohort = candidates
+    .filter((hit) => Math.abs(Math.abs(hitCenter(hit).x - x) - nearestX) <= 0.75)
+    .sort((left, right) => Math.abs(hitCenter(left).y - y) - Math.abs(hitCenter(right).y - y));
+  return Object.freeze(cohort);
+}
+
+function isSharedXMark<Row>(hit: HitRegion<Row>): boolean {
+  return hit.mark !== "arc" && hit.mark !== "rect";
 }
 
 function queryVisibleHit<Row>(
@@ -1298,7 +1489,13 @@ function queryVisibleHit<Row>(
 }
 
 function filteredHits<Row>(state: ControllerState<Row>): readonly HitRegion<Row>[] {
-  return state.scene.hits.filter((hit) => !hit.series || !state.hiddenSeries.has(hit.series));
+  const unique = new Map<string, HitRegion<Row>>();
+  for (const hit of state.scene.hits) {
+    if (hit.series && state.hiddenSeries.has(hit.series)) continue;
+    const identity = `${hit.markId ?? hit.id.replace(/-hit(?:-\d+)?$/, "")}:${String(hit.key)}`;
+    if (!unique.has(identity)) unique.set(identity, hit);
+  }
+  return Object.freeze([...unique.values()]);
 }
 
 function hitCenter<Row>(hit: HitRegion<Row>): { x: number; y: number } {
@@ -1306,6 +1503,14 @@ function hitCenter<Row>(hit: HitRegion<Row>): { x: number; y: number } {
   if (shape.kind === "rect") return { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 };
   if (shape.kind === "circle") return { x: shape.x, y: shape.y };
   if (shape.kind === "line") return { x: (shape.x1 + shape.x2) / 2, y: (shape.y1 + shape.y2) / 2 };
+  if (shape.kind === "polyline" || shape.kind === "polygon") {
+    const count = Math.max(1, shape.points.length);
+    return {
+      x: shape.points.reduce((sum, point) => sum + point.x, 0) / count,
+      y: shape.points.reduce((sum, point) => sum + point.y, 0) / count,
+    };
+  }
+  if (shape.kind === "text") return { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 };
   const angle = (shape.startAngle + shape.endAngle) / 2;
   const radius = (shape.innerRadius + shape.outerRadius) / 2;
   return { x: shape.cx + Math.cos(angle) * radius, y: shape.cy + Math.sin(angle) * radius };
@@ -1410,15 +1615,51 @@ function applyCanvasViewTransform<Row>(
   view: PlotView,
   axes: "x" | "y" | "xy",
 ): void {
-  state.baseCanvas.style.transformOrigin = "0 0";
-  state.baseCanvas.style.transform = resolvePlotViewTransform(state.scene, view, axes);
-  state.baseCanvas.style.willChange = "transform";
+  const x = axes.includes("x")
+    ? axisViewTransform(primaryScale(state.scene, "x"), view.x)
+    : { scale: 1, translate: 0 };
+  const y = axes.includes("y")
+    ? axisViewTransform(primaryScale(state.scene, "y"), view.y)
+    : { scale: 1, translate: 0 };
+  state.marksCanvas.style.transformOrigin = "0 0";
+  state.marksCanvas.style.transform = `matrix(${x.scale}, 0, 0, ${y.scale}, ${x.translate}, ${y.translate})`;
+  state.marksCanvas.style.willChange = "transform";
+  const hits = transformHitRegions(state.scene.hits, {
+    scaleX: x.scale,
+    scaleY: y.scale,
+    translateX: x.translate,
+    translateY: y.translate,
+  });
+  state.hitIndex = createHitIndex(hits, { width: state.scene.width, height: state.scene.height });
+  paintTransientChrome(state, x, y);
+}
+
+function paintTransientChrome<Row>(
+  state: ControllerState<Row>,
+  x: { scale: number; translate: number },
+  y: { scale: number; translate: number },
+): void {
+  const axes = state.scene.axes.map((axis) => {
+    const horizontal = axis.orientation === "top" || axis.orientation === "bottom";
+    const transform = horizontal ? x : y;
+    return { ...axis, ticks: axis.ticks.map((tick) => ({ ...tick, position: tick.position * transform.scale + transform.translate })) };
+  });
+  const grids = state.scene.grids.map((grid) => {
+    const transform = grid.axis === "x" ? x : y;
+    return { ...grid, positions: grid.positions.map((position) => position * transform.scale + transform.translate) };
+  });
+  const context = state.chromeCanvas.getContext("2d");
+  if (context) renderPlotChrome(context, { ...state.scene, axes, grids }, state.theme);
 }
 
 function clearCanvasTransform<Row>(state: ControllerState<Row>): void {
-  state.baseCanvas.style.removeProperty("transform");
-  state.baseCanvas.style.removeProperty("transform-origin");
-  state.baseCanvas.style.removeProperty("will-change");
+  state.marksCanvas.style.removeProperty("transform");
+  state.marksCanvas.style.removeProperty("transform-origin");
+  state.marksCanvas.style.removeProperty("will-change");
+  state.hitIndex = createHitIndex(state.scene.hits, {
+    width: state.scene.width,
+    height: state.scene.height,
+  });
 }
 
 function scheduleTransientViewCommit<Row>(state: ControllerState<Row>): void {
@@ -1506,7 +1747,7 @@ function exportScene<Row>(state: ControllerState<Row>, view: "current" | "full" 
       undefined,
     );
   }
-  if (!state.transientView) return state.scene;
+  if (!state.transientView) return state.transitionScene ?? state.scene;
   return compileRuntimeScene(
     state.config,
     state.scene.width,
@@ -1580,8 +1821,18 @@ function destroyController<Row>(state: ControllerState<Row>): void {
     state.frameHandle = null;
   });
   invokeAndCollect(errors, () => {
+    if (state.inspectionFrameHandle != null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(state.inspectionFrameHandle);
+    }
+    state.inspectionFrameHandle = null;
+  });
+  invokeAndCollect(errors, () => {
     if (state.viewCommitTimer != null) clearTimeout(state.viewCommitTimer);
     state.viewCommitTimer = null;
+  });
+  invokeAndCollect(errors, () => {
+    if (state.tooltipHideTimer != null) clearTimeout(state.tooltipHideTimer);
+    state.tooltipHideTimer = null;
   });
   for (const cleanup of state.cleanups.splice(0)) invokeAndCollect(errors, cleanup);
   const onApiChange = state.currentApiChange;
@@ -1589,8 +1840,10 @@ function destroyController<Row>(state: ControllerState<Row>): void {
   invokeAndCollect(errors, () => onApiChange?.(null));
   invokeAndCollect(errors, () => hideTooltip(state));
   invokeAndCollect(errors, () => {
-    state.baseCanvas.width = 0;
-    state.baseCanvas.height = 0;
+    state.chromeCanvas.width = 0;
+    state.chromeCanvas.height = 0;
+    state.marksCanvas.width = 0;
+    state.marksCanvas.height = 0;
     state.overlayCanvas.width = 0;
     state.overlayCanvas.height = 0;
   });

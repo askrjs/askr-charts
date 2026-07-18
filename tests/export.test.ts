@@ -193,7 +193,9 @@ function scene(marks: readonly SceneMark<Row>[] = everyMark()): PlotScene<Row> {
     legends: Object.freeze([]),
     interactions: Object.freeze({
       tooltip: true,
+      tooltipMode: "auto",
       crosshair: null,
+      select: null,
       zoom: null,
       brush: null,
     }),

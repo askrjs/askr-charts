@@ -99,6 +99,7 @@ describe("plot factory descriptors", () => {
       "Legend",
       "Tooltip",
       "Crosshair",
+      "Select",
       "Zoom",
       "Brush",
     ]);

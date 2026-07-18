@@ -98,7 +98,7 @@ const Plot = createPlot();
 assert.equal(Object.isFrozen(Plot), true);
 assert.deepEqual(Object.keys(Plot), [
   "Root", "Scale", "Axis", "Grid", "Bar", "Line", "Area", "Point", "Arc",
-  "Cell", "Rect", "Rule", "Text", "Legend", "Tooltip", "Crosshair", "Zoom", "Brush",
+  "Cell", "Rect", "Rule", "Text", "Legend", "Tooltip", "Crosshair", "Select", "Zoom", "Brush",
 ]);
 
 const original = Object.freeze([{ id: "a", value: 1 }]);

@@ -53,6 +53,7 @@
     "access": "public"
   },
   "scripts": {
+    "dev:visual": "vp dev visual --host 127.0.0.1",
     "bench": "npm run bench:tier1 && npm run bench:tier2 && npm run bench:tier3 && npm run bench:tier4",
     "bench:tier1": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier1.config.ts",
     "bench:tier2": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
@@ -61,7 +62,8 @@
     "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser",
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
-    "test:browser": "vp test run -c vitest.test.browser.config.ts",
+    "test:browser": "cross-env NODE_ENV=production vp test run -c vitest.test.browser.config.ts",
+    "test:visual": "cross-env NODE_ENV=production vp test run -c vitest.test.visual.config.ts",
     "test:types": "npm run build && tsc -p tsconfig.types.json --noEmit",
     "test:installed": "npm run build && node tests/installed-smoke.js",
     "test:publint": "publint",

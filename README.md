@@ -63,7 +63,7 @@ export function RevenueTrend() {
 
 - structure: `Root`, `Scale`, `Axis`, `Grid`
 - marks: `Bar`, `Line`, `Area`, `Point`, `Arc`, `Cell`, `Rect`, `Rule`, `Text`
-- interaction: `Legend`, `Tooltip`, `Crosshair`, `Zoom`, `Brush`
+- interaction: `Legend`, `Tooltip`, `Crosshair`, `Select`, `Zoom`, `Brush`
 
 The root owns responsive sizing, semantic labels, title and description, empty and summary states, controlled or uncontrolled view and selection, follow-latest behavior, activation, and export access through `onApiChange`.
 
@@ -76,6 +76,10 @@ Useful defaults are inferred from channels and mark context:
 - Cartesian marks receive default axes and tooltip behavior
 
 Add explicit scale, axis, grid, legend, or tooltip children when the composition needs different behavior. Named scales support mixed plots and dual axes.
+
+`Tooltip` supports nearest-mark inspection and shared nearest-x inspection with `mode="mark" | "x"`; `auto` chooses shared x for compatible Cartesian marks. Add `Select` for click/tap and Enter/Space selection. Its `single` default replaces the selection, while `toggle` adds or removes source keys. Selection updates before the additive `onActivate(row, key, target)` callback.
+
+Mounted plots always respond to their container. `width` is the SSR and initial-layout fallback, not a fixed browser width; use a sized container for a fixed mounted chart.
 
 ## Data rules
 

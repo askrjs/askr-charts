@@ -1,6 +1,6 @@
 import { arcPath, areaPath, roundedRectPath, segmentedLinePath } from "./paths";
 import type { PlotKey } from "./model";
-import type { PlotScene, SceneMark } from "./scene-model";
+import type { HitShape, PlotScene, SceneMark } from "./scene-model";
 
 export interface PlotTheme {
   readonly background: string;
@@ -120,15 +120,41 @@ export function renderPlotScene<Row>(
     selectedKeys?: ReadonlySet<PlotKey>;
   } = {},
 ): void {
+  renderPlotChrome(context, scene, theme, options.background);
+  renderPlotMarks(context, scene, theme, options);
+}
+
+export function renderPlotChrome<Row>(
+  context: CanvasRenderingContext2D,
+  scene: PlotScene<Row>,
+  theme: PlotTheme,
+  background: string | null | undefined = undefined,
+): void {
   context.save();
   context.setTransform(scene.pixelRatio, 0, 0, scene.pixelRatio, 0, 0);
   context.clearRect(0, 0, scene.width, scene.height);
-  if (options.background !== null) {
-    context.fillStyle = options.background ?? theme.surface;
+  if (background !== null) {
+    context.fillStyle = background ?? theme.surface;
     context.fillRect(0, 0, scene.width, scene.height);
   }
 
   drawGrids(context, scene, theme);
+  drawAxes(context, scene, theme);
+  context.restore();
+}
+
+export function renderPlotMarks<Row>(
+  context: CanvasRenderingContext2D,
+  scene: PlotScene<Row>,
+  theme: PlotTheme,
+  options: {
+    hiddenSeries?: ReadonlySet<string>;
+    selectedKeys?: ReadonlySet<PlotKey>;
+  } = {},
+): void {
+  context.save();
+  context.setTransform(scene.pixelRatio, 0, 0, scene.pixelRatio, 0, 0);
+  context.clearRect(0, 0, scene.width, scene.height);
   context.save();
   context.beginPath();
   context.rect(scene.plotArea.x, scene.plotArea.y, scene.plotArea.width, scene.plotArea.height);
@@ -144,7 +170,6 @@ export function renderPlotScene<Row>(
       drawSelectedMark(context, mark, theme);
   }
   context.restore();
-  drawAxes(context, scene, theme);
   context.restore();
 }
 
@@ -355,16 +380,26 @@ function drawSelectedMark<Row>(
       context.stroke();
       break;
     case "line":
+      context.stroke(new Path2D(segmentedLinePath(mark.segments, mark.curve)));
+      break;
     case "area":
+      context.stroke(new Path2D(areaPath(mark.points, mark.baseline, mark.curve)));
+      break;
     case "text":
+      context.font = mark.font || theme.font;
+      context.textAlign = mark.align;
+      context.textBaseline = mark.baseline;
+      context.strokeText(mark.text, mark.x, mark.y);
       break;
   }
   context.restore();
 }
 
 export interface PlotInteractionOverlayState {
+  readonly clip?: { x: number; y: number; width: number; height: number } | null;
   readonly crosshair?: { x: number; y: number; axes: "x" | "y" | "xy" } | null;
   readonly brush?: { x0: number; y0: number; x1: number; y1: number } | null;
+  readonly hover?: readonly HitShape[];
   readonly focus?: { x: number; y: number; radius?: number } | null;
 }
 
@@ -378,6 +413,11 @@ export function renderInteractionOverlay(
   context.save();
   context.setTransform(dimensions.pixelRatio, 0, 0, dimensions.pixelRatio, 0, 0);
   if (options.clear ?? true) context.clearRect(0, 0, dimensions.width, dimensions.height);
+  if (state.clip) {
+    context.beginPath();
+    context.rect(state.clip.x, state.clip.y, state.clip.width, state.clip.height);
+    context.clip();
+  }
   if (state.crosshair) {
     context.strokeStyle = theme.crosshair;
     context.lineWidth = 1;
@@ -412,5 +452,51 @@ export function renderInteractionOverlay(
     context.arc(state.focus.x, state.focus.y, state.focus.radius ?? 6, 0, Math.PI * 2);
     context.stroke();
   }
+  if (state.hover) {
+    context.strokeStyle = theme.selectionBorder;
+    context.fillStyle = theme.selection;
+    context.lineWidth = 2;
+    context.setLineDash([]);
+    for (const hover of state.hover) drawHitOutline(context, hover);
+  }
   context.restore();
+}
+
+function drawHitOutline(context: CanvasRenderingContext2D, shape: HitShape): void {
+  context.beginPath();
+  switch (shape.kind) {
+    case "rect":
+      context.rect(shape.x - 2, shape.y - 2, shape.width + 4, shape.height + 4);
+      break;
+    case "circle":
+      context.arc(shape.x, shape.y, shape.radius + 3, 0, Math.PI * 2);
+      break;
+    case "line":
+      context.moveTo(shape.x1, shape.y1);
+      context.lineTo(shape.x2, shape.y2);
+      break;
+    case "arc":
+      context.arc(
+        shape.cx,
+        shape.cy,
+        (shape.innerRadius + shape.outerRadius) / 2,
+        shape.startAngle,
+        shape.endAngle,
+        shape.endAngle < shape.startAngle,
+      );
+      break;
+    case "polyline":
+    case "polygon":
+      shape.points.forEach((point, index) => {
+        if (index === 0) context.moveTo(point.x, point.y);
+        else context.lineTo(point.x, point.y);
+      });
+      if (shape.kind === "polygon") context.closePath();
+      break;
+    case "text":
+      context.rect(shape.x - 2, shape.y - 2, shape.width + 4, shape.height + 4);
+      break;
+  }
+  context.fill();
+  context.stroke();
 }

@@ -1,6 +1,10 @@
 import { defineConfig } from "vite-plus";
+import { fileURLToPath } from "node:url";
 
 export const sharedVitestConfig = defineConfig({
+  resolve: {
+    alias: { "@askrjs/charts": fileURLToPath(new URL("./src/index.ts", import.meta.url)) },
+  },
   test: {
     globals: true,
   },

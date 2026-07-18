@@ -1,4 +1,4 @@
-import type { HitRegion, HitShape } from "./scene-model";
+import type { HitRegion, HitShape, SceneMark } from "./scene-model";
 
 export interface HitIndex<Row> {
   readonly size: number;
@@ -56,7 +56,10 @@ export function createHitIndex<Row>(
       const region = regions[index]!;
       if (contains(region.shape, x, y)) matches.push(region);
     }
-    matches.sort((left, right) => right.order - left.order);
+    matches.sort(
+      (left, right) =>
+        right.order - left.order || distanceToShape(left.shape, x, y) - distanceToShape(right.shape, x, y),
+    );
     return Object.freeze(matches);
   };
 
@@ -80,7 +83,7 @@ export function createHitIndex<Row>(
     }
     const matches = [...indices]
       .map((index) => regions[index]!)
-      .filter((region) => intersects(hitBounds(region.shape), bounds))
+      .filter((region) => shapeIntersectsRect(region.shape, bounds))
       .sort((left, right) => left.order - right.order);
     return Object.freeze(matches);
   };
@@ -94,6 +97,257 @@ export function createHitIndex<Row>(
     queryAll,
     queryRect,
   });
+}
+
+function shapeIntersectsRect(
+  shape: HitShape,
+  rect: { x0: number; y0: number; x1: number; y1: number },
+): boolean {
+  if (!intersects(hitBounds(shape), rect)) return false;
+  switch (shape.kind) {
+    case "rect":
+      return true;
+    case "circle": {
+      const nearestX = Math.max(rect.x0, Math.min(shape.x, rect.x1));
+      const nearestY = Math.max(rect.y0, Math.min(shape.y, rect.y1));
+      return (shape.x - nearestX) ** 2 + (shape.y - nearestY) ** 2 <= shape.radius ** 2;
+    }
+    case "line":
+      return (
+        contains(shape, rect.x0, rect.y0) ||
+        contains(shape, rect.x1, rect.y0) ||
+        contains(shape, rect.x0, rect.y1) ||
+        contains(shape, rect.x1, rect.y1) ||
+        segmentIntersectsRect(shape.x1, shape.y1, shape.x2, shape.y2, rect)
+      );
+    case "arc": {
+      if (contains(shape, rect.x0, rect.y0) || contains(shape, rect.x1, rect.y0) ||
+          contains(shape, rect.x0, rect.y1) || contains(shape, rect.x1, rect.y1)) return true;
+      const steps = Math.max(8, Math.ceil(Math.abs(shape.endAngle - shape.startAngle) / (Math.PI / 16)));
+      for (const radius of [shape.innerRadius, shape.outerRadius]) {
+        for (let index = 0; index <= steps; index += 1) {
+          const angle = shape.startAngle + ((shape.endAngle - shape.startAngle) * index) / steps;
+          const x = shape.cx + Math.cos(angle) * radius;
+          const y = shape.cy + Math.sin(angle) * radius;
+          if (x >= rect.x0 && x <= rect.x1 && y >= rect.y0 && y <= rect.y1) return true;
+        }
+      }
+      return false;
+    }
+    case "polyline":
+      return shape.points.some((point, index) => {
+        const next = shape.points[index + 1];
+        return next ? segmentIntersectsRect(point.x, point.y, next.x, next.y, rect) : false;
+      });
+    case "polygon":
+      return (
+        shape.points.some(
+          (point) =>
+            point.x >= rect.x0 &&
+            point.x <= rect.x1 &&
+            point.y >= rect.y0 &&
+            point.y <= rect.y1,
+        ) ||
+        pointInPolygon(shape.points, rect.x0, rect.y0) ||
+        shape.points.some((point, index) => {
+          const next = shape.points[(index + 1) % shape.points.length];
+          return next ? segmentIntersectsRect(point.x, point.y, next.x, next.y, rect) : false;
+        })
+      );
+    case "text":
+      return true;
+  }
+}
+
+function segmentIntersectsRect(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  rect: { x0: number; y0: number; x1: number; y1: number },
+): boolean {
+  if (
+    (x1 >= rect.x0 && x1 <= rect.x1 && y1 >= rect.y0 && y1 <= rect.y1) ||
+    (x2 >= rect.x0 && x2 <= rect.x1 && y2 >= rect.y0 && y2 <= rect.y1)
+  ) return true;
+  const edges = [
+    [rect.x0, rect.y0, rect.x1, rect.y0],
+    [rect.x1, rect.y0, rect.x1, rect.y1],
+    [rect.x1, rect.y1, rect.x0, rect.y1],
+    [rect.x0, rect.y1, rect.x0, rect.y0],
+  ] as const;
+  return edges.some(([ax, ay, bx, by]) => segmentsCross(x1, y1, x2, y2, ax, ay, bx, by));
+}
+
+function segmentsCross(
+  ax: number, ay: number, bx: number, by: number,
+  cx: number, cy: number, dx: number, dy: number,
+): boolean {
+  const orient = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) =>
+    (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
+  const first = orient(ax, ay, bx, by, cx, cy);
+  const second = orient(ax, ay, bx, by, dx, dy);
+  const third = orient(cx, cy, dx, dy, ax, ay);
+  const fourth = orient(cx, cy, dx, dy, bx, by);
+  return first * second <= 0 && third * fourth <= 0;
+}
+
+/** Rebuild hit geometry from an interpolated frame while preserving target metadata. */
+export function projectHitRegions<Row>(
+  regions: readonly HitRegion<Row>[],
+  marks: readonly SceneMark<Row>[],
+): readonly HitRegion<Row>[] {
+  const projected: HitRegion<Row>[] = [];
+  for (const region of regions) {
+    const mark = marks.find(
+      (candidate) =>
+        candidate.kind === region.mark &&
+        (candidate.id === region.markId ||
+          candidate.key === region.key ||
+          (candidate.sourceKeys ?? []).includes(region.key)),
+    );
+    if (!mark) continue;
+    const shape = projectedShape(region, mark);
+    if (!shape) continue;
+    projected.push(Object.freeze({ ...region, markId: mark.id, shape: Object.freeze(shape) }));
+  }
+  return Object.freeze(projected);
+}
+
+export function transformHitRegions<Row>(
+  regions: readonly HitRegion<Row>[],
+  transform: { scaleX: number; scaleY: number; translateX: number; translateY: number },
+): readonly HitRegion<Row>[] {
+  return Object.freeze(
+    regions.map((region) =>
+      Object.freeze({ ...region, shape: Object.freeze(transformShape(region.shape, transform)) }),
+    ),
+  );
+}
+
+function transformShape(
+  shape: HitShape,
+  transform: { scaleX: number; scaleY: number; translateX: number; translateY: number },
+): HitShape {
+  const x = (value: number) => value * transform.scaleX + transform.translateX;
+  const y = (value: number) => value * transform.scaleY + transform.translateY;
+  switch (shape.kind) {
+    case "rect": {
+      const x0 = x(shape.x);
+      const x1 = x(shape.x + shape.width);
+      const y0 = y(shape.y);
+      const y1 = y(shape.y + shape.height);
+      return { kind: "rect", x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) };
+    }
+    case "circle":
+      return { kind: "circle", x: x(shape.x), y: y(shape.y), radius: shape.radius * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)) };
+    case "line":
+      return { kind: "line", x1: x(shape.x1), y1: y(shape.y1), x2: x(shape.x2), y2: y(shape.y2), tolerance: shape.tolerance * Math.max(Math.abs(transform.scaleX), Math.abs(transform.scaleY)) };
+    case "arc": {
+      const radialScale = (Math.abs(transform.scaleX) + Math.abs(transform.scaleY)) / 2;
+      return { ...shape, cx: x(shape.cx), cy: y(shape.cy), innerRadius: shape.innerRadius * radialScale, outerRadius: shape.outerRadius * radialScale };
+    }
+    case "polyline":
+    case "polygon":
+      return { ...shape, points: shape.points.map((point) => ({ x: x(point.x), y: y(point.y) })) };
+    case "text": {
+      const x0 = x(shape.x);
+      const x1 = x(shape.x + shape.width);
+      const y0 = y(shape.y);
+      const y1 = y(shape.y + shape.height);
+      return { kind: "text", x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) };
+    }
+  }
+}
+
+function projectedShape<Row>(region: HitRegion<Row>, mark: SceneMark<Row>): HitShape | null {
+  switch (mark.kind) {
+    case "bar":
+    case "cell":
+    case "rect":
+      return { kind: "rect", x: mark.x, y: mark.y, width: mark.width, height: mark.height };
+    case "point":
+      return { kind: "circle", x: mark.x, y: mark.y, radius: Math.max(5, mark.radius) };
+    case "arc":
+      return {
+        kind: "arc",
+        cx: mark.cx,
+        cy: mark.cy,
+        innerRadius: mark.innerRadius,
+        outerRadius: mark.outerRadius,
+        startAngle: mark.startAngle,
+        endAngle: mark.endAngle,
+      };
+    case "rule":
+      return {
+        kind: "line",
+        x1: mark.x1,
+        y1: mark.y1,
+        x2: mark.x2,
+        y2: mark.y2,
+        tolerance: Math.max(5, mark.strokeWidth / 2),
+      };
+    case "line": {
+      const index = mark.points.findIndex((candidate) => candidate.key === region.key);
+      const point = mark.points[index];
+      if (!point) return null;
+      const previous = mark.points[index - 1];
+      const next = mark.points[index + 1];
+      return {
+        kind: "polyline",
+        points: [previous ?? point, point, next ?? point],
+        tolerance: 5,
+      };
+    }
+    case "area": {
+      const index = mark.points.findIndex((candidate) => candidate.key === region.key);
+      const point = mark.points[index];
+      const baseline = mark.baseline[index];
+      return point && baseline
+        ? {
+            kind: "polygon",
+            points: [
+              { x: point.x - 4, y: point.y },
+              { x: point.x + 4, y: point.y },
+              { x: point.x + 4, y: baseline.y },
+              { x: point.x - 4, y: baseline.y },
+            ],
+          }
+        : null;
+    }
+    case "text": {
+      const old = region.shape;
+      const width = old.kind === "text" ? old.width : Math.max(8, mark.text.length * 7);
+      const height = old.kind === "text" ? old.height : 14;
+      return { kind: "text", x: mark.x - width / 2, y: mark.y - height / 2, width, height };
+    }
+  }
+}
+
+function distanceToShape(shape: HitShape, x: number, y: number): number {
+  if (contains(shape, x, y)) return 0;
+  switch (shape.kind) {
+    case "circle":
+      return Math.max(0, Math.hypot(x - shape.x, y - shape.y) - shape.radius);
+    case "line":
+      return pointSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2);
+    case "arc":
+      return Math.abs(Math.hypot(x - shape.cx, y - shape.cy) - (shape.innerRadius + shape.outerRadius) / 2);
+    case "rect": {
+      const dx = Math.max(shape.x - x, 0, x - (shape.x + shape.width));
+      const dy = Math.max(shape.y - y, 0, y - (shape.y + shape.height));
+      return Math.hypot(dx, dy);
+    }
+    case "polyline":
+      return polylineDistance(shape.points, x, y);
+    case "polygon":
+      return Math.min(...shape.points.map((point) => Math.hypot(x - point.x, y - point.y)));
+    case "text": {
+      const dx = Math.max(shape.x - x, 0, x - (shape.x + shape.width));
+      const dy = Math.max(shape.y - y, 0, y - (shape.y + shape.height));
+      return Math.hypot(dx, dy);
+    }
+  }
 }
 
 function clampCell(value: number, count: number): number {
@@ -137,6 +391,25 @@ function hitBounds(shape: HitShape): {
         y1: Math.max(shape.y1, shape.y2) + padding,
       };
     }
+    case "polyline":
+    case "polygon": {
+      const xs = shape.points.map((point) => point.x);
+      const ys = shape.points.map((point) => point.y);
+      const padding = shape.kind === "polyline" ? shape.tolerance : 0;
+      return {
+        x0: Math.min(...xs) - padding,
+        y0: Math.min(...ys) - padding,
+        x1: Math.max(...xs) + padding,
+        y1: Math.max(...ys) + padding,
+      };
+    }
+    case "text":
+      return {
+        x0: shape.x,
+        y0: shape.y,
+        x1: shape.x + shape.width,
+        y1: shape.y + shape.height,
+      };
   }
 }
 
@@ -164,6 +437,12 @@ function contains(shape: HitShape, x: number, y: number): boolean {
     }
     case "line":
       return pointSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2) <= shape.tolerance;
+    case "polyline":
+      return polylineDistance(shape.points, x, y) <= shape.tolerance;
+    case "polygon":
+      return pointInPolygon(shape.points, x, y);
+    case "text":
+      return x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height;
   }
 }
 
@@ -185,6 +464,47 @@ function pointSegmentDistance(
   if (dx === 0 && dy === 0) return Math.hypot(x - x1, y - y1);
   const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)));
   return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
+}
+
+function polylineDistance(
+  points: readonly { readonly x: number; readonly y: number }[],
+  x: number,
+  y: number,
+): number {
+  if (points.length < 2)
+    return points[0] ? Math.hypot(x - points[0].x, y - points[0].y) : Infinity;
+  let distance = Infinity;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const first = points[index]!;
+    const second = points[index + 1]!;
+    distance = Math.min(
+      distance,
+      pointSegmentDistance(x, y, first.x, first.y, second.x, second.y),
+    );
+  }
+  return distance;
+}
+
+function pointInPolygon(
+  points: readonly { readonly x: number; readonly y: number }[],
+  x: number,
+  y: number,
+): boolean {
+  let inside = false;
+  for (let index = 0, previous = points.length - 1; index < points.length; previous = index++) {
+    const currentPoint = points[index]!;
+    const previousPoint = points[previous]!;
+    if (
+      (currentPoint.y > y) !== (previousPoint.y > y) &&
+      x <
+        ((previousPoint.x - currentPoint.x) * (y - currentPoint.y)) /
+          (previousPoint.y - currentPoint.y) +
+          currentPoint.x
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside;
 }
 
 function intersects(

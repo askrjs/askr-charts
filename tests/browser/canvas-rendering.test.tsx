@@ -1,6 +1,6 @@
 import { cleanupApp, createIsland } from "@askrjs/askr/boot";
 import type { JSXElement } from "@askrjs/askr/jsx-runtime";
-import { page } from "@vitest/browser/context";
+import { page } from "vitest/browser";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import "../../src/styles.css";
 import {
@@ -81,7 +81,7 @@ describe("canvas rendering and export", () => {
     container = mount(<CartesianExample />);
     await flushPaint();
     const frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-base"]');
+    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-chrome"]');
 
     expect(canvas.width).toBe(Math.round(frame.clientWidth * devicePixelRatio));
     expect(canvas.height).toBe(Math.round(frame.clientHeight * devicePixelRatio));
@@ -106,7 +106,7 @@ describe("canvas rendering and export", () => {
     await flushPaint();
 
     const frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
-    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-base"]');
+    const canvas = required<HTMLCanvasElement>(container, '[data-slot="plot-canvas-chrome"]');
     expect(frame.clientHeight).toBe(196);
     expect(canvas.height).toBe(Math.round(196 * devicePixelRatio));
 
@@ -144,7 +144,7 @@ describe("canvas rendering and export", () => {
     await flushPaint();
 
     const canvases = container.querySelectorAll<HTMLCanvasElement>(
-      '[data-slot="plot-canvas-base"]',
+      '[data-slot="plot-canvas-marks"]',
     );
     expect(canvases).toHaveLength(6);
     const frames = [...container.querySelectorAll<HTMLElement>('[data-slot="plot-frame"]')];
@@ -167,8 +167,8 @@ describe("canvas rendering and export", () => {
       expect(Number(frame.dataset.markCount), `${label} scene mark count`).toBeGreaterThanOrEqual(
         expected!,
       );
-      const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
-      expect(countPaintedPixels(canvas), `${label} painted pixels`).toBeGreaterThan(100);
+      const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
+      expect(countPaintedPixels(canvas), `${label} painted pixels`).toBeGreaterThan(50);
     }
     const expectedLegendPositions = new Map([
       ["Operations trend", "bottom"],
@@ -203,7 +203,7 @@ describe("canvas rendering and export", () => {
             "";
           const root = frame.closest<HTMLElement>('[data-slot="plot-root"]');
           expect(root, `missing ${theme} ${viewport} root for ${label}`).not.toBeNull();
-          const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-base"]');
+          const canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
           expect(
             countPaintedPixels(canvas),
             `${label} ${theme} ${viewport} painted pixels`,
@@ -330,6 +330,7 @@ function VisualMatrix() {
         width: "720px",
         padding: "16px",
         background: "var(--ak-chart-bg)",
+        "--ak-chart-transition-duration": "0ms",
       }}
     >
       <CartesianExample />

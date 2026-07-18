@@ -246,6 +246,30 @@ describe("scale and diagnostic defaults", () => {
     expect(scene.interactions.zoom?.axes).toBe("xy");
   });
 
+  it("should resolve shared-x tooltip and toggle selection given explicit interaction descriptors", () => {
+    const rows = Object.freeze([{ id: "a", x: 1, y: 2 }]);
+    const scene = compile(rows, [
+      descriptor("Point", { x: "x", y: "y" }),
+      descriptor("Tooltip", { mode: "x", channels: ["x", "y"] }),
+      descriptor("Select", { mode: "toggle" }),
+    ]);
+
+    expect(scene.interactions.tooltipMode).toBe("x");
+    expect(scene.interactions.tooltipChannels).toEqual(["x", "y"]);
+    expect(scene.interactions.select).toEqual({ mode: "toggle" });
+    expect(Object.isFrozen(scene.interactions.select)).toBe(true);
+  });
+
+  it("should reject invalid tooltip and select modes given malformed descriptors", () => {
+    const rows = Object.freeze([{ id: "a", x: 1, y: 2 }]);
+    expect(() =>
+      compile(rows, [descriptor("Point", { x: "x", y: "y" }), descriptor("Tooltip", { mode: "near" })]),
+    ).toThrow(/Invalid Tooltip mode/);
+    expect(() =>
+      compile(rows, [descriptor("Point", { x: "x", y: "y" }), descriptor("Select", { mode: "many" })]),
+    ).toThrow(/Invalid Select mode/);
+  });
+
   it("should use a band height given a Rect with one categorical y bound when compiling", () => {
     const rows = Object.freeze([
       { id: "api", lane: "API", start: 0, end: 42 },
