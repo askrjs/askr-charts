@@ -71,7 +71,10 @@ function countVisibleMarks<Row>(
 
 function geometryWeight<Row>(mark: SceneMark<Row>): number {
   if (mark.kind === "line")
-    return Math.max(1, mark.segments.reduce((sum, segment) => sum + segment.length, 0));
+    return Math.max(
+      1,
+      mark.segments.reduce((sum, segment) => sum + segment.length, 0),
+    );
   if (mark.kind === "area") return Math.max(1, mark.points.length + mark.baseline.length);
   return 1;
 }
@@ -80,7 +83,12 @@ function enteringMark<Row>(mark: SceneMark<Row>, amount: number): SceneMark<Row>
   const opacity = mark.opacity * amount;
   switch (mark.kind) {
     case "bar":
-      return { ...mark, opacity, y: mark.y + mark.height * (1 - amount), height: mark.height * amount };
+      return {
+        ...mark,
+        opacity,
+        y: mark.y + mark.height * (1 - amount),
+        height: mark.height * amount,
+      };
     case "cell":
     case "rect":
       return {
@@ -94,16 +102,32 @@ function enteringMark<Row>(mark: SceneMark<Row>, amount: number): SceneMark<Row>
     case "point":
       return { ...mark, opacity, radius: mark.radius * amount };
     case "arc":
-      return { ...mark, opacity, endAngle: mark.startAngle + (mark.endAngle - mark.startAngle) * amount };
+      return {
+        ...mark,
+        opacity,
+        endAngle: mark.startAngle + (mark.endAngle - mark.startAngle) * amount,
+      };
     case "rule":
-      return { ...mark, opacity, x2: mark.x1 + (mark.x2 - mark.x1) * amount, y2: mark.y1 + (mark.y2 - mark.y1) * amount };
+      return {
+        ...mark,
+        opacity,
+        x2: mark.x1 + (mark.x2 - mark.x1) * amount,
+        y2: mark.y1 + (mark.y2 - mark.y1) * amount,
+      };
     case "line": {
-      const segments = mark.segments.map((segment) => segment.slice(0, Math.max(1, Math.ceil(segment.length * amount))));
+      const segments = mark.segments.map((segment) =>
+        segment.slice(0, Math.max(1, Math.ceil(segment.length * amount))),
+      );
       return { ...mark, opacity, segments, points: segments.flat() };
     }
     case "area": {
       const length = Math.max(1, Math.ceil(mark.points.length * amount));
-      return { ...mark, opacity, points: mark.points.slice(0, length), baseline: mark.baseline.slice(0, length) };
+      return {
+        ...mark,
+        opacity,
+        points: mark.points.slice(0, length),
+        baseline: mark.baseline.slice(0, length),
+      };
     }
     case "text":
       return { ...mark, opacity };

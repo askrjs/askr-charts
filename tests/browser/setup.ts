@@ -28,5 +28,6 @@ console.error = (...values: unknown[]) => {
 };
 
 afterEach(() => {
-  if (unexpected.length > 0) throw new Error(`Unexpected browser console output:\n${unexpected.join("\n")}`);
+  if (unexpected.length > 0)
+    throw new Error(`Unexpected browser console output:\n${unexpected.join("\n")}`);
 });

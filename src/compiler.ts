@@ -1446,9 +1446,10 @@ function resolveAxes(
     }
     const horizontal = orientation === "top" || orientation === "bottom";
     const numericRange = scale.range.filter((value): value is number => typeof value === "number");
-    const rangeSpan = numericRange.length > 1
-      ? Math.abs(numericRange[numericRange.length - 1]! - numericRange[0]!)
-      : 320;
+    const rangeSpan =
+      numericRange.length > 1
+        ? Math.abs(numericRange[numericRange.length - 1]! - numericRange[0]!)
+        : 320;
     const adaptiveTickCount = Math.max(2, Math.round(rangeSpan / (horizontal ? 80 : 48)));
     const rawTicks = scale.ticks(spec.tickCount ?? adaptiveTickCount);
     const tickValues = collisionAwareTickValues(rawTicks, scale, horizontal, rangeSpan);
@@ -1493,7 +1494,9 @@ function collisionAwareTickValues(
   const widest = Math.max(...values.map((value) => String(value).length * 7 + 12));
   const step = Math.max(1, Math.ceil(widest / Math.max(1, spacing)));
   if (step === 1) return values;
-  const retained = values.filter((_value, index) => index === 0 || index === values.length - 1 || index % step === 0);
+  const retained = values.filter(
+    (_value, index) => index === 0 || index === values.length - 1 || index % step === 0,
+  );
   return Object.freeze(retained);
 }
 
