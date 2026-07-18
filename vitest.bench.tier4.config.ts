@@ -1,14 +1,25 @@
-import { defineConfig } from "vite-plus";
+import { askr } from "@askrjs/vite";
+import { playwright } from "vite-plus/test/browser-playwright";
+import { defineConfig } from "vite-plus/test/config";
 import { benchmarkThresholdReporter } from "./benches/_shared/threshold-reporter";
-import browserConfig from "./vitest.test.browser.config";
 
 const tier4Include = ["benches/tier4/**/*.bench.ts", "benches/tier4/**/*.bench.tsx"];
 
-const tier4Config = {
-  ...browserConfig,
+export default defineConfig({
+  plugins: [askr()],
   test: {
-    ...(browserConfig as { test: Record<string, unknown> }).test,
+    globals: true,
     passWithNoTests: true,
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [{ browser: "chromium" }],
+      api: {
+        host: "127.0.0.1",
+        port: 0,
+      },
+    },
     include: tier4Include,
     benchmark: {
       include: tier4Include,
@@ -27,6 +38,11 @@ const tier4Config = {
       ],
     },
   },
-} as unknown as Parameters<typeof defineConfig>[0];
-
-export default defineConfig(tier4Config);
+  oxc: {
+    jsx: {
+      runtime: "automatic",
+      importSource: "@askrjs/askr",
+    },
+    jsxInject: "import { jsx, jsxs, Fragment } from '@askrjs/askr/jsx-runtime';",
+  },
+});
