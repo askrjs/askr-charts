@@ -1,5 +1,8 @@
 # @askrjs/charts
 
+[![CI](https://github.com/askrjs/askr-charts/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/askrjs/askr-charts/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/%40askrjs%2Fcharts.svg)](https://www.npmjs.com/package/@askrjs/charts)
+
 Typed Canvas 2D plots for Askr applications, with the same immutable scene available for SVG and data export.
 
 Version 0.1 is a clean break from the old CSS-first chart catalog. JavaScript comes from `@askrjs/charts`; structural and theme-token styles come from `@askrjs/charts/styles`. There are no component, core, default, per-chart CSS, template, or generator compatibility entrypoints.
