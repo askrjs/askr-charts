@@ -93,6 +93,7 @@ describe("mounted canvas transitions", () => {
 
     frame = required<HTMLElement>(container, '[data-slot="plot-frame"]');
     canvas = required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
+    await waitFor(() => frame?.dataset.animationMode === "keyed");
     expect(frame.dataset.animationMode, JSON.stringify({ ...frame.dataset })).toBe("keyed");
     expect(frame.getAttribute("data-animation-running")).toBe("true");
     expect(legendButton(container, "api").getAttribute("aria-pressed")).toBe("false");
@@ -159,6 +160,14 @@ async function flushPaint(): Promise<void> {
 
 async function delay(milliseconds: number): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function waitFor(condition: () => boolean, timeoutMilliseconds = 1_000): Promise<void> {
+  const deadline = performance.now() + timeoutMilliseconds;
+  while (!condition()) {
+    if (performance.now() >= deadline) throw new Error("Timed out waiting for browser state.");
+    await delay(10);
+  }
 }
 
 function motionMediaQuery(query: string, reduced: () => boolean): MediaQueryList {
