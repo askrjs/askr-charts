@@ -82,6 +82,7 @@ describe("mounted canvas transitions", () => {
       /data-plot-overlays="true"[\s\S]*<circle/,
     );
 
+    container.style.setProperty("--ak-chart-transition-duration", "500ms");
     liveRows!.set([
       { id: "b", day: "Tue", value: 1, series: "worker" },
       { id: "a", day: "Mon", value: 8, series: "api" },
@@ -104,7 +105,7 @@ describe("mounted canvas transitions", () => {
     expect(plotApi!.exportSvg({ includeOverlays: true })).toMatch(
       /data-plot-overlays="true"[\s\S]*<circle/,
     );
-    await delay(150);
+    await delay(550);
     expect(frame.hasAttribute("data-animation-running")).toBe(false);
 
     reducedMotion = true;
