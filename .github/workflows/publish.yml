@@ -11,7 +11,7 @@ jobs:
 
   publish:
     needs: ci
-    uses: askrjs/actions/.github/workflows/publish-package.yml@main
+    uses: askrjs/actions/.github/workflows/publish-package.yml@cfbfac63066d778fa1fa99247f6af43515155e4f
     with:
       install-playwright: true
       release-command: npx playwright install --with-deps firefox webkit && npm run check
@@ -19,4 +19,3 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    secrets: inherit
