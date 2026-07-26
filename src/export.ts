@@ -15,6 +15,44 @@ import {
 } from "./render";
 import type { PlotScene, SceneMark } from "./scene-model";
 
+const SVG_HEX_COLOR = /^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i;
+const SVG_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)%?$/;
+
+function isNumericSvgColor(value: string): boolean {
+  const match = /^(rgb|rgba|hsl|hsla)\((.*)\)$/i.exec(value);
+  if (!match) return false;
+  const [, name, body] = match;
+  if (/[^\s,+./\d%-]/.test(body)) return false;
+  if (body.includes(",")) {
+    if (body.includes("/")) return false;
+    const values = body.split(",").map((part) => part.trim());
+    const expected = name.toLowerCase().endsWith("a") ? 4 : 3;
+    return values.length === expected && values.every((part) => SVG_NUMBER.test(part));
+  }
+  const slash = body.split("/");
+  if (slash.length > 2) return false;
+  const channels = slash[0].trim().split(/\s+/);
+  const alpha = slash[1]?.trim();
+  return (
+    channels.length === 3 &&
+    channels.every((part) => SVG_NUMBER.test(part)) &&
+    (alpha === undefined || SVG_NUMBER.test(alpha))
+  );
+}
+
+function svgPaint(value: string): string {
+  const paint = value.trim();
+  if (
+    paint === "none" ||
+    paint === "transparent" ||
+    SVG_HEX_COLOR.test(paint) ||
+    isNumericSvgColor(paint)
+  ) {
+    return escapeXml(paint);
+  }
+  throw new TypeError(`SVG paint must be a hex, rgb, hsl, transparent, or none value: ${value}`);
+}
+
 export function serializePlotSvg<Row>(
   scene: PlotScene<Row>,
   options: PlotSvgExportOptions & {
@@ -31,11 +69,11 @@ export function serializePlotSvg<Row>(
     `<title>${escapeXml(scene.summary)}</title>`,
   ];
   if (background !== null) {
-    content.push(`<rect width="100%" height="100%" fill="${escapeXml(background)}"/>`);
+    content.push(`<rect width="100%" height="100%" fill="${svgPaint(background)}"/>`);
   }
 
   if (scene.grids.length > 0) {
-    content.push(`<g fill="none" stroke="${escapeXml(theme.grid)}" stroke-width="1">`);
+    content.push(`<g fill="none" stroke="${svgPaint(theme.grid)}" stroke-width="1">`);
     for (const grid of scene.grids) {
       for (const position of grid.positions) {
         content.push(
@@ -68,7 +106,7 @@ export function serializePlotSvg<Row>(
   content.push("</svg>");
 
   content.push(
-    `<g fill="${escapeXml(theme.textMuted)}" stroke="${escapeXml(theme.axis)}" style="font:${escapeXml(theme.smallFont)}">`,
+    `<g fill="${svgPaint(theme.textMuted)}" stroke="${svgPaint(theme.axis)}" style="font:${escapeXml(theme.smallFont)}">`,
   );
   for (const axis of scene.axes) {
     const horizontal = axis.orientation === "top" || axis.orientation === "bottom";
@@ -131,8 +169,8 @@ export function serializePlotSvg<Row>(
 }
 
 function serializeMark<Row>(mark: SceneMark<Row>, theme: PlotTheme, selected: boolean): string {
-  const fill = escapeXml(resolvePaint(mark.fill, theme));
-  const stroke = escapeXml(selected ? theme.selectionBorder : resolvePaint(mark.stroke, theme));
+  const fill = svgPaint(resolvePaint(mark.fill, theme));
+  const stroke = svgPaint(selected ? theme.selectionBorder : resolvePaint(mark.stroke, theme));
   const selection = selected ? ' data-selected="true" stroke-width="2.5"' : "";
   const common = ` fill="${fill}" stroke="${stroke}" opacity="${formatNumber(mark.opacity)}"${selection}`;
   const title = mark.title ? `<title>${escapeXml(mark.title)}</title>` : "";
@@ -178,12 +216,12 @@ function serializeInteractionOverlay<Row>(
     const { x, y, axes } = overlays.crosshair;
     if (axes.includes("x")) {
       content.push(
-        `<path d="M${formatNumber(x)},0V${formatNumber(scene.height)}" stroke="${escapeXml(theme.crosshair)}" stroke-dasharray="3 3"/>`,
+        `<path d="M${formatNumber(x)},0V${formatNumber(scene.height)}" stroke="${svgPaint(theme.crosshair)}" stroke-dasharray="3 3"/>`,
       );
     }
     if (axes.includes("y")) {
       content.push(
-        `<path d="M0,${formatNumber(y)}H${formatNumber(scene.width)}" stroke="${escapeXml(theme.crosshair)}" stroke-dasharray="3 3"/>`,
+        `<path d="M0,${formatNumber(y)}H${formatNumber(scene.width)}" stroke="${svgPaint(theme.crosshair)}" stroke-dasharray="3 3"/>`,
       );
     }
   }
@@ -191,12 +229,12 @@ function serializeInteractionOverlay<Row>(
     const x = Math.min(overlays.brush.x0, overlays.brush.x1);
     const y = Math.min(overlays.brush.y0, overlays.brush.y1);
     content.push(
-      `<rect x="${formatNumber(x)}" y="${formatNumber(y)}" width="${formatNumber(Math.abs(overlays.brush.x1 - overlays.brush.x0))}" height="${formatNumber(Math.abs(overlays.brush.y1 - overlays.brush.y0))}" fill="${escapeXml(theme.selection)}" stroke="${escapeXml(theme.selectionBorder)}"/>`,
+      `<rect x="${formatNumber(x)}" y="${formatNumber(y)}" width="${formatNumber(Math.abs(overlays.brush.x1 - overlays.brush.x0))}" height="${formatNumber(Math.abs(overlays.brush.y1 - overlays.brush.y0))}" fill="${svgPaint(theme.selection)}" stroke="${svgPaint(theme.selectionBorder)}"/>`,
     );
   }
   if (overlays.focus) {
     content.push(
-      `<circle cx="${formatNumber(overlays.focus.x)}" cy="${formatNumber(overlays.focus.y)}" r="${formatNumber(overlays.focus.radius ?? 6)}" stroke="${escapeXml(theme.focus)}" stroke-width="2"/>`,
+      `<circle cx="${formatNumber(overlays.focus.x)}" cy="${formatNumber(overlays.focus.y)}" r="${formatNumber(overlays.focus.radius ?? 6)}" stroke="${svgPaint(theme.focus)}" stroke-width="2"/>`,
     );
   }
   content.push("</g>");

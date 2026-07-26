@@ -273,7 +273,7 @@ describe("SVG scene serialization", () => {
     expect(svg).toContain('stroke-dasharray="4 2"');
   });
 
-  it("should escape summaries labels titles paints and text given hostile strings when exporting SVG", () => {
+  it("should escape summaries labels titles and text given hostile strings when exporting SVG", () => {
     const hostile = {
       ...base("hostile", '<script>alert("title")</script>'),
       kind: "text" as const,
@@ -283,22 +283,65 @@ describe("SVG scene serialization", () => {
       align: "left" as const,
       baseline: "alphabetic" as const,
       font: "12px sans-serif",
-      fill: '#fff"/><script>alert("paint")</script>',
+      fill: "#fff",
     };
 
-    const svg = serializePlotSvg(scene([hostile]), {
-      background: '#fff" onload="alert(1)',
-    });
+    const svg = serializePlotSvg(scene([hostile]), { background: "#fff" });
 
     expect(svg).toContain("<title>Revenue &lt;Q1&gt; &amp; &quot;best&quot;</title>");
     expect(svg).toContain("&lt;zero&gt; &amp; one");
     expect(svg).toContain("&lt;script&gt;alert(&quot;title&quot;)&lt;/script&gt;");
     expect(svg).toContain("&lt;script&gt;alert(&quot;text&quot;)&lt;/script&gt;");
-    expect(svg).toContain(
-      'fill="#fff&quot;/&gt;&lt;script&gt;alert(&quot;paint&quot;)&lt;/script&gt;"',
-    );
-    expect(svg).toContain('fill="#fff&quot; onload=&quot;alert(1)"');
     expect(svg).not.toContain("<script>");
+  });
+
+  it.each([
+    "url(https://attacker.test/paint.svg#gradient)",
+    "url(#local-reference)",
+    "var(--external-paint)",
+    "linear-gradient(red, blue)",
+    '#fff" onload="alert(1)',
+    "#1234567",
+    "rgb(1 2 3 4 5)",
+  ])("should reject non-color SVG paint %s", (fill) => {
+    expect(() =>
+      serializePlotSvg(
+        scene([
+          {
+            ...base("hostile"),
+            kind: "text",
+            x: 10,
+            y: 10,
+            text: "hostile",
+            align: "left",
+            baseline: "alphabetic",
+            font: "12px sans-serif",
+            fill,
+          },
+        ]),
+      ),
+    ).toThrow("SVG paint must be");
+  });
+
+  it("should preserve documented inert color formats", () => {
+    const svg = serializePlotSvg(
+      scene([
+        {
+          ...base("safe"),
+          kind: "text",
+          x: 10,
+          y: 10,
+          text: "safe",
+          align: "left",
+          baseline: "alphabetic",
+          font: "12px sans-serif",
+          fill: "rgb(1 2 3 / 50%)",
+        },
+      ]),
+      { background: "hsl(120 50% 50%)" },
+    );
+    expect(svg).toContain('fill="rgb(1 2 3 / 50%)"');
+    expect(svg).toContain('fill="hsl(120 50% 50%)"');
   });
 
   it("should omit filtered series and honor background overrides given export options when serializing", () => {
