@@ -15,9 +15,30 @@ import {
 } from "./render";
 import type { PlotScene, SceneMark } from "./scene-model";
 
-const SVG_HEX_COLOR = /^#[\da-f]{3,4}(?:[\da-f]{3,4})?$/i;
-const SVG_NUMERIC_COLOR =
-  /^(?:rgb|rgba|hsl|hsla)\(\s*[-+.\d%]+(?:\s*(?:,|\/|\s)\s*[-+.\d%]+)*\s*\)$/i;
+const SVG_HEX_COLOR = /^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i;
+const SVG_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)%?$/;
+
+function isNumericSvgColor(value: string): boolean {
+  const match = /^(rgb|rgba|hsl|hsla)\((.*)\)$/i.exec(value);
+  if (!match) return false;
+  const [, name, body] = match;
+  if (/[^\s,+./\d%-]/.test(body)) return false;
+  if (body.includes(",")) {
+    if (body.includes("/")) return false;
+    const values = body.split(",").map((part) => part.trim());
+    const expected = name.toLowerCase().endsWith("a") ? 4 : 3;
+    return values.length === expected && values.every((part) => SVG_NUMBER.test(part));
+  }
+  const slash = body.split("/");
+  if (slash.length > 2) return false;
+  const channels = slash[0].trim().split(/\s+/);
+  const alpha = slash[1]?.trim();
+  return (
+    channels.length === 3 &&
+    channels.every((part) => SVG_NUMBER.test(part)) &&
+    (alpha === undefined || SVG_NUMBER.test(alpha))
+  );
+}
 
 function svgPaint(value: string): string {
   const paint = value.trim();
@@ -25,7 +46,7 @@ function svgPaint(value: string): string {
     paint === "none" ||
     paint === "transparent" ||
     SVG_HEX_COLOR.test(paint) ||
-    SVG_NUMERIC_COLOR.test(paint)
+    isNumericSvgColor(paint)
   ) {
     return escapeXml(paint);
   }

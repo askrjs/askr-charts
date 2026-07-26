@@ -301,6 +301,8 @@ describe("SVG scene serialization", () => {
     "var(--external-paint)",
     "linear-gradient(red, blue)",
     '#fff" onload="alert(1)',
+    "#1234567",
+    "rgb(1 2 3 4 5)",
   ])("should reject non-color SVG paint %s", (fill) => {
     expect(() =>
       serializePlotSvg(
