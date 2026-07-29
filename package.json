@@ -59,7 +59,7 @@
     "bench:tier2": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
     "bench:tier3": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench.tier3.config.ts",
     "bench:tier4": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench.tier4.config.ts",
-    "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser",
+    "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser && npm run test:visual",
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
     "test:browser": "cross-env NODE_ENV=production vp test run -c vitest.test.browser.config.ts",
