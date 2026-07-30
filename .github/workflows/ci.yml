@@ -3,6 +3,12 @@ name: CI
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      update_visual_snapshots:
+        description: "Regenerate visual snapshots and upload them as an artifact"
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "15 3 * * *"
   push:
@@ -52,5 +58,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Update visual snapshots
+        if: ${{ inputs.update_visual_snapshots == true }}
+        run: npm run test:visual -- --update
+
+      - name: Upload visual snapshots
+        if: ${{ inputs.update_visual_snapshots == true }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: visual-snapshots-${{ matrix.os }}
+          path: tests/visual/__screenshots__/
+          if-no-files-found: error
+
       - name: Test
+        if: ${{ inputs.update_visual_snapshots != true }}
         run: npm test && npm run test:types
