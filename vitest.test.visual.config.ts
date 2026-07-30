@@ -8,6 +8,9 @@ export default defineConfig({
   resolve: {
     alias: { "@askrjs/charts": fileURLToPath(new URL("./src/index.ts", import.meta.url)) },
   },
+  optimizeDeps: {
+    include: ["vite-plus/test"],
+  },
   test: {
     globals: true,
     setupFiles: ["tests/browser/setup.ts"],
