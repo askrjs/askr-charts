@@ -11,7 +11,6 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ["tests/browser/setup.ts"],
-    passWithNoTests: true,
     api: {
       host: "127.0.0.1",
     },
