@@ -105,7 +105,10 @@ describe("mounted canvas transitions", () => {
     expect(plotApi!.exportSvg({ includeOverlays: true })).toMatch(
       /data-plot-overlays="true"[\s\S]*<circle/,
     );
-    await delay(550);
+    // WebKit can deliver animation frames later than the nominal duration on
+    // hosted runners. Wait for the observable completion state instead of
+    // assuming one fixed wall-clock delay.
+    await waitFor(() => !frame.hasAttribute("data-animation-running"), 2_000);
     expect(frame.hasAttribute("data-animation-running")).toBe(false);
 
     reducedMotion = true;
