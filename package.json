@@ -1,6 +1,6 @@
 {
   "name": "@askrjs/charts",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Typed Canvas 2D plots and SVG export for Askr applications.",
   "keywords": [
     "askr",

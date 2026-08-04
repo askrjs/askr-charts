@@ -183,7 +183,7 @@ void api;
   );
 
   const packedManifest = packResult[0];
-  assert.equal(packedManifest.version, "0.1.4");
+  assert.equal(packedManifest.version, "0.1.5");
   assert.match(packedManifest.filename, /askrjs-charts-0\.1\.4\.tgz$/);
   assert.equal(packedManifest.size > 0, true);
   assert.equal(packedManifest.unpackedSize > 0, true);
