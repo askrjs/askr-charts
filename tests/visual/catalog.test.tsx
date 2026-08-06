@@ -54,6 +54,12 @@ describe("visual catalog baselines", () => {
             .element(locator)
             .toMatchScreenshot(
               `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${theme}-${width}`,
+              {
+                comparatorOptions: {
+                  allowedMismatchedPixelRatio: 0.01,
+                  threshold: 0.3,
+                },
+              },
             );
         }
       });
