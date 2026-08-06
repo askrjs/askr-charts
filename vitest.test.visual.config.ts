@@ -10,6 +10,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["vite-plus/test"],
+    noDiscovery: true,
   },
   test: {
     globals: true,
@@ -17,7 +18,7 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      provider: playwright({ contextOptions: { timezoneId: "UTC" } }),
       instances: [{ browser: "chromium" }],
       api: { host: "127.0.0.1", port: 0 },
     },
