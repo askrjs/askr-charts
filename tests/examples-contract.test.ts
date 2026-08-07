@@ -24,7 +24,7 @@ describe("local plot examples", () => {
         noEmit: true,
         paths: {
           ...parsed.options.paths,
-          "@askrjs/charts": ["src/index.ts"],
+          "@askrjs/charts": ["./src/index.ts"],
         },
       },
     });

@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const askrRoot = resolve(repositoryRoot, "node_modules/@askrjs/askr");
-const typescriptCli = resolve(repositoryRoot, "node_modules/typescript/bin/tsc");
+const typescriptCli = resolve(repositoryRoot, "node_modules/@typescript/native/bin/tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "askr-charts-installed-"));
 
 function run(executable, arguments_, cwd) {
