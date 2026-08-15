@@ -1,7 +1,20 @@
 import type { ScenePoint } from "./scene-model";
 
 export function escapeXml(value: unknown): string {
-  return String(value)
+  let safe = "";
+  for (const character of String(value)) {
+    const codePoint = character.codePointAt(0)!;
+    const permitted =
+      codePoint === 0x09 ||
+      codePoint === 0x0a ||
+      codePoint === 0x0d ||
+      (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+      (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+      (codePoint >= 0x10000 && codePoint <= 0x10ffff);
+    safe += permitted ? character : "\ufffd";
+  }
+
+  return safe
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

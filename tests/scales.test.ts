@@ -194,6 +194,7 @@ describe("continuous coordinate scales", () => {
     expect(mappedNumber(scale, 0)).toBeCloseTo(50);
     expect(mappedNumber(scale, 1.7e308)).toBe(100);
     expect(invertedNumber(scale, 50)).toBeCloseTo(0);
+    expect(scale.ticks(4)).toEqual([-1e308, 0, 1e308]);
   });
 });
 

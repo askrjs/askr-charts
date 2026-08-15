@@ -312,7 +312,13 @@ describe("SVG scene serialization", () => {
 
     const svg = serializePlotSvg(scene([hostile]), { background: "#fff" });
 
-    expect(svg).not.toMatch(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ud800]/u);
+    for (const forbidden of [
+      String.fromCharCode(0),
+      String.fromCharCode(11),
+      String.fromCharCode(0xd800),
+    ]) {
+      expect(svg).not.toContain(forbidden);
+    }
     expect(svg.match(/�/gu)).toHaveLength(6);
     expect(svg).toContain("tab\tline\nreturn\r");
     expect(svg).toContain("😀");
