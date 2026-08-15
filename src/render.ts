@@ -295,6 +295,7 @@ function drawMark<Row>(context: CanvasRenderingContext2D, mark: SceneMark<Row>, 
       context.lineWidth = mark.strokeWidth;
       context.lineJoin = "round";
       context.lineCap = "round";
+      context.setLineDash([...mark.dash]);
       context.stroke(new Path2D(segmentedLinePath(mark.segments, mark.curve)));
       break;
     }

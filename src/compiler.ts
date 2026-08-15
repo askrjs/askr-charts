@@ -109,6 +109,16 @@ const SERIES_COLORS = Object.freeze(
   Array.from({ length: 10 }, (_, index) => `var(--ak-chart-series-${index + 1})`),
 );
 
+const SERIES_LINE_DASHES: readonly (readonly number[])[] = Object.freeze([
+  Object.freeze([]),
+  Object.freeze([6, 3]),
+  Object.freeze([2, 3]),
+  Object.freeze([8, 3, 2, 3]),
+  Object.freeze([10, 3]),
+]);
+
+const SERIES_POINT_SHAPES = Object.freeze(["circle", "square", "diamond"] as const);
+
 const MARK_KINDS = new Set<PrimitiveKind>([
   "Bar",
   "Line",
@@ -1838,7 +1848,10 @@ function compileLines<Row>(
   const marks: SceneMark<Row>[] = [];
   const hits: HitRegion<Row>[] = [];
   const visibleKeys = new Set<PlotKey>();
+  let groupIndex = 0;
   for (const data of groups.values()) {
+    const seriesIndex = groupIndex;
+    groupIndex += 1;
     const dataByKey = new Map(data.map((datum) => [datum.key, datum]));
     const rawSegments: ScenePoint[][] = [];
     let currentSegment: ScenePoint[] = [];
@@ -1888,6 +1901,10 @@ function compileLines<Row>(
       points,
       curve: toCurve(mark.props.curve),
       strokeWidth: Math.max(0.5, finiteOr(mark.props.strokeWidth, 2)),
+      dash:
+        mark.props.dash === undefined && groups.size > 1
+          ? SERIES_LINE_DASHES[seriesIndex % SERIES_LINE_DASHES.length]!
+          : resolveDash(mark.props.dash, "Line"),
     });
     marks.push(sceneMark);
     for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
@@ -2188,6 +2205,11 @@ function compilePoints<Row>(
   const hits: HitRegion<Row>[] = [];
   const occupied = mark.data.length > 10_000 ? new Set<number>() : null;
   const occupiedColumns = Math.max(1, Math.floor(plotArea.width) + 1);
+  const series = [...new Set(mark.data.map((datum) => datum.series ?? "__default__"))];
+  const cycleShapes = mark.props.shape === undefined && series.length > 1;
+  const shapesBySeries = new Map(
+    series.map((name, index) => [name, SERIES_POINT_SHAPES[index % SERIES_POINT_SHAPES.length]!]),
+  );
   for (const datum of mark.data) {
     const x = mapped(xScale, datum.x, true);
     const y = mapped(yScale, datum.y, true);
@@ -2207,7 +2229,9 @@ function compilePoints<Row>(
       x,
       y,
       radius,
-      shape: toPointShape(mark.props.shape),
+      shape: cycleShapes
+        ? (shapesBySeries.get(datum.series ?? "__default__") ?? "circle")
+        : toPointShape(mark.props.shape),
     });
     marks.push(sceneMark);
     hits.push(
@@ -2392,7 +2416,7 @@ function compileRules<Row>(
   const xScale = scales[String(mark.props.xScale ?? "x")];
   const yScale = scales[String(mark.props.yScale ?? "y")];
   if (!xScale || !yScale) return emptyCompiled<Row>();
-  const dash = resolveRuleDash(mark.props.dash);
+  const dash = resolveDash(mark.props.dash, "Rule");
   const marks: SceneMark<Row>[] = [];
   const hits: HitRegion<Row>[] = [];
   for (const datum of mark.data) {
@@ -2440,13 +2464,13 @@ function compileRules<Row>(
   return { marks, hits };
 }
 
-function resolveRuleDash(value: unknown): readonly number[] {
+function resolveDash(value: unknown, mark: "Line" | "Rule"): readonly number[] {
   if (value === undefined) return Object.freeze([]);
   if (!Array.isArray(value)) {
-    throw new TypeError("Rule dash must be an array of numbers.");
+    throw new TypeError(`${mark} dash must be an array of numbers.`);
   }
   if (!value.every((entry) => isFiniteNumber(entry) && entry >= 0)) {
-    throw new RangeError("Rule dash entries must be finite non-negative numbers.");
+    throw new RangeError(`${mark} dash entries must be finite non-negative numbers.`);
   }
   return Object.freeze([...value] as number[]);
 }

@@ -402,6 +402,11 @@ export interface LineProps<Row> extends CartesianMarkProps<Row> {
   y: RowNumericChannelInput<Row>;
   curve?: "linear" | "step" | "monotone";
   strokeWidth?: number;
+  /**
+   * Explicit stroke dash pattern. When omitted, a multi-series line mark cycles
+   * accessible dash patterns; pass an empty array to keep every series solid.
+   */
+  dash?: readonly number[];
   defined?: RowAccessor<Row, boolean>;
 }
 
@@ -421,6 +426,10 @@ export interface PointProps<Row> extends CartesianMarkProps<Row> {
   x: RowScaleChannelInput<Row>;
   y: RowNumericChannelInput<Row>;
   r?: RowNumericChannelInput<Row> | number;
+  /**
+   * Explicit point shape. When omitted, a multi-series point mark cycles shapes
+   * so color is not the only default series encoding.
+   */
   shape?: "circle" | "square" | "diamond";
 }
 
