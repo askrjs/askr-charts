@@ -1,6 +1,6 @@
 {
   "name": "@askrjs/charts",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Typed Canvas 2D plots and SVG export for Askr applications.",
   "keywords": [
     "askr",
@@ -79,6 +79,7 @@
   },
   "devDependencies": {
     "@askrjs/askr": ">=0.0.88 <0.1.0",
+    "@askrjs/ui": ">=0.0.27 <0.1.0",
     "@askrjs/vite": ">=0.0.12 <0.1.0",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.2.0",
