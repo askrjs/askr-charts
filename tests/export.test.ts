@@ -97,6 +97,7 @@ function everyMark(): readonly SceneMark<Row>[] {
       points,
       curve: "monotone",
       strokeWidth: 2,
+      dash: Object.freeze([6, 3]),
     },
     { ...base("area"), kind: "area", points, baseline, curve: "linear" },
     {
@@ -272,6 +273,38 @@ describe("SVG scene serialization", () => {
     expect(svg).toContain('<svg x="5" y="5" width="90" height="60"');
     expect(svg).not.toContain("clipPath");
     expect(svg).toContain('stroke-dasharray="4 2"');
+  });
+
+  it("should render default multi-series lines and points with non-color encodings", () => {
+    const seriesRows = Object.freeze([
+      { id: "api-1", x: 1, y: 1, series: "api" },
+      { id: "worker-1", x: 1, y: 2, series: "worker" },
+      { id: "api-2", x: 2, y: 3, series: "api" },
+      { id: "worker-2", x: 2, y: 4, series: "worker" },
+    ]);
+    const compiled = compilePlotScene({
+      rows: seriesRows,
+      rowKey: (row) => row.id,
+      label: "Services",
+      descriptors: [
+        descriptor("Line", { x: "x", y: "y", stroke: "series" }),
+        descriptor("Point", { x: "x", y: "y", fill: "series" }),
+      ],
+      width: 640,
+      height: 360,
+    });
+    const document = new JSDOM(serializePlotSvg(compiled), {
+      contentType: "image/svg+xml",
+    }).window.document;
+    const lineDashes = [...document.querySelectorAll('[data-mark="line"]')].map((line) =>
+      line.getAttribute("stroke-dasharray"),
+    );
+    const pointShapes = [...document.querySelectorAll('[data-mark="point"]')].map(
+      ({ localName }) => localName,
+    );
+
+    expect(lineDashes).toEqual(["", "6 3"]);
+    expect(pointShapes).toEqual(["circle", "rect", "circle", "rect"]);
   });
 
   it("should escape summaries labels titles and text given hostile strings when exporting SVG", () => {

@@ -323,6 +323,11 @@ The stylesheet is self-contained and also consumes compatible Askr theme tokens 
 - interaction: `--ak-chart-focus-ring`, `--ak-chart-selection`, `--ak-chart-crosshair`
 - motion: `--ak-chart-transition-duration`, `--ak-chart-transition-easing`
 
+The dark defaults override series 7 and 10 so every built-in series color has at
+least 3:1 contrast against both chart background tokens. Multi-series lines and
+points also cycle dash patterns and shapes unless the caller supplies an explicit
+`dash` or `shape`, keeping color from becoming the sole default encoding.
+
 Structural `data-slot="plot-*"` hooks are stable application/testing seams. Do not depend on canvas-internal geometry or generated scene IDs for product CSS.
 
 ## Clean-break migration table

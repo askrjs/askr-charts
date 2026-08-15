@@ -904,6 +904,47 @@ describe("runtime contract hardening", () => {
     ]);
   });
 
+  it("should encode multiple line and point series with stable non-color channels", () => {
+    const seriesRows = Object.freeze([
+      { id: "api-1", x: 1, y: 1, series: "api" },
+      { id: "worker-1", x: 1, y: 2, series: "worker" },
+      { id: "api-2", x: 2, y: 3, series: "api" },
+      { id: "worker-2", x: 2, y: 4, series: "worker" },
+    ]);
+    const scene = compile(seriesRows, [
+      descriptor("Line", { x: "x", y: "y", stroke: "series" }),
+      descriptor("Point", { x: "x", y: "y", fill: "series" }),
+    ]);
+    const lines = scene.marks.filter((mark) => mark.kind === "line");
+    const points = scene.marks.filter((mark) => mark.kind === "point");
+
+    expect(lines.map((line) => Reflect.get(line, "dash"))).toEqual([[], [6, 3]]);
+    expect(
+      points.filter(({ series }) => series === "string:api").map(({ shape }) => shape),
+    ).toEqual(["circle", "circle"]);
+    expect(
+      points.filter(({ series }) => series === "string:worker").map(({ shape }) => shape),
+    ).toEqual(["square", "square"]);
+
+    const explicit = compile(seriesRows, [
+      descriptor("Line", { x: "x", y: "y", stroke: "series", dash: [9, 2] }),
+      descriptor("Point", { x: "x", y: "y", fill: "series", shape: "diamond" }),
+    ]);
+    expect(explicit.marks.filter((mark) => mark.kind === "line").map(({ dash }) => dash)).toEqual([
+      [9, 2],
+      [9, 2],
+    ]);
+    expect(
+      explicit.marks.filter((mark) => mark.kind === "point").map(({ shape }) => shape),
+    ).toEqual(["diamond", "diamond", "diamond", "diamond"]);
+
+    expect(() =>
+      compile(seriesRows, [
+        descriptor("Line", { x: "x", y: "y", stroke: "series", dash: [4, -1] }),
+      ]),
+    ).toThrow(/Line dash entries must be finite non-negative numbers/);
+  });
+
   it("should keep legends passive unless interaction is explicitly requested when compiling", () => {
     const scene = compile(Object.freeze([{ id: "point", x: 1, y: 1, series: "api" }]), [
       descriptor("Point", { x: "x", y: "y", fill: "series" }),

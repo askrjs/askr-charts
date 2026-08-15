@@ -103,6 +103,7 @@ function line(id: string, segments: readonly (readonly ScenePoint[])[]): SceneLi
     points: segments.flat(),
     curve: "linear",
     strokeWidth: 2,
+    dash: [],
   };
 }
 
