@@ -34,7 +34,10 @@ describe("chart accessibility defaults", () => {
 
 function resolvedColor(element: HTMLElement, token: string): readonly [number, number, number] {
   element.style.color = `var(${token})`;
-  const channels = getComputedStyle(element).color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+  const channels = getComputedStyle(element)
+    .color.match(/[\d.]+/g)
+    ?.slice(0, 3)
+    .map(Number);
   if (!channels || channels.length !== 3) throw new Error(`Unable to resolve ${token}`);
   return channels as unknown as readonly [number, number, number];
 }
@@ -53,9 +56,7 @@ function contrast(
 function luminance(color: readonly [number, number, number]): number {
   const [red, green, blue] = color.map((channel) => {
     const normalized = channel / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : Math.pow((normalized + 0.055) / 1.055, 2.4);
+    return normalized <= 0.04045 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
   });
   return red! * 0.2126 + green! * 0.7152 + blue! * 0.0722;
 }

@@ -81,6 +81,8 @@
   --ak-chart-tooltip-fg: var(--ak-color-text-inverse, #18181b);
   --ak-chart-tooltip-border: rgb(24 24 27 / 0.14);
   --ak-chart-shadow: var(--ak-shadow-md, 0 16px 40px rgb(0 0 0 / 0.42));
+  --ak-chart-series-7: var(--ak-color-chart-series-7, #f472b6);
+  --ak-chart-series-10: var(--ak-color-chart-series-10, #818cf8);
 }
 
 :where(.ak-plot-root, [data-slot="plot-root"]),

@@ -180,7 +180,7 @@ function serializeMark<Row>(mark: SceneMark<Row>, theme: PlotTheme, selected: bo
     case "rect":
       return `<path data-mark="${mark.kind}" d="${roundedRectPath(mark.x, mark.y, mark.width, mark.height, mark.radius)}"${common}>${title}</path>`;
     case "line":
-      return `<path data-mark="line" d="${segmentedLinePath(mark.segments, mark.curve)}" fill="none" stroke="${stroke}" stroke-width="${formatNumber(selected ? Math.max(2.5, mark.strokeWidth) : mark.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" opacity="${formatNumber(mark.opacity)}"${selected ? ' data-selected="true"' : ""}>${title}</path>`;
+      return `<path data-mark="line" d="${segmentedLinePath(mark.segments, mark.curve)}" fill="none" stroke="${stroke}" stroke-width="${formatNumber(selected ? Math.max(2.5, mark.strokeWidth) : mark.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${mark.dash.map(formatNumber).join(" ")}" opacity="${formatNumber(mark.opacity)}"${selected ? ' data-selected="true"' : ""}>${title}</path>`;
     case "area":
       return `<path data-mark="area" d="${areaPath(mark.points, mark.baseline, mark.curve)}"${common}>${title}</path>`;
     case "point":

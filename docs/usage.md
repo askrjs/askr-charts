@@ -226,6 +226,11 @@ Color scales can be named too:
 <Plot.Point x="timestamp" y="value" r="weight" shape="diamond" />
 ```
 
+When `stroke` or `fill` creates multiple data-driven series, `Plot.Line` cycles
+dash patterns and `Plot.Point` cycles shapes by default, so hue is not the only
+series encoding. Set `dash={[]}` or an explicit point `shape` when a deliberate
+single visual treatment is more appropriate.
+
 ### Pie, donut, and gauge
 
 ```tsx

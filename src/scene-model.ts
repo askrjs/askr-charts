@@ -39,6 +39,7 @@ export interface SceneLineMark<Row> extends SceneMarkBase<Row> {
   readonly points: readonly ScenePoint[];
   readonly curve: "linear" | "step" | "monotone";
   readonly strokeWidth: number;
+  readonly dash: readonly number[];
 }
 
 export interface SceneAreaMark<Row> extends SceneMarkBase<Row> {

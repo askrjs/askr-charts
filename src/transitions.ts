@@ -214,6 +214,7 @@ function marksEqual<Row>(left: SceneMark<Row>, right: SceneMark<Row>): boolean {
         right.kind === "line" &&
         left.curve === right.curve &&
         left.strokeWidth === right.strokeWidth &&
+        numericArraysEqual(left.dash, right.dash) &&
         pointArraysEqual(left.points, right.points) &&
         segmentArraysEqual(readLineSegments(left), readLineSegments(right))
       );
@@ -336,6 +337,7 @@ function interpolateMark<Row>(
         points,
         segments,
         strokeWidth: lerp(previous.strokeWidth, next.strokeWidth, amount),
+        dash: interpolateNumbers(previous.dash, next.dash, amount),
       } as SceneMark<Row>;
     }
     case "area":
