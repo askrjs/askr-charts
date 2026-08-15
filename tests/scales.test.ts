@@ -182,6 +182,20 @@ describe("continuous coordinate scales", () => {
     expect(scale.domain).toEqual([-50_000, 49_999]);
     expect(scale.omittedValueCount).toBe(0);
   });
+
+  it("should map finite positions given a domain whose span exceeds Number.MAX_VALUE", () => {
+    const scale = createScale({
+      type: "linear",
+      domain: [-1.7e308, 1.7e308],
+      range: [0, 100],
+    });
+
+    expect(mappedNumber(scale, -1.7e308)).toBe(0);
+    expect(mappedNumber(scale, 0)).toBeCloseTo(50);
+    expect(mappedNumber(scale, 1.7e308)).toBe(100);
+    expect(invertedNumber(scale, 50)).toBeCloseTo(0);
+    expect(scale.ticks(4)).toEqual([-1e308, 0, 1e308]);
+  });
 });
 
 describe("categorical coordinate scales", () => {

@@ -300,10 +300,11 @@ function dateDomain(values: readonly unknown[], explicit: boolean): NumericDomai
 }
 
 function tickStep(start: number, stop: number, count: number): number {
-  const span = Math.abs(stop - start);
-  if (!Number.isFinite(span) || span === 0) return 0;
+  if (start === stop) return 0;
 
-  const rawStep = span / Math.max(1, count);
+  const divisor = Math.max(1, count);
+  const rawStep = Math.abs(stop / divisor - start / divisor);
+  if (!Number.isFinite(rawStep) || rawStep === 0) return 0;
   const power = Math.floor(Math.log10(rawStep));
   const magnitude = 10 ** power;
   const error = rawStep / magnitude;
@@ -410,7 +411,20 @@ function interpolateNumberRange(range: readonly number[], value: number): number
   const index =
     value <= 0 ? 0 : value >= 1 ? range.length - 2 : Math.min(range.length - 2, Math.floor(scaled));
   const fraction = scaled - index;
-  return range[index]! + (range[index + 1]! - range[index]!) * fraction;
+  return interpolateFiniteSpan(range[index]!, range[index + 1]!, fraction);
+}
+
+function normalizeFiniteSpan(value: number, start: number, stop: number): number {
+  if (start === stop) return 0.5;
+  const delta = stop - start;
+  if (Number.isFinite(delta)) return (value - start) / delta;
+  return (value / 2 - start / 2) / (stop / 2 - start / 2);
+}
+
+function interpolateFiniteSpan(start: number, stop: number, fraction: number): number {
+  if (fraction === 0) return start;
+  if (fraction === 1) return stop;
+  return start * (1 - fraction) + stop * fraction;
 }
 
 function isMonotonic(values: readonly number[]): boolean {
@@ -442,7 +456,7 @@ function uninterpolateNumberRange(
   if (firstIndex != null) {
     const left = range[firstIndex]!;
     const right = range[firstIndex + 1]!;
-    const fraction = (resolvedValue - left) / (right - left);
+    const fraction = normalizeFiniteSpan(resolvedValue, left, right);
     return (firstIndex + fraction) / (range.length - 1);
   }
 
@@ -453,7 +467,7 @@ function uninterpolateNumberRange(
       (ascending && resolvedValue >= left && resolvedValue <= right) ||
       (!ascending && resolvedValue <= left && resolvedValue >= right)
     ) {
-      const fraction = right === left ? 0 : (resolvedValue - left) / (right - left);
+      const fraction = right === left ? 0 : normalizeFiniteSpan(resolvedValue, left, right);
       return (index + fraction) / (range.length - 1);
     }
   }
@@ -933,7 +947,7 @@ function createContinuousColorScale(options: CreateScaleOptions): ResolvedScale 
       const numeric =
         value instanceof Date ? value.getTime() : typeof value === "number" ? value : NaN;
       if (!Number.isFinite(numeric)) return unknownValue;
-      const raw = delta === 0 ? 0.5 : (numeric - start) / delta;
+      const raw = delta === 0 ? 0.5 : normalizeFiniteSpan(numeric, start, stop);
       return interpolateColorRange(colors, raw, shouldClamp);
     },
     ticks(tickCount = 5) {
@@ -1046,14 +1060,16 @@ function createNumericScale(
       if (!isFiniteNumber(value) || (type === "log" && value <= 0)) return unknownValue;
       const transformed = transform(value);
       const raw =
-        transformedDelta === 0 ? 0.5 : (transformed - transformedStart) / transformedDelta;
+        transformedDelta === 0
+          ? 0.5
+          : normalizeFiniteSpan(transformed, transformedStart, transformedStop);
       return interpolateNumberRange(range, shouldClamp ? clamp01(raw) : raw);
     },
     invert(value) {
       const normalized = uninterpolateNumberRange(range, value, shouldClamp);
       if (normalized == null) return undefined;
       const fraction = shouldClamp ? clamp01(normalized) : normalized;
-      return untransform(transformedStart + transformedDelta * fraction);
+      return untransform(interpolateFiniteSpan(transformedStart, transformedStop, fraction));
     },
     ticks(tickCount = 5) {
       return type === "log"
