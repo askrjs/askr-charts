@@ -21,6 +21,7 @@ export function readRowKey<Row>(
   return value;
 }
 
+/** Appends one or more rows to `rows`, returning a new frozen array (or `rows` if nothing was added). */
 export function appendPlotRows<Row>(
   rows: readonly Row[],
   appended: readonly Row[] | Row,
@@ -29,6 +30,10 @@ export function appendPlotRows<Row>(
   return additions.length === 0 ? rows : Object.freeze([...rows, ...additions]);
 }
 
+/**
+ * Inserts or updates rows by key: rows whose key matches an existing row replace it in place,
+ * and new keys are appended. Throws if `updates` or the existing `rows` contain duplicate keys.
+ */
 export function upsertPlotRows<Row>(
   rows: readonly Row[],
   updates: readonly Row[] | Row,
@@ -67,6 +72,10 @@ export function upsertPlotRows<Row>(
   return Object.freeze(result);
 }
 
+/**
+ * Removes rows matching a predicate, or by key (requires `rowKey` when `keys` is an array/set).
+ * Returns the original `rows` reference unchanged if nothing was removed.
+ */
 export function removePlotRows<Row>(
   rows: readonly Row[],
   keys:
@@ -101,6 +110,7 @@ export function removePlotRows<Row>(
   return changed ? Object.freeze(kept) : rows;
 }
 
+/** Options for {@link trimPlotRows}: keep the last `rows` rows, or rows within `durationMs` of `now`. */
 export type TrimPlotRowsOptions<Row> =
   | { rows: number }
   | {
@@ -109,6 +119,11 @@ export type TrimPlotRowsOptions<Row> =
       now?: Date | number;
     };
 
+/**
+ * Trims `rows` down to a trailing window, either by row count or by a duration relative to a
+ * temporal field. A bare number is shorthand for `{ rows: number }`. Returns the original `rows`
+ * reference unchanged if nothing was trimmed.
+ */
 export function trimPlotRows<Row>(
   rows: readonly Row[],
   options: number | TrimPlotRowsOptions<Row>,

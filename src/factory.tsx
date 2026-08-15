@@ -28,6 +28,16 @@ const rootInstanceSlugs = new WeakMap<object, string>();
 const ssrRootCounters = new WeakMap<object, number>();
 let browserRootCounter = 0;
 
+/**
+ * Creates a self-contained set of plot components (`Root`, marks, scales, and
+ * annotations) bound to a single row type.
+ *
+ * @example
+ * const Plot = createPlot<{ x: number; y: number }>();
+ * <Plot.Root data={rows} rowKey="x" label="Example">
+ *   <Plot.Line x="x" y="y" />
+ * </Plot.Root>
+ */
 export function createPlot<Row>(): PlotFactory<Row> {
   const factory = Object.freeze({});
   const Root = ((props: RootProps<Row>, context?: PlotExecutionContext) =>
