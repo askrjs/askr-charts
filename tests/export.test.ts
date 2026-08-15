@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { JSDOM } from "jsdom";
 
 import { compilePlotScene } from "../src/compiler";
 import type { PlotDescriptor } from "../src/descriptors";
@@ -293,6 +294,29 @@ describe("SVG scene serialization", () => {
     expect(svg).toContain("&lt;script&gt;alert(&quot;title&quot;)&lt;/script&gt;");
     expect(svg).toContain("&lt;script&gt;alert(&quot;text&quot;)&lt;/script&gt;");
     expect(svg).not.toContain("<script>");
+  });
+
+  it("should replace XML-forbidden code points given hostile chart text when exporting SVG", () => {
+    const hostileText = `before${String.fromCharCode(0)}${String.fromCharCode(11)}${String.fromCharCode(0xd800)}after`;
+    const hostile = {
+      ...base("hostile", hostileText),
+      kind: "text" as const,
+      x: 10,
+      y: 10,
+      text: `tab\tline\nreturn\r${hostileText}😀`,
+      align: "left" as const,
+      baseline: "alphabetic" as const,
+      font: "12px sans-serif",
+      fill: "#fff",
+    };
+
+    const svg = serializePlotSvg(scene([hostile]), { background: "#fff" });
+
+    expect(svg).not.toMatch(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ud800]/u);
+    expect(svg.match(/�/gu)).toHaveLength(6);
+    expect(svg).toContain("tab\tline\nreturn\r");
+    expect(svg).toContain("😀");
+    expect(() => new JSDOM(svg, { contentType: "image/svg+xml" })).not.toThrow();
   });
 
   it.each([
