@@ -53,8 +53,9 @@ try {
       repositoryRoot,
     ),
   );
-  assert.equal(packResult.length, 1, "npm pack should produce exactly one tarball");
-  const tarball = join(packDirectory, packResult[0].filename);
+  const packEntries = Array.isArray(packResult) ? packResult : Object.values(packResult);
+  assert.equal(packEntries.length, 1, "npm pack should produce exactly one tarball");
+  const tarball = join(packDirectory, packEntries[0].filename);
 
   writeFileSync(
     join(consumerDirectory, "package.json"),
@@ -182,7 +183,7 @@ void api;
     consumerDirectory,
   );
 
-  const packedManifest = packResult[0];
+  const packedManifest = packEntries[0];
   assert.equal(packedManifest.version, "0.1.10");
   assert.match(packedManifest.filename, /askrjs-charts-0\.1\.10\.tgz$/);
   assert.equal(packedManifest.size > 0, true);

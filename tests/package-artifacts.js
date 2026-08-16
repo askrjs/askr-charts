@@ -8,15 +8,16 @@ const result = JSON.parse(
     encoding: "utf8",
   }),
 );
+const artifacts = Array.isArray(result) ? result : Object.values(result);
 
-if (result.length !== 1) {
-  throw new Error(`Expected one packed artifact, received ${result.length}.`);
+if (artifacts.length !== 1) {
+  throw new Error(`Expected one packed artifact, received ${artifacts.length}.`);
 }
 
-const packedFiles = new Set(result[0].files.map(({ path }) => normalize(path)));
+const packedFiles = new Set(artifacts[0].files.map(({ path }) => normalize(path)));
 const sourceMappingPattern = /[#@]\s*sourceMappingURL=([^\s*]+)/gu;
 
-for (const file of result[0].files) {
+for (const file of artifacts[0].files) {
   if (!/\.(?:css|d\.ts|js)$/u.test(file.path)) continue;
 
   const source = readFileSync(file.path, "utf8");
