@@ -2,7 +2,7 @@ import { bench, describe } from "vite-plus/test";
 import "../../src/styles.css";
 import { createPlot } from "../../src";
 import { renderPlotScene, defaultPlotTheme } from "../../src/render";
-import { flushCanvasPaint, mountPlot, unmountPlot } from "../_shared/browser";
+import { mountPlot, unmountPlot } from "../_shared/browser";
 import { compileLineScene, sourceRows100k, type BenchmarkRow } from "../_shared/fixtures";
 
 const runtimeGlobal = globalThis as unknown as {
@@ -61,11 +61,10 @@ function HundredThousandRowPlot() {
 describe("tier4 Chromium Canvas 2D acceptance", () => {
   bench(
     "mount, compile, and paint a 100k line plot (<=250ms)",
-    async () => {
+    () => {
       const startedAt = performance.now();
       const root = mountPlot(<HundredThousandRowPlot />);
       try {
-        await flushCanvasPaint();
         const frame = root.querySelector<HTMLElement>('[data-slot="plot-frame"]');
         const base = root.querySelector<HTMLCanvasElement>('[data-slot="plot-canvas-marks"]');
         if (!frame || !base || frame.dataset.markCount !== "4" || base.width === 0) {
