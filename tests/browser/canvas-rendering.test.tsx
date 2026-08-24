@@ -33,16 +33,18 @@ const currentCartesianRows: readonly CartesianRow[] = [cartesianRows[3]!];
 function CartesianExample({
   onApiChange,
   tokenHeight = false,
+  label = "Operations trend",
 }: {
   onApiChange?: (api: PlotApi<CartesianRow> | null) => void;
   tokenHeight?: boolean;
+  label?: string;
 }) {
   return (
     <Cartesian.Root
       data={cartesianRows}
       rowKey="id"
-      label="Operations trend"
-      title="Operations trend"
+      label={label}
+      title={label}
       width={640}
       height={tokenHeight ? undefined : 320}
       onApiChange={onApiChange}
@@ -137,6 +139,63 @@ describe("canvas rendering and export", () => {
     expect(bitmap.width).toBe(frame.clientWidth * 2);
     expect(bitmap.height).toBe(frame.clientHeight * 2);
     bitmap.close();
+  });
+
+  it("should isolate concurrent resize and export work across independent chart instances", async () => {
+    const first = document.createElement("div");
+    const second = document.createElement("div");
+    first.style.width = "280px";
+    second.style.width = "520px";
+    document.body.append(first, second);
+    let firstApi: PlotApi<CartesianRow> | null = null;
+    let secondApi: PlotApi<CartesianRow> | null = null;
+
+    try {
+      createIsland({
+        root: first,
+        component: () => (
+          <CartesianExample label="First isolated plot" onApiChange={(api) => (firstApi = api)} />
+        ),
+      });
+      createIsland({
+        root: second,
+        component: () => (
+          <CartesianExample label="Second isolated plot" onApiChange={(api) => (secondApi = api)} />
+        ),
+      });
+      await flushPaint();
+
+      const firstFrame = required<HTMLElement>(first, '[data-slot="plot-frame"]');
+      const secondFrame = required<HTMLElement>(second, '[data-slot="plot-frame"]');
+      const firstWidth = firstFrame.clientWidth;
+      const secondWidth = secondFrame.clientWidth;
+      first.style.width = "360px";
+      const [firstPng, secondPng, firstSvg, secondSvg] = await Promise.all([
+        firstApi!.exportPng({ pixelRatio: 1 }),
+        secondApi!.exportPng({ pixelRatio: 2 }),
+        Promise.resolve(firstApi!.exportSvg()),
+        Promise.resolve(secondApi!.exportSvg()),
+      ]);
+      await flushPaint();
+
+      const firstBitmap = await createImageBitmap(firstPng);
+      const secondBitmap = await createImageBitmap(secondPng);
+      expect(firstFrame.clientWidth).toBe(360);
+      expect(secondFrame.clientWidth).toBe(secondWidth);
+      expect(firstBitmap.width).toBe(firstWidth);
+      expect(secondBitmap.width).toBe(secondFrame.clientWidth * 2);
+      expect(firstSvg).toContain("<title>First isolated plot");
+      expect(firstSvg).not.toContain("Second isolated plot");
+      expect(secondSvg).toContain("<title>Second isolated plot");
+      expect(secondSvg).not.toContain("First isolated plot");
+      firstBitmap.close();
+      secondBitmap.close();
+    } finally {
+      cleanupApp(first);
+      cleanupApp(second);
+      first.remove();
+      second.remove();
+    }
   });
 
   it("should paint every mark family and mixed reference given the full theme and width matrix", async () => {
