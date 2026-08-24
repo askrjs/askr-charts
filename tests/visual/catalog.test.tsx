@@ -5,6 +5,33 @@ import { VisualCatalog } from "../../examples/catalog";
 import "../../src/styles.css";
 import "../../visual/visual.css";
 
+const VISUAL_BASELINE_PALETTES = {
+  light: [
+    "#2563eb",
+    "#7c3aed",
+    "#059669",
+    "#d97706",
+    "#dc2626",
+    "#0891b2",
+    "#be185d",
+    "#ea580c",
+    "#0f766e",
+    "#4f46e5",
+  ],
+  dark: [
+    "#2563eb",
+    "#7c3aed",
+    "#059669",
+    "#d97706",
+    "#dc2626",
+    "#0891b2",
+    "#f472b6",
+    "#ea580c",
+    "#0f766e",
+    "#818cf8",
+  ],
+} as const;
+
 describe("visual catalog baselines", () => {
   let container: HTMLDivElement | undefined;
 
@@ -23,6 +50,9 @@ describe("visual catalog baselines", () => {
         container.dataset.theme = theme;
         container.style.width = `${width}px`;
         container.style.setProperty("--ak-chart-transition-duration", "0ms");
+        VISUAL_BASELINE_PALETTES[theme].forEach((color, index) => {
+          container!.style.setProperty(`--ak-chart-series-${index + 1}`, color);
+        });
         document.body.append(container);
         createIsland({ root: container, component: VisualCatalog });
         await document.fonts.ready;

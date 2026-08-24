@@ -31,15 +31,15 @@
   --ak-chart-transition-duration: var(--ak-duration-fast, 160ms);
   --ak-chart-transition-easing: var(--ak-ease-standard, cubic-bezier(0.22, 1, 0.36, 1));
   --ak-chart-series-1: var(--ak-color-chart-series-1, #2563eb);
-  --ak-chart-series-2: var(--ak-color-chart-series-2, #7c3aed);
-  --ak-chart-series-3: var(--ak-color-chart-series-3, #059669);
-  --ak-chart-series-4: var(--ak-color-chart-series-4, #d97706);
-  --ak-chart-series-5: var(--ak-color-chart-series-5, #dc2626);
-  --ak-chart-series-6: var(--ak-color-chart-series-6, #0891b2);
-  --ak-chart-series-7: var(--ak-color-chart-series-7, #be185d);
-  --ak-chart-series-8: var(--ak-color-chart-series-8, #ea580c);
-  --ak-chart-series-9: var(--ak-color-chart-series-9, #0f766e);
-  --ak-chart-series-10: var(--ak-color-chart-series-10, #4f46e5);
+  --ak-chart-series-2: var(--ak-color-chart-series-2, #bb8800);
+  --ak-chart-series-3: var(--ak-color-chart-series-3, #dd0044);
+  --ak-chart-series-4: var(--ak-color-chart-series-4, #889988);
+  --ak-chart-series-5: var(--ak-color-chart-series-5, #bb3399);
+  --ak-chart-series-6: var(--ak-color-chart-series-6, #cc3300);
+  --ak-chart-series-7: var(--ak-color-chart-series-7, #aa6644);
+  --ak-chart-series-8: var(--ak-color-chart-series-8, #5599cc);
+  --ak-chart-series-9: var(--ak-color-chart-series-9, #bb00bb);
+  --ak-chart-series-10: var(--ak-color-chart-series-10, #9900ff);
 }
 
 :root,
@@ -81,8 +81,6 @@
   --ak-chart-tooltip-fg: var(--ak-color-text-inverse, #18181b);
   --ak-chart-tooltip-border: rgb(24 24 27 / 0.14);
   --ak-chart-shadow: var(--ak-shadow-md, 0 16px 40px rgb(0 0 0 / 0.42));
-  --ak-chart-series-7: var(--ak-color-chart-series-7, #f472b6);
-  --ak-chart-series-10: var(--ak-color-chart-series-10, #818cf8);
 }
 
 :where(.ak-plot-root, [data-slot="plot-root"]),

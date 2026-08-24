@@ -30,7 +30,66 @@ describe("chart accessibility defaults", () => {
       }
     }
   });
+
+  it("should keep every default series pair distinguishable under red-green color blindness", () => {
+    const host = document.createElement("div");
+    const probe = document.createElement("span");
+    host.append(probe);
+    document.body.append(host);
+    mounted.push(host);
+    const palette = Array.from({ length: 10 }, (_, index) =>
+      resolvedColor(probe, `--ak-chart-series-${index + 1}`),
+    );
+
+    for (const simulation of [PROTANOPIA, DEUTERANOPIA] as const) {
+      for (let first = 0; first < palette.length; first += 1) {
+        for (let second = first + 1; second < palette.length; second += 1) {
+          const distance = colorDistance(
+            simulateColorBlindness(palette[first]!, simulation),
+            simulateColorBlindness(palette[second]!, simulation),
+          );
+          expect(
+            distance,
+            `series ${first + 1} and ${second + 1} have simulated distance ${distance.toFixed(1)}`,
+          ).toBeGreaterThanOrEqual(55);
+        }
+      }
+    }
+  });
 });
+
+type ColorMatrix = readonly [
+  readonly [number, number, number],
+  readonly [number, number, number],
+  readonly [number, number, number],
+];
+
+const PROTANOPIA: ColorMatrix = [
+  [0.152286, 1.052583, -0.204868],
+  [0.114503, 0.786281, 0.099216],
+  [-0.003882, -0.048116, 1.051998],
+];
+const DEUTERANOPIA: ColorMatrix = [
+  [0.367322, 0.860646, -0.227968],
+  [0.280085, 0.672501, 0.047413],
+  [-0.01182, 0.04294, 0.968881],
+];
+
+function simulateColorBlindness(
+  color: readonly [number, number, number],
+  matrix: ColorMatrix,
+): readonly [number, number, number] {
+  return matrix.map((row) =>
+    row.reduce((total, coefficient, index) => total + coefficient * color[index]!, 0),
+  ) as unknown as readonly [number, number, number];
+}
+
+function colorDistance(
+  first: readonly [number, number, number],
+  second: readonly [number, number, number],
+): number {
+  return Math.hypot(...first.map((channel, index) => channel - second[index]!));
+}
 
 function resolvedColor(element: HTMLElement, token: string): readonly [number, number, number] {
   element.style.color = `var(${token})`;
