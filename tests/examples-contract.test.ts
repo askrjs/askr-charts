@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vite-plus/test";
@@ -31,6 +32,29 @@ describe("local plot examples", () => {
     const diagnostics = ts.getPreEmitDiagnostics(program);
 
     expect(formatDiagnostics(diagnostics)).toBe("");
+  });
+
+  it("should link every removed chart composition to a checked and typechecked example", () => {
+    const readme = readFileSync(resolve(workspace, "README.md"), "utf8");
+    for (const legacyName of [
+      "AreaChart",
+      "BarChart",
+      "LineChart",
+      "DonutChart",
+      "PieChart",
+      "StackedBarChart",
+      "Sparkline",
+      "Heatmap",
+      "Timeline",
+      "FlameGraph",
+      "ProgressMeter",
+      "RadialGauge",
+    ]) {
+      const row = readme.split("\n").find((line) => line.startsWith(`| \`${legacyName}\``));
+      expect(row, legacyName).toBeDefined();
+      expect(row, legacyName).toContain("](./examples/");
+      expect(row, legacyName).toContain(".tsx)");
+    }
   });
 });
 

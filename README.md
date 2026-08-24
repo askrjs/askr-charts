@@ -97,24 +97,24 @@ Mounted plots always respond to their container. `width` is the SSR and initial-
 
 There are no compatibility wrappers in 0.1.
 
-| Removed 0.0 surface                         | 0.1 composition                                                   |
-| ------------------------------------------- | ----------------------------------------------------------------- |
-| `ChartShell`                                | `Plot.Root`; keep product card or page chrome in the app          |
-| `ChartPanel`                                | App-owned card/section plus `Plot.Root` title and description     |
-| `ChartEmptyState`                           | `Root empty="..."`; keep loading and error ownership in the route |
-| `ChartLegend`                               | `Plot.Legend`                                                     |
-| `AreaChart`                                 | `Plot.Area`                                                       |
-| `BarChart`                                  | `Plot.Bar`                                                        |
-| `LineChart`                                 | `Plot.Line`, optionally with `Plot.Point`                         |
-| `DonutChart`                                | `Plot.Arc` with `innerRadius`                                     |
-| `PieChart`                                  | `Plot.Arc` with `innerRadius={0}`                                 |
-| `StackedBarChart`                           | `Plot.Bar stack="series"`; use `normalize` for percent stacks     |
-| `Sparkline`                                 | Compact `Plot.Root` with `Plot.Line` or `Plot.Area`               |
-| `Heatmap`                                   | `Plot.Cell`                                                       |
-| `Timeline`                                  | `Plot.Rule`, `Plot.Point`, and `Plot.Text`                        |
-| `FlameGraph`                                | `Plot.Rect` with `partition(...)`                                 |
-| `ProgressMeter`                             | Bounded `Plot.Bar` plus `Root meter={{ role: "meter", ... }}`     |
-| `RadialGauge`                               | Bounded `Plot.Arc` plus `Root meter={{ role: "meter", ... }}`     |
+| Removed 0.0 surface                         | 0.1 composition                                                   | Worked example                                    |
+| ------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------- |
+| `ChartShell`                                | `Plot.Root`; keep product card or page chrome in the app          | [catalog](./examples/catalog.tsx)                 |
+| `ChartPanel`                                | App-owned card/section plus `Plot.Root` title and description     | [catalog](./examples/catalog.tsx)                 |
+| `ChartEmptyState`                           | `Root empty="..."`; keep loading and error ownership in the route | [catalog](./examples/catalog.tsx)                 |
+| `ChartLegend`                               | `Plot.Legend`                                                     | [mark families](./examples/mark-families.tsx)     |
+| `AreaChart`                                 | `Plot.Area`                                                       | [mark families](./examples/mark-families.tsx)     |
+| `BarChart`                                  | `Plot.Bar`                                                        | [mark families](./examples/mark-families.tsx)     |
+| `LineChart`                                 | `Plot.Line`, optionally with `Plot.Point`                         | [mark families](./examples/mark-families.tsx)     |
+| `DonutChart`                                | `Plot.Arc` with `innerRadius`                                     | [mark families](./examples/mark-families.tsx)     |
+| `PieChart`                                  | `Plot.Arc` with `innerRadius={0}`                                 | [catalog recipes](./examples/catalog-recipes.tsx) |
+| `StackedBarChart`                           | `Plot.Bar stack="series"`; use `normalize` for percent stacks     | [catalog recipes](./examples/catalog-recipes.tsx) |
+| `Sparkline`                                 | Compact `Plot.Root` with `Plot.Line` or `Plot.Area`               | [catalog recipes](./examples/catalog-recipes.tsx) |
+| `Heatmap`                                   | `Plot.Cell`                                                       | [mark families](./examples/mark-families.tsx)     |
+| `Timeline`                                  | `Plot.Rule`, `Plot.Point`, and `Plot.Text`                        | [mark families](./examples/mark-families.tsx)     |
+| `FlameGraph`                                | `Plot.Rect` with `partition(...)`                                 | [mark families](./examples/mark-families.tsx)     |
+| `ProgressMeter`                             | Bounded `Plot.Bar` plus `Root meter={{ role: "meter", ... }}`     | [mark families](./examples/mark-families.tsx)     |
+| `RadialGauge`                               | Bounded `Plot.Arc` plus `Root meter={{ role: "meter", ... }}`     | [mark families](./examples/mark-families.tsx)     |
 | `@askrjs/charts/core`                       | Helpers exported directly from `@askrjs/charts`                   |
 | `@askrjs/charts/default` or root CSS import | `@askrjs/charts/styles`                                           |
 | Per-chart CSS, templates, and `new:chart`   | One structural stylesheet and primitive composition               |
