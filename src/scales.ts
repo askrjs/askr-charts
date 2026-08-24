@@ -42,11 +42,15 @@ type TimeInterval = {
 
 const DEFAULT_ORDINAL_COLORS = [
   "#2563eb",
-  "#7c3aed",
-  "#059669",
-  "#d97706",
-  "#dc2626",
-  "#0891b2",
+  "#bb8800",
+  "#dd0044",
+  "#889988",
+  "#bb3399",
+  "#cc3300",
+  "#aa6644",
+  "#5599cc",
+  "#bb00bb",
+  "#9900ff",
 ] as const;
 
 const DEFAULT_CONTINUOUS_COLORS = ["#eff6ff", "#2563eb"] as const;
