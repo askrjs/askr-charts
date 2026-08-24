@@ -358,6 +358,14 @@ describe("SVG scene serialization", () => {
     expect(() => new JSDOM(svg, { contentType: "image/svg+xml" })).not.toThrow();
   });
 
+  it("should reject XML-hostile attribute paints without emitting partial SVG", () => {
+    const hostilePaint = `#fff"${String.fromCharCode(0)} onload="alert(1)`;
+
+    expect(() => serializePlotSvg(scene(), { background: hostilePaint })).toThrow(
+      "SVG paint must be",
+    );
+  });
+
   it.each([
     "url(https://attacker.test/paint.svg#gradient)",
     "url(#local-reference)",

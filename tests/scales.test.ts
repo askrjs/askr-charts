@@ -196,6 +196,37 @@ describe("continuous coordinate scales", () => {
     expect(invertedNumber(scale, 50)).toBeCloseTo(0);
     expect(scale.ticks(4)).toEqual([-1e308, 0, 1e308]);
   });
+
+  it("should preserve tiny finite observations beside extreme magnitudes", () => {
+    const scale = createScale({
+      type: "linear",
+      values: [-1.7e308, -Number.MIN_VALUE, Number.MIN_VALUE, 1.7e308],
+      range: [0, 100],
+    });
+
+    for (const value of [-1.7e308, -Number.MIN_VALUE, 0, Number.MIN_VALUE, 1.7e308]) {
+      expect(mappedNumber(scale, value), String(value)).toBeTypeOf("number");
+      expect(Number.isFinite(mappedNumber(scale, value)), String(value)).toBe(true);
+    }
+    expect(mappedNumber(scale, 0)).toBeCloseTo(50);
+  });
+});
+
+describe("time boundary scales", () => {
+  it("should map absolute elapsed time across a daylight-saving transition", () => {
+    const before = new Date("2026-03-08T01:30:00-05:00");
+    const after = new Date("2026-03-08T03:30:00-04:00");
+    const midpoint = new Date((before.getTime() + after.getTime()) / 2);
+    const scale = createScale({ type: "time", domain: [before, after], range: [0, 100] });
+
+    expect(after.getTime() - before.getTime()).toBe(60 * 60 * 1_000);
+    expect(mappedNumber(scale, before)).toBe(0);
+    expect(mappedNumber(scale, midpoint)).toBeCloseTo(50);
+    expect(mappedNumber(scale, after)).toBe(100);
+    const inverted = scale.invert?.(50);
+    expect(inverted).toBeInstanceOf(Date);
+    expect((inverted as Date).getTime()).toBe(midpoint.getTime());
+  });
 });
 
 describe("categorical coordinate scales", () => {
@@ -299,6 +330,23 @@ describe("time scales", () => {
 });
 
 describe("color scales", () => {
+  it("should keep the renderer fallback palette aligned with the stylesheet contract", () => {
+    const domain = Array.from({ length: 10 }, (_, index) => `series-${index + 1}`);
+    const scale = createScale({ type: "ordinal-color", domain, range: [] });
+
+    expect(domain.map((value) => scale.map(value))).toEqual([
+      "#2563eb",
+      "#bb8800",
+      "#dd0044",
+      "#889988",
+      "#bb3399",
+      "#cc3300",
+      "#aa6644",
+      "#5599cc",
+      "#bb00bb",
+      "#9900ff",
+    ]);
+  });
   it("should cycle a fixed palette given unique categories when mapping ordinal colors", () => {
     const scale = createScale({
       type: "ordinal-color",
