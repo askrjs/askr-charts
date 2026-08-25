@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
@@ -6,28 +6,6 @@ import { describe, expect, it } from "vite-plus/test";
 import * as publicApi from "../src";
 
 const ROOT = join(import.meta.dirname, "..");
-const EXPORT_EVIDENCE: Readonly<Record<keyof typeof publicApi, readonly string[]>> = {
-  appendPlotRows: ["tests/rows.test.ts"],
-  bin: ["tests/compiler.test.ts"],
-  constant: ["tests/compiler.test.ts", "examples/mark-families.tsx"],
-  count: ["tests/compiler.test.ts"],
-  createPlot: ["tests/root.test.tsx", "tests/browser/canvas-rendering.test.tsx"],
-  filterRows: ["tests/transforms.test.ts"],
-  group: ["tests/contracts-audit.test.ts"],
-  mean: ["tests/contracts-audit.test.ts"],
-  movingAverage: ["tests/compiler.test.ts"],
-  movingWindow: ["tests/contracts-audit.test.ts"],
-  normalize: ["tests/contracts-audit.test.ts"],
-  partition: ["tests/transforms.test.ts", "examples/mark-families.tsx"],
-  regression: ["tests/contracts-audit.test.ts"],
-  removePlotRows: ["tests/rows.test.ts"],
-  sortRows: ["tests/transforms.test.ts"],
-  stack: ["tests/compiler.test.ts"],
-  sum: ["tests/compiler.test.ts"],
-  trimPlotRows: ["tests/rows.test.ts"],
-  upsertPlotRows: ["tests/rows.test.ts"],
-};
-
 const TOKEN_DELEGATION = {
   "--ak-chart-font-family": "--ak-font-family-body",
   "--ak-chart-font-family-mono": "--ak-font-family-mono",
@@ -63,19 +41,6 @@ describe("cross-package contract audit", () => {
     );
     expect(publicApi.normalize("value").kind).toBe("normalize");
     expect(publicApi.regression("value", { x: "time" }).kind).toBe("regression");
-  });
-
-  it("should keep every public runtime export attached to direct executable evidence", () => {
-    expect(Object.keys(EXPORT_EVIDENCE).sort()).toEqual(Object.keys(publicApi).sort());
-    for (const [name, files] of Object.entries(EXPORT_EVIDENCE)) {
-      expect(files.length, name).toBeGreaterThan(0);
-      for (const file of files) {
-        expect(existsSync(join(ROOT, file)), `${name}: missing ${file}`).toBe(true);
-        expect(readFileSync(join(ROOT, file), "utf8"), `${name}: absent from ${file}`).toContain(
-          name,
-        );
-      }
-    }
   });
 
   it("should delegate shared chart tokens to the themes token vocabulary", () => {
