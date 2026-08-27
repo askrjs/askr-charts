@@ -266,7 +266,12 @@ export function compilePlotScene<Row>(options: CompilePlotOptions<Row>): PlotSce
     ? exportRows
     : buildSourceRowRecords(sourceRows, options.rowKey, exportRows);
 
-  const legends = resolveLegends(options.descriptors, scales, scaleUses);
+  const legends = resolveLegends(
+    options.descriptors,
+    scales,
+    scaleUses,
+    sourceRows.length === 0,
+  );
   const interactions = resolveInteractions(options.descriptors, marks.length > 0);
   const scaleDiagnostics = Object.values(scales)
     .filter((scale) => scale.omittedValueCount > 0)
@@ -1583,6 +1588,7 @@ function resolveLegends(
   descriptors: readonly PlotDescriptor[],
   scales: Readonly<Record<string, ResolvedScale>>,
   uses: ReadonlyMap<string, ScaleUse>,
+  emptyData: boolean,
 ): SceneLegend[] {
   const explicit = descriptors.filter((descriptor) => descriptor.kind === "Legend");
   const colorScales = [...uses.values()].filter((use) => use.channel === "color");
@@ -1602,6 +1608,7 @@ function resolveLegends(
     }
     const name = spec.scale ?? "color";
     const scale = scales[name];
+    if (!scale && emptyData) return [];
     if (!scale) throw new Error(`Legend references unknown scale ${name}.`);
     if (!isColorScale(scale)) {
       throw new TypeError(`Legend requires a color scale, received ${name}.`);

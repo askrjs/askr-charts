@@ -954,6 +954,16 @@ describe("runtime contract hardening", () => {
     expect(scene.legends[0]?.interactive).toBe(false);
   });
 
+  it("should compile an empty data set without requiring an inferred color scale", () => {
+    const scene = compile(Object.freeze([]), [
+      descriptor("Bar", { x: "route", y: "requests", fill: "service" }),
+      descriptor("Legend"),
+    ]);
+
+    expect(scene.marks).toEqual([]);
+    expect(scene.legends).toEqual([]);
+  });
+
   it("should keep delimiter-bearing aggregate groups distinct when compiling", () => {
     const scene = compile(
       Object.freeze([
