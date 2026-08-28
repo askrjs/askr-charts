@@ -266,7 +266,7 @@ export function compilePlotScene<Row>(options: CompilePlotOptions<Row>): PlotSce
     ? exportRows
     : buildSourceRowRecords(sourceRows, options.rowKey, exportRows);
 
-  const legends = resolveLegends(options.descriptors, scales, scaleUses);
+  const legends = resolveLegends(options.descriptors, scales, scaleUses, sourceRows.length === 0);
   const interactions = resolveInteractions(options.descriptors, marks.length > 0);
   const scaleDiagnostics = Object.values(scales)
     .filter((scale) => scale.omittedValueCount > 0)
@@ -1583,14 +1583,18 @@ function resolveLegends(
   descriptors: readonly PlotDescriptor[],
   scales: Readonly<Record<string, ResolvedScale>>,
   uses: ReadonlyMap<string, ScaleUse>,
+  emptyData: boolean,
 ): SceneLegend[] {
   const explicit = descriptors.filter((descriptor) => descriptor.kind === "Legend");
   const colorScales = [...uses.values()].filter((use) => use.channel === "color");
-  const specs: Record<string, unknown>[] =
+  const specs: { inferred: boolean; spec: Record<string, unknown> }[] =
     explicit.length > 0
-      ? explicit.map((descriptor) => descriptor.props as Record<string, unknown>)
-      : colorScales.map((use) => ({ scale: use.name }) as Record<string, unknown>);
-  return specs.flatMap((spec) => {
+      ? explicit.map((descriptor) => ({
+          inferred: descriptor.props.scale == null,
+          spec: descriptor.props as Record<string, unknown>,
+        }))
+      : colorScales.map((use) => ({ inferred: true, spec: { scale: use.name } }));
+  return specs.flatMap(({ inferred, spec }) => {
     if (spec.position != null && !isLegendPosition(spec.position)) {
       throw new TypeError(`Invalid Legend position ${String(spec.position)}.`);
     }
@@ -1602,6 +1606,7 @@ function resolveLegends(
     }
     const name = spec.scale ?? "color";
     const scale = scales[name];
+    if (!scale && emptyData && inferred) return [];
     if (!scale) throw new Error(`Legend references unknown scale ${name}.`);
     if (!isColorScale(scale)) {
       throw new TypeError(`Legend requires a color scale, received ${name}.`);
