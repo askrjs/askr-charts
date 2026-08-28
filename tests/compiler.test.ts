@@ -964,6 +964,15 @@ describe("runtime contract hardening", () => {
     expect(scene.legends).toEqual([]);
   });
 
+  it("should reject an explicitly unknown legend scale even when data is empty", () => {
+    expect(() =>
+      compile(Object.freeze([]), [
+        descriptor("Bar", { x: "route", y: "requests", fill: "service" }),
+        descriptor("Legend", { scale: "colr" }),
+      ]),
+    ).toThrow("Legend references unknown scale colr.");
+  });
+
   it("should keep delimiter-bearing aggregate groups distinct when compiling", () => {
     const scene = compile(
       Object.freeze([
