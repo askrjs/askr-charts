@@ -13,7 +13,7 @@ function readAllTestFiles(dir: string): string[] {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       results.push(...readAllTestFiles(full));
-    } else if (entry.isFile() && /\.test\.(ts|tsx)$/.test(entry.name)) {
+    } else if (entry.isFile() && /\.(test|spec)\.(ts|tsx)$/.test(entry.name)) {
       results.push(full);
     }
   }
@@ -88,7 +88,7 @@ describe("Test suite guidelines", () => {
       }
     }
 
-    for (const file of files.filter((candidate) => /\.test\.(ts|tsx)$/.test(candidate))) {
+    for (const file of files.filter((candidate) => /\.(test|spec)\.(ts|tsx)$/.test(candidate))) {
       const content = fs.readFileSync(file, "utf-8");
       const regex = /\b(it|test)\s*\(\s*(['"`])([^'"\n\r]+)\2/gi;
       let match: RegExpExecArray | null;
@@ -108,15 +108,16 @@ describe("Test suite guidelines", () => {
       }
     }
 
-    for (const file of files.filter((candidate) => /\.test\.(ts|tsx)$/.test(candidate))) {
+    for (const file of files.filter((candidate) => /\.(test|spec)\.(ts|tsx)$/.test(candidate))) {
       const base = path.basename(file);
-      if (!/^[a-z0-9_-]+\.test\.(ts|tsx)$/.test(base)) {
+      if (!/^[a-z0-9_-]+\.(test|spec)\.(ts|tsx)$/.test(base)) {
         failures.push({
           file,
           line: 1,
           snippet: path.relative(process.cwd(), file),
           rule: "test filename convention",
-          message: "Test filenames must be lowercase and end with .test.ts or .test.tsx",
+          message:
+            "Test filenames must be lowercase and end with .test.ts, .test.tsx, .spec.ts or .spec.tsx",
         });
       }
     }

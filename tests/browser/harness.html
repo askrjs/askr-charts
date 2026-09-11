@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>askr-charts browser test harness</title>
+    <script>
+      // Mirrors the old vitest browser setup file: the charting runtime and its
+      // askr dependencies must observe a production environment so that
+      // development-only console warnings stay off (the console guard fixture
+      // fails any test that emits one).
+      globalThis.process = {
+        ...globalThis.process,
+        env: { ...globalThis.process?.env, NODE_ENV: "production" },
+      };
+    </script>
+    <script type="module" src="./harness.tsx"></script>
+  </head>
+  <body></body>
+</html>

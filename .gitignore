@@ -58,6 +58,7 @@ Thumbs.db
 !.env.example
 
 # Browser test outputs
+blob-report/
 playwright-report/
 test-results/
 .vitest-attachments/
