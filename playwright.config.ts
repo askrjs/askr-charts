@@ -5,7 +5,7 @@ const PORT = 4320;
 const BASE_URL = `http://${HOST}:${PORT}`;
 
 export default defineConfig({
-  testDir: "./tests/browser",
+  testDir: "./tests",
   testMatch: "**/*.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

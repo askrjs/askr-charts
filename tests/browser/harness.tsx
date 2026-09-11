@@ -25,6 +25,7 @@ import {
   type PlotSelection,
   type PlotView,
 } from "../../src";
+import { VisualCatalog } from "../../examples/catalog";
 
 /* ------------------------------------------------------------------ */
 /* canvas-rendering                                                     */
@@ -565,6 +566,7 @@ export interface ChartsHarness {
     LiveApp: typeof LiveApp;
     FollowApp: typeof FollowApp;
     TransitionExample: typeof TransitionExample;
+    VisualCatalog: typeof VisualCatalog;
   };
 }
 
@@ -597,5 +599,6 @@ function mount(component: () => JSXElement, options: { width?: string } = {}): H
     LiveApp,
     FollowApp,
     TransitionExample,
+    VisualCatalog,
   },
 };
