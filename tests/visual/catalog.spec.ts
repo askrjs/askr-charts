@@ -17,7 +17,7 @@ test.describe("visual catalog", () => {
   });
 
   for (const { theme, width, palette } of cases) {
-    test(`${theme} ${width}px`, async ({ page }) => {
+    test(`should render ${theme} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width: width + 32, height: 900 });
       await page.evaluate(
         ({ theme, width, palette }) => {
