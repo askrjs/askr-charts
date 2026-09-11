@@ -19,34 +19,41 @@ test.describe("visual catalog", () => {
   for (const { theme, width, palette } of cases) {
     test(`${theme} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width: width + 32, height: 900 });
-      await page.evaluate(({ theme, width, palette }) => {
-        const root = document.createElement("div");
-        root.dataset.visualCatalogRoot = `${theme}-${width}`;
-        root.style.width = `${width}px`;
-        root.style.margin = "0 auto";
-        root.dataset.theme = theme;
-        root.dataset.palette = palette;
-        document.body.append(root);
-        window.charts.createIsland({
-          root,
-          component: () => window.charts.components.VisualCatalog(),
-        });
-      }, { theme, width, palette });
+      await page.evaluate(
+        ({ theme, width, palette }) => {
+          const root = document.createElement("div");
+          root.dataset.visualCatalogRoot = `${theme}-${width}`;
+          root.style.width = `${width}px`;
+          root.style.margin = "0 auto";
+          root.dataset.theme = theme;
+          root.dataset.palette = palette;
+          document.body.append(root);
+          window.charts.createIsland({
+            root,
+            component: () => window.charts.components.VisualCatalog(),
+          });
+        },
+        { theme, width, palette },
+      );
 
       await page.evaluate(async () => {
         await document.fonts.ready;
-        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
       });
 
       await expect(page.locator("[data-visual-case]")).toHaveCount(4);
       await expect(page.locator('[data-slot="plot-root"]')).toHaveCount(14);
-      const markCounts = await page.locator('[data-slot="plot-root"]').evaluateAll((roots) =>
-        roots.map((root) => root.querySelectorAll('[data-slot="mark"]').length),
-      );
+      const markCounts = await page
+        .locator('[data-slot="plot-root"]')
+        .evaluateAll((roots) =>
+          roots.map((root) => root.querySelectorAll('[data-slot="mark"]').length),
+        );
       expect(markCounts.every((count) => count > 0)).toBe(true);
 
       const roots = page.locator('[data-slot="plot-root"]');
-      for (let index = 0; index < await roots.count(); index += 1) {
+      for (let index = 0; index < (await roots.count()); index += 1) {
         const root = roots.nth(index);
         await root.scrollIntoViewIfNeeded();
         const label = await root.getAttribute("aria-label");
