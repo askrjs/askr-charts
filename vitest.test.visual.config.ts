@@ -14,7 +14,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    setupFiles: ["tests/browser/setup.ts"],
+    setupFiles: ["tests/visual/setup.ts"],
     browser: {
       enabled: true,
       headless: true,

@@ -62,7 +62,7 @@
     "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser && npm run test:visual",
     "test:unit": "vp test run -c vitest.test.unit.config.ts",
     "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
-    "test:browser": "cross-env NODE_ENV=production vp test run -c vitest.test.browser.config.ts",
+    "test:browser": "playwright test",
     "test:visual": "cross-env NODE_ENV=production vp test run -c vitest.test.visual.config.ts",
     "test:types": "npm run build && tsc -p tsconfig.types.json --noEmit",
     "test:installed": "npm run build && node tests/installed-smoke.js",
@@ -81,6 +81,7 @@
     "@askrjs/askr": ">=0.2.3 <0.3.0",
     "@askrjs/ui": ">=0.2.3 <0.3.0",
     "@askrjs/vite": ">=0.2.1 <0.3.0",
+    "@playwright/test": "1.62.1",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.3.0",
     "@typescript/native": "npm:typescript@^7.0.2",
@@ -103,6 +104,7 @@
   "askr": {
     "update": {
       "ignore": [
+        "@playwright/test",
         "playwright"
       ]
     }
