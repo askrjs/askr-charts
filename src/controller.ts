@@ -28,8 +28,23 @@ import {
   resolveSceneTransitionMode,
   type SceneTransitionMode,
 } from "./transitions";
-import { onClick, onKeyDown, onPointerCancel, onPointerDown, onPointerLeave, onPointerMove, onPointerUp, onWheel } from "./controller/pointer";
-import { filteredHits, hideTooltip, hitCenter, retainSelection, selectionKeys } from "./controller/selection";
+import {
+  onClick,
+  onKeyDown,
+  onPointerCancel,
+  onPointerDown,
+  onPointerLeave,
+  onPointerMove,
+  onPointerUp,
+  onWheel,
+} from "./controller/pointer";
+import {
+  filteredHits,
+  hideTooltip,
+  hitCenter,
+  retainSelection,
+  selectionKeys,
+} from "./controller/selection";
 import type { ControllerState } from "./controller/state";
 import {
   clearCanvasTransform,

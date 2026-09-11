@@ -656,7 +656,9 @@ function resolveSeries<Row>(
   return channelSeries(readChannel<Row>(row, index, input));
 }
 
-export function collectScaleUses<Row>(preparedMarks: readonly PreparedMark<Row>[]): Map<string, ScaleUse> {
+export function collectScaleUses<Row>(
+  preparedMarks: readonly PreparedMark<Row>[],
+): Map<string, ScaleUse> {
   const uses = new Map<string, ScaleUse>();
   const get = (name: string, channel: ScaleUse["channel"]): ScaleUse => {
     const existing = uses.get(name);

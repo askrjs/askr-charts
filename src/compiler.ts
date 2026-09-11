@@ -9,7 +9,12 @@ import type {
   SceneExportRow,
   SceneMark,
 } from "./scene-model";
-import { resolveAxes, resolveGrids, resolveInteractions, resolveLegends } from "./compiler/axes-legends";
+import {
+  resolveAxes,
+  resolveGrids,
+  resolveInteractions,
+  resolveLegends,
+} from "./compiler/axes-legends";
 import {
   collectInvalidLogSourceKeys,
   collectScaleUses,

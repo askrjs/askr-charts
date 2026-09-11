@@ -103,7 +103,12 @@ function zoomScale(
   return [restoreValue(domain[0], bounded[0]), restoreValue(domain[1], bounded[1])];
 }
 
-export function panTo<Row>(state: ControllerState<Row>, drag: DragState, x: number, y: number): void {
+export function panTo<Row>(
+  state: ControllerState<Row>,
+  drag: DragState,
+  x: number,
+  y: number,
+): void {
   const interaction = state.scene.interactions.zoom;
   if (!interaction || !hasContinuousZoomAxis(state)) return;
   pauseFollowing(state);

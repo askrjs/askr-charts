@@ -1,12 +1,14 @@
 import type { PlotDescriptor } from "../descriptors";
-import type {
-  AxisProps,
-  ScaleDomainValue,
-  ScaleValue,
-} from "../model";
+import type { AxisProps, ScaleDomainValue, ScaleValue } from "../model";
 import { isFiniteNumber } from "../transforms";
 import type { ResolvedScale } from "../scales";
-import type { SceneAxis, SceneGrid, SceneInteractions, SceneLegend, SceneTick } from "../scene-model";
+import type {
+  SceneAxis,
+  SceneGrid,
+  SceneInteractions,
+  SceneLegend,
+  SceneTick,
+} from "../scene-model";
 import { MARK_KINDS, channelSeries, isConstant, type ScaleUse } from "./shared";
 import { isColorScale, scaleChannel } from "./scales";
 

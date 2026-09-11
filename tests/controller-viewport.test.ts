@@ -21,7 +21,13 @@ describe("controller/viewport clampViewDomain", () => {
 
 describe("controller/viewport isContinuousScale", () => {
   it("should treat linear, time, and log scales as continuous", () => {
-    const linear = createScale({ name: "x", channel: "x", type: "linear", domain: [0, 1], range: [0, 100] });
+    const linear = createScale({
+      name: "x",
+      channel: "x",
+      type: "linear",
+      domain: [0, 1],
+      range: [0, 100],
+    });
     expect(isContinuousScale(linear)).toBe(true);
   });
 

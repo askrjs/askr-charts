@@ -103,7 +103,10 @@ export function tooltipRecord<Row>(
   );
 }
 
-export function announceFocusedHit<Row>(state: ControllerState<Row>, hit: HitRegion<Row> | null): void {
+export function announceFocusedHit<Row>(
+  state: ControllerState<Row>,
+  hit: HitRegion<Row> | null,
+): void {
   state.hover = hit;
   if (!hit) {
     hideTooltip(state);
@@ -220,7 +223,10 @@ export function sourceKeysForHit<Row>(
   );
 }
 
-export function toggleFocusedSelection<Row>(state: ControllerState<Row>, hit: HitRegion<Row>): void {
+export function toggleFocusedSelection<Row>(
+  state: ControllerState<Row>,
+  hit: HitRegion<Row>,
+): void {
   const keys = new Set(selectionKeys(state));
   const sourceKeys = sourceKeysForHit(state, hit);
   const selected = sourceKeys.every((key) => keys.has(key));

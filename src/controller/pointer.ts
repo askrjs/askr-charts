@@ -328,7 +328,10 @@ function panWithKeyboard<Row>(
   commitTransientView(state);
 }
 
-export function eventPoint(canvas: HTMLCanvasElement, event: MouseEvent | PointerEvent | WheelEvent) {
+export function eventPoint(
+  canvas: HTMLCanvasElement,
+  event: MouseEvent | PointerEvent | WheelEvent,
+) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = rect.width > 0 ? canvas.clientWidth / rect.width || 1 : 1;
   const scaleY = rect.height > 0 ? canvas.clientHeight / rect.height || 1 : 1;
@@ -337,4 +340,3 @@ export function eventPoint(canvas: HTMLCanvasElement, event: MouseEvent | Pointe
     y: (event.clientY - rect.top) * scaleY,
   };
 }
-

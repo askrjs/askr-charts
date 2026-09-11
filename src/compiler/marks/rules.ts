@@ -1,6 +1,13 @@
 import type { ResolvedScale } from "../../scales";
 import type { HitRegion, SceneMark } from "../../scene-model";
-import { emptyCompiled, finiteOr, mapped, markBase, resolveDash, type PreparedMark } from "../shared";
+import {
+  emptyCompiled,
+  finiteOr,
+  mapped,
+  markBase,
+  resolveDash,
+  type PreparedMark,
+} from "../shared";
 
 export function compileRules<Row>(
   mark: PreparedMark<Row>,
