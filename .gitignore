@@ -68,3 +68,6 @@ tests/**/__screenshots__/
 # Vite logs
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local agent state and worktrees
+.claude/
