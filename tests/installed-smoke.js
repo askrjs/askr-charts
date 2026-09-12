@@ -17,6 +17,9 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const askrRoot = resolve(repositoryRoot, "node_modules/@askrjs/askr");
 const typescriptCli = resolve(repositoryRoot, "node_modules/@typescript/native/bin/tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "askr-charts-installed-"));
+const { version: expectedVersion } = JSON.parse(
+  readFileSync(join(repositoryRoot, "package.json"), "utf8"),
+);
 
 function run(executable, arguments_, cwd) {
   return execFileSync(executable, arguments_, {
@@ -184,8 +187,8 @@ void api;
   );
 
   const packedManifest = packEntries[0];
-  assert.equal(packedManifest.version, "0.2.2");
-  assert.match(packedManifest.filename, /askrjs-charts-0\.2\.2\.tgz$/);
+  assert.equal(packedManifest.version, expectedVersion);
+  assert.equal(packedManifest.filename, `askrjs-charts-${expectedVersion}.tgz`);
   assert.equal(packedManifest.size > 0, true);
   assert.equal(packedManifest.unpackedSize > 0, true);
   const packedFiles = new Set(packedManifest.files.map(({ path }) => path));
