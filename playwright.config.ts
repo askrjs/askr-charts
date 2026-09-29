@@ -1,8 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const HOST = "127.0.0.1";
-const PORT = 4320;
-const BASE_URL = `http://${HOST}:${PORT}`;
+import { HARNESS_HOST, resolveHarnessServer } from "./tests/browser/harness-server";
+
+// Local runs take a free port so parallel checkouts never share a harness;
+// CI keeps the fixed port. Reuse is opt-in with `PW_REUSE_SERVER=1`, and the
+// global setup refuses a reused harness that serves another checkout. See
+// `tests/browser/harness-server.ts`.
+const { port: PORT, baseURL: BASE_URL, reuseExistingServer } = await resolveHarnessServer();
+const HOST = HARNESS_HOST;
 
 export default defineConfig({
   testDir: "./tests",
@@ -11,6 +16,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
+  globalSetup: "./tests/browser/global-setup.ts",
   use: {
     baseURL: BASE_URL,
     trace: "retain-on-failure",
@@ -21,7 +27,7 @@ export default defineConfig({
     // something this repo can rely on.
     command: `npx vp dev --config vite.harness.config.ts --mode production --strictPort --host ${HOST} --port ${PORT}`,
     url: `${BASE_URL}/tests/browser/harness.html`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer,
     timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",
