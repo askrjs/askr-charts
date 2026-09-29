@@ -54,9 +54,8 @@ test.describe("mounted canvas transitions", () => {
             }),
         });
         await harness.flushFrames();
-        await harness.delay(140);
-
         let frame = harness.required<HTMLElement>(container, '[data-slot="plot-frame"]');
+        await harness.waitFor(() => !frame.hasAttribute("data-animation-running"), 2_000);
         let canvas = harness.required<HTMLCanvasElement>(frame, '[data-slot="plot-canvas-marks"]');
         const settled = {
           animationMode: frame.dataset.animationMode,
