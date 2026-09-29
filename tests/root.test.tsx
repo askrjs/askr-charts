@@ -212,7 +212,7 @@ describe("plot root", () => {
     expect(meter?.querySelector('[data-slot="plot-tooltip"]')).toBeNull();
   });
 
-  it("should preserve cleanup given an api callback failure when unmounting", () => {
+  it("should preserve cleanup given an api callback failure when unmounting", async () => {
     createIsland({
       root: container,
       component: () => (
@@ -224,9 +224,19 @@ describe("plot root", () => {
       ),
     });
     const canvases = [...container.querySelectorAll("canvas")];
-
-    expect(() => cleanupApp(container)).not.toThrow();
-    expect(canvases.every((canvas) => canvas.width === 0 && canvas.height === 0)).toBe(true);
+    const cleanupErrors: unknown[] = [];
+    const originalReportError = globalThis.reportError;
+    vi.stubGlobal("reportError", (error: unknown) => cleanupErrors.push(error));
+    try {
+      expect(() => cleanupApp(container)).not.toThrow();
+      expect(canvases.every((canvas) => canvas.width === 0 && canvas.height === 0)).toBe(true);
+      await Promise.resolve();
+    } finally {
+      if (originalReportError) vi.stubGlobal("reportError", originalReportError);
+      else vi.stubGlobal("reportError", undefined);
+    }
+    expect(cleanupErrors).toHaveLength(1);
+    expect(cleanupErrors[0]).toMatchObject({ message: "callback cleanup failed" });
   });
 
   it("should settle an inline api callback given reactive api storage when rerendering", async () => {
