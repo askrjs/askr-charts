@@ -47,6 +47,10 @@ describe("package exports", () => {
       "default/progress-meter.css",
       "default/tokens.css",
       "templates/chart",
+      "model",
+      "compiler",
+      "scene",
+      "descriptors",
     ];
 
     for (const subpath of legacySubpaths) {

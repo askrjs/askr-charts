@@ -23,6 +23,30 @@ function region(id: string, shape: HitShape, order = 0): HitRegion<Row> {
 }
 
 describe("spatial hit index", () => {
+  it("should retain exact point and line tolerance boundaries given degenerate geometry and an empty index", () => {
+    const point = region("point", { kind: "circle", x: 10, y: 10, radius: 0 });
+    const line = region("line", {
+      kind: "line",
+      x1: 30,
+      y1: 30,
+      x2: 30,
+      y2: 30,
+      tolerance: 2,
+    });
+    const index = createHitIndex([point, line], { width: 50, height: 50 });
+
+    expect(index.query(10, 10)?.id).toBe("point");
+    expect(index.query(10.01, 10)).toBeNull();
+    expect(index.queryRect(10, 10, 10, 10).map(({ id }) => id)).toEqual(["point"]);
+    expect(index.query(30, 32)?.id).toBe("line");
+    expect(index.query(30, 32.01)).toBeNull();
+
+    const empty = createHitIndex<Row>([], { width: 50, height: 50 });
+    expect(empty.query(10, 10)).toBeNull();
+    expect(empty.queryAll(10, 10)).toEqual([]);
+    expect(empty.queryRect(0, 0, 50, 50)).toEqual([]);
+  });
+
   it("should match rectangle circle arc and line geometry given points when querying", () => {
     const rectangles = region("rect", {
       kind: "rect",

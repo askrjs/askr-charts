@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
+  copyFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -15,7 +16,10 @@ import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const askrRoot = resolve(repositoryRoot, "node_modules/@askrjs/askr");
-const typescriptCli = resolve(repositoryRoot, "node_modules/@typescript/native/bin/tsc");
+const typescriptClis = [
+  resolve(repositoryRoot, "node_modules/typescript/bin/tsc6"),
+  resolve(repositoryRoot, "node_modules/@typescript/native/bin/tsc"),
+];
 const temporaryRoot = mkdtempSync(join(tmpdir(), "askr-charts-installed-"));
 const { version: expectedVersion } = JSON.parse(
   readFileSync(join(repositoryRoot, "package.json"), "utf8"),
@@ -97,6 +101,14 @@ try {
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { appendPlotRows, constant, createPlot } from "@askrjs/charts";
+import * as publicApi from "@askrjs/charts";
+
+assert.deepEqual(Object.keys(publicApi).sort(), [
+  "appendPlotRows", "bin", "constant", "count", "createPlot", "filterRows", "group",
+  "mean", "movingAverage", "movingWindow", "normalize", "partition", "regression",
+  "removePlotRows", "sortRows", "stack", "sum", "trimPlotRows", "upsertPlotRows",
+].sort());
+for (const value of Object.values(publicApi)) assert.equal(typeof value, "function");
 
 const Plot = createPlot();
 assert.equal(Object.isFrozen(Plot), true);
@@ -113,6 +125,11 @@ assert.equal(Object.isFrozen(appended), true);
 assert.equal(constant("#2563eb").kind, "constant");
 
 const require = createRequire(import.meta.url);
+for (const subpath of ["model", "compiler", "scene", "descriptors"]) {
+  assert.throws(() => require.resolve("@askrjs/charts/" + subpath), {
+    code: "ERR_PACKAGE_PATH_NOT_EXPORTED",
+  });
+}
 const stylesPath = require.resolve("@askrjs/charts/styles");
 const styles = readFileSync(stylesPath, "utf8");
 assert.match(styles, /--ak-chart-bg:/);
@@ -174,17 +191,23 @@ void api;
           noUncheckedSideEffectImports: true,
           noEmit: true,
         },
-        include: ["type-smoke.tsx"],
+        include: ["*.tsx"],
       },
       null,
       2,
     )}\n`,
   );
-  run(
-    process.execPath,
-    [typescriptCli, "-p", "tsconfig.json", "--pretty", "false"],
-    consumerDirectory,
-  );
+  for (const fixture of ["public-api.fixture.tsx", "public-surface.fixture.tsx"]) {
+    copyFileSync(join(repositoryRoot, "tests/types", fixture), join(consumerDirectory, fixture));
+  }
+  for (const typescriptCli of typescriptClis) {
+    process.stdout.write(run(process.execPath, [typescriptCli, "--version"], consumerDirectory));
+    run(
+      process.execPath,
+      [typescriptCli, "-p", "tsconfig.json", "--pretty", "false"],
+      consumerDirectory,
+    );
+  }
 
   const packedManifest = packEntries[0];
   assert.equal(packedManifest.version, expectedVersion);
@@ -196,6 +219,10 @@ void api;
     "dist/styles.css",
     "dist/styles.d.ts",
     "CHARTING.md",
+    "CHANGELOG.md",
+    "docs/0.5.0-public-api.md",
+    "docs/migration-0.5.0.md",
+    "docs/hardening-0.5.0.md",
     "docs/overview.md",
     "docs/usage.md",
     "examples/live-interactions-export.tsx",
