@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 - 2026-10-10
+
 ### Breaking changes
 
 - Reduce the root type surface from 100 names to 69 by retiring 31 low-level channel/field, descriptor, and shared primitive-prop types. Keep all 19 runtime functions and all three export keys. Use concrete mark/helper/factory contracts as described in the [complete migration guide](./docs/migration-0.5.0.md) and [API decision matrix](./docs/0.5.0-public-api.md).
@@ -15,3 +17,8 @@
 ### Development dependencies
 
 - Refresh compatible locked development tooling without changing manifest ranges: vite-plus 0.3.3 brings oxfmt 0.68.0 and tinypool 2.1.2; source-map-js resolves to 1.2.2. This removes the confirmed tinypool and source-map-js advisories without changing runtime dependencies.
+
+### Development
+
+- First-party development workflows use Vite+; specialized compiler, runtime,
+  browser, and package checks remain part of validation.
