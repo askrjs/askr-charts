@@ -1,4 +1,4 @@
-import type { Reporter } from "vitest/reporters";
+import type { Reporter } from "vite-plus/test/reporters";
 import { describe, expect, it } from "vite-plus/test";
 import { BenchmarkThresholdReporter } from "../benches/_shared/threshold-reporter";
 

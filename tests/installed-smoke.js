@@ -7,7 +7,7 @@ import {
   readFileSync,
   readdirSync,
   rmSync,
-  symlinkSync,
+  realpathSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,7 +15,6 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const askrRoot = resolve(repositoryRoot, "node_modules/@askrjs/askr");
 const typescriptClis = [
   resolve(repositoryRoot, "node_modules/typescript/bin/tsc6"),
   resolve(repositoryRoot, "node_modules/@typescript/native/bin/tsc"),
@@ -70,30 +69,25 @@ try {
       {
         private: true,
         type: "module",
-        dependencies: { "@askrjs/charts": `file:${tarball}` },
+        dependencies: { "@askrjs/charts": `file:${tarball}`, "@askrjs/askr": expectedVersion },
       },
       null,
       2,
     )}\n`,
   );
 
-  // The tarball has no runtime dependencies. Ignore automatic peer installation so this smoke
-  // stays offline, then provide the versioned peer installed by this package's clean lockfile.
-  run(
-    "npm",
-    [
-      "install",
-      "--ignore-scripts",
-      "--no-package-lock",
-      "--no-audit",
-      "--no-fund",
-      "--legacy-peer-deps",
-    ],
-    consumerDirectory,
+  // Resolve the exact release peer through the configured registry using ordinary npm semantics.
+  run("npm", ["install", "--no-package-lock", "--no-audit", "--no-fund"], consumerDirectory);
+  run("npm", ["ls", "--all", "--json"], consumerDirectory);
+  const installedCore = join(consumerDirectory, "node_modules/@askrjs/askr");
+  assert.equal(
+    realpathSync(installedCore),
+    join(realpathSync(consumerDirectory), "node_modules/@askrjs/askr"),
   );
-  const askrScope = join(consumerDirectory, "node_modules/@askrjs");
-  mkdirSync(askrScope, { recursive: true });
-  symlinkSync(askrRoot, join(askrScope, "askr"), "dir");
+  assert.equal(
+    JSON.parse(readFileSync(join(installedCore, "package.json"), "utf8")).version,
+    expectedVersion,
+  );
 
   writeFileSync(
     join(consumerDirectory, "runtime-smoke.mjs"),
