@@ -1,5 +1,5 @@
-import type { BenchmarkResult } from "vitest";
-import type { Reporter } from "vitest/reporters";
+import type { BenchmarkResult } from "vite-plus/test";
+import type { Reporter } from "vite-plus/test/reporters";
 
 type ReportedTestCase = Parameters<NonNullable<Reporter["onTestCaseResult"]>>[0];
 
