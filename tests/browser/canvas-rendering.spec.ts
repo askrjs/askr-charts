@@ -223,6 +223,282 @@ test.describe("canvas rendering and export", () => {
     expect(result.secondSvg).not.toContain("First isolated plot");
   });
 
+  test("should preserve captured PNG pixels while the same plot updates resizes and unmounts", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const harness = window.charts;
+      type Row = { id: string; day: string; value: number; series: string };
+      let rows!: import("@askrjs/askr").State<readonly Row[]>;
+      let api!: import("../../src").PlotApi<Row>;
+      let apiCleared = false;
+      const container = document.createElement("div");
+      container.style.width = "420px";
+      container.style.setProperty("--ak-chart-height", "220px");
+      container.style.setProperty("--ak-chart-transition-duration", "0ms");
+      document.body.append(container);
+
+      const nativeToBlob = HTMLCanvasElement.prototype.toBlob;
+      let holdNext = false;
+      let encoded!: () => void;
+      let releaseHeld: (() => void) | undefined;
+      const holdNextExport = () => {
+        const ready = new Promise<void>((resolve) => (encoded = resolve));
+        holdNext = true;
+        const pending = api.exportPng({ pixelRatio: 1 });
+        return { ready, pending };
+      };
+      const sameRaster = (
+        first: Awaited<ReturnType<typeof harness.readPng>>,
+        second: Awaited<ReturnType<typeof harness.readPng>>,
+      ) =>
+        first.width === second.width &&
+        first.height === second.height &&
+        first.pixels.every((value, index) => value === second.pixels[index]);
+
+      try {
+        harness.createIsland({
+          root: container,
+          component: () =>
+            harness.components.TransitionExample({
+              tokenHeight: true,
+              onRows: (value) => (rows = value),
+              onApiChange: (value) => {
+                if (value) api = value;
+                else apiCleared = true;
+              },
+            }),
+        });
+        await harness.flushPaint();
+        const initial = await harness.readPng(await api.exportPng({ pixelRatio: 1 }));
+        const initialSvg = harness.inspectSvg(api.exportSvg());
+
+        // The native encoder completes, but its callback is held until explicitly released.
+        HTMLCanvasElement.prototype.toBlob = function (callback, type, quality) {
+          if (!holdNext) return nativeToBlob.call(this, callback, type, quality);
+          holdNext = false;
+          nativeToBlob.call(
+            this,
+            (blob) => {
+              releaseHeld = () => {
+                releaseHeld = undefined;
+                callback(blob);
+              };
+              encoded();
+            },
+            type,
+            quality,
+          );
+        };
+        const captured = holdNextExport();
+        let settled = false;
+        void captured.pending.then(() => (settled = true));
+        await captured.ready;
+
+        rows.set([
+          { id: "b", day: "Tue", value: 19, series: "worker" },
+          { id: "c", day: "Wed", value: 1, series: "api" },
+          { id: "d", day: "Thu", value: 11, series: "worker" },
+        ]);
+        container.style.width = "560px";
+        container.style.setProperty("--ak-chart-height", "280px");
+        await harness.flushPaint();
+        const frame = harness.required<HTMLElement>(container, '[data-slot="plot-frame"]');
+        const canvases = [...container.querySelectorAll<HTMLCanvasElement>("canvas")];
+        const updatedSvg = harness.inspectSvg(api.exportSvg());
+        const updatedRows = JSON.parse(api.exportData({ rows: "source", format: "json" }));
+        const updatedApiRows = api.rows;
+        const updatedCanvasSizes = canvases.map((canvas) => [canvas.width, canvas.height]);
+        const pendingBeforeRelease = !settled;
+        releaseHeld!();
+        const capturedImage = await harness.readPng(await captured.pending);
+        const updatedImage = await harness.readPng(await api.exportPng({ pixelRatio: 1 }));
+
+        const cleanupCapture = holdNextExport();
+        await cleanupCapture.ready;
+        container.style.width = "600px";
+        window.dispatchEvent(new Event("resize"));
+        harness.cleanupApp(container);
+        container.remove();
+        window.dispatchEvent(new Event("resize"));
+        await harness.flushFrames();
+        const cleanup = {
+          apiCleared,
+          disconnected: !frame.isConnected,
+          animationRunning: frame.hasAttribute("data-animation-running"),
+          canvasSizes: canvases.map((canvas) => [canvas.width, canvas.height]),
+        };
+        releaseHeld!();
+        const afterCleanupImage = await harness.readPng(await cleanupCapture.pending);
+
+        return {
+          initialSize: [initial.width, initial.height],
+          initialSvg,
+          updatedSvg,
+          updatedRows,
+          apiRows: updatedApiRows,
+          updatedCanvasSizes,
+          expectedBackingSize: [
+            Math.round(560 * devicePixelRatio),
+            Math.round(280 * devicePixelRatio),
+          ],
+          updatedImageSize: [updatedImage.width, updatedImage.height],
+          capturedMatchesInitial: sameRaster(capturedImage, initial),
+          cleanupMatchesUpdated: sameRaster(afterCleanupImage, updatedImage),
+          pendingBeforeRelease,
+          cleanup,
+        };
+      } finally {
+        HTMLCanvasElement.prototype.toBlob = nativeToBlob;
+        releaseHeld?.();
+        if (container.isConnected) harness.cleanupApp(container);
+        container.remove();
+      }
+    });
+
+    expect(result.initialSize).toEqual([420, 220]);
+    expect(result.initialSvg).toEqual({
+      width: 420,
+      height: 220,
+      pointCount: 2,
+      invalidGeometry: false,
+    });
+    expect(result.pendingBeforeRelease).toBe(true);
+    expect(result.capturedMatchesInitial).toBe(true);
+    expect(result.updatedSvg).toEqual({
+      width: 560,
+      height: 280,
+      pointCount: 3,
+      invalidGeometry: false,
+    });
+    expect(result.updatedImageSize).toEqual([560, 280]);
+    expect(
+      result.updatedRows.map((row: { id: string; value: number }) => [row.id, row.value]),
+    ).toEqual([
+      ["b", 19],
+      ["c", 1],
+      ["d", 11],
+    ]);
+    expect(result.apiRows).toEqual(result.updatedRows);
+    for (const size of result.updatedCanvasSizes) expect(size).toEqual(result.expectedBackingSize);
+    expect(result.cleanupMatchesUpdated).toBe(true);
+    expect(result.cleanup.apiCleared).toBe(true);
+    expect(result.cleanup.disconnected).toBe(true);
+    expect(result.cleanup.animationRunning).toBe(false);
+    for (const size of result.cleanup.canvasSizes) expect(size).toEqual([0, 0]);
+  });
+
+  test("should recover the latest rows and exact dimensions after a zero-size layout interval", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const harness = window.charts;
+      type Row = { id: string; day: string; value: number; series: string };
+      let rows!: import("@askrjs/askr").State<readonly Row[]>;
+      let api!: import("../../src").PlotApi<Row>;
+      let apiCleared = false;
+      const container = document.createElement("div");
+      container.style.width = "420px";
+      container.style.setProperty("--ak-chart-height", "220px");
+      container.style.setProperty("--ak-chart-transition-duration", "0ms");
+      document.body.append(container);
+      try {
+        harness.createIsland({
+          root: container,
+          component: () =>
+            harness.components.TransitionExample({
+              tokenHeight: true,
+              onRows: (value) => (rows = value),
+              onApiChange: (value) => {
+                if (value) api = value;
+                else apiCleared = true;
+              },
+            }),
+        });
+        await harness.flushPaint();
+        const frame = harness.required<HTMLElement>(container, '[data-slot="plot-frame"]');
+        const initialSize = [frame.clientWidth, frame.clientHeight];
+        container.style.display = "none";
+        const hiddenMeasuredSize = [frame.clientWidth, frame.clientHeight];
+        rows.set([
+          { id: "a", day: "Mon", value: 17, series: "api" },
+          { id: "c", day: "Wed", value: 3, series: "worker" },
+          { id: "d", day: "Thu", value: 9, series: "api" },
+        ]);
+        window.dispatchEvent(new Event("resize"));
+        await harness.flushPaint();
+        const hiddenSvg = harness.inspectSvg(api.exportSvg());
+        const hiddenPng = await harness.readPng(await api.exportPng({ pixelRatio: 1 }));
+
+        container.style.width = "560px";
+        container.style.setProperty("--ak-chart-height", "280px");
+        container.style.display = "block";
+        window.dispatchEvent(new Event("resize"));
+        await harness.flushPaint();
+        const restoredSvg = harness.inspectSvg(api.exportSvg());
+        const restoredPng = await harness.readPng(await api.exportPng({ pixelRatio: 1 }));
+        const canvases = [...container.querySelectorAll<HTMLCanvasElement>("canvas")];
+        const restoredCanvasSizes = canvases.map((canvas) => [canvas.width, canvas.height]);
+        const restoredRows = JSON.parse(api.exportData({ rows: "source", format: "json" }));
+        harness.cleanupApp(container);
+        container.remove();
+        window.dispatchEvent(new Event("resize"));
+        await harness.flushFrames();
+        return {
+          initialSize,
+          hiddenMeasuredSize,
+          hiddenSvg,
+          hiddenPngSize: [hiddenPng.width, hiddenPng.height],
+          restoredSvg,
+          restoredPngSize: [restoredPng.width, restoredPng.height],
+          restoredCanvasSizes,
+          expectedBackingSize: [
+            Math.round(560 * devicePixelRatio),
+            Math.round(280 * devicePixelRatio),
+          ],
+          restoredRows,
+          apiCleared,
+          disconnected: !frame.isConnected,
+          cleanupCanvasSizes: canvases.map((canvas) => [canvas.width, canvas.height]),
+        };
+      } finally {
+        if (container.isConnected) harness.cleanupApp(container);
+        container.remove();
+      }
+    });
+
+    expect(result.initialSize).toEqual([420, 220]);
+    expect(result.hiddenMeasuredSize).toEqual([0, 0]);
+    expect(result.hiddenSvg.invalidGeometry).toBe(false);
+    expect(result.hiddenSvg.pointCount).toBe(3);
+    for (const dimension of [
+      result.hiddenSvg.width,
+      result.hiddenSvg.height,
+      ...result.hiddenPngSize,
+    ]) {
+      expect(Number.isFinite(dimension)).toBe(true);
+      expect(dimension).toBeGreaterThan(0);
+    }
+    expect(result.restoredSvg).toEqual({
+      width: 560,
+      height: 280,
+      pointCount: 3,
+      invalidGeometry: false,
+    });
+    expect(result.restoredPngSize).toEqual([560, 280]);
+    expect(
+      result.restoredRows.map((row: { id: string; value: number }) => [row.id, row.value]),
+    ).toEqual([
+      ["a", 17],
+      ["c", 3],
+      ["d", 9],
+    ]);
+    for (const size of result.restoredCanvasSizes) expect(size).toEqual(result.expectedBackingSize);
+    expect(result.apiCleared).toBe(true);
+    expect(result.disconnected).toBe(true);
+    for (const size of result.cleanupCanvasSizes) expect(size).toEqual([0, 0]);
+  });
+
   test("should paint every mark family and mixed reference given the full theme and width matrix", async ({
     page,
   }) => {

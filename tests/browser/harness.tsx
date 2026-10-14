@@ -420,9 +420,11 @@ const transitionRows: readonly TransitionRow[] = [
 function TransitionPlot({
   data,
   onApiChange,
+  tokenHeight = false,
 }: {
   data: readonly TransitionRow[] | (() => readonly TransitionRow[]);
   onApiChange: (api: PlotApi<TransitionRow> | null) => void;
+  tokenHeight?: boolean;
 }) {
   return (
     <Transition.Root
@@ -430,7 +432,7 @@ function TransitionPlot({
       rowKey="id"
       label="Transition evidence"
       width={420}
-      height={220}
+      height={tokenHeight ? undefined : 220}
       defaultSelection={{ keys: ["a"] }}
       onApiChange={onApiChange}
     >
@@ -444,13 +446,15 @@ function TransitionPlot({
 function TransitionExample({
   onRows,
   onApiChange,
+  tokenHeight = false,
 }: {
   onRows: (rows: State<readonly TransitionRow[]>) => void;
   onApiChange: (api: PlotApi<TransitionRow> | null) => void;
+  tokenHeight?: boolean;
 }) {
   const liveRows = state<readonly TransitionRow[]>(transitionRows);
   onRows(liveRows);
-  return <TransitionPlot data={liveRows} onApiChange={onApiChange} />;
+  return <TransitionPlot data={liveRows} onApiChange={onApiChange} tokenHeight={tokenHeight} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -544,6 +548,66 @@ function firstPoint(svg: string): { x: number; y: number } {
   return { x: Number(match[1]), y: Number(match[2]) };
 }
 
+async function readPng(blob: Blob) {
+  const bitmap = await createImageBitmap(blob);
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas 2D is unavailable for PNG readback.");
+    context.drawImage(bitmap, 0, 0);
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      pixels: context.getImageData(0, 0, bitmap.width, bitmap.height).data,
+    };
+  } finally {
+    bitmap.close();
+  }
+}
+
+function inspectSvg(svg: string) {
+  const document = new DOMParser().parseFromString(svg, "image/svg+xml");
+  if (document.querySelector("parsererror")) throw new Error("Exported SVG must be valid XML.");
+  const geometryAttributes = new Set([
+    "width",
+    "height",
+    "viewBox",
+    "d",
+    "points",
+    "transform",
+    "x",
+    "y",
+    "x1",
+    "y1",
+    "x2",
+    "y2",
+    "cx",
+    "cy",
+    "r",
+    "rx",
+    "ry",
+    "stroke-width",
+  ]);
+  const invalidGeometry = [...document.querySelectorAll("*")].some((element) =>
+    [...element.attributes].some(
+      (attribute) =>
+        geometryAttributes.has(attribute.name) &&
+        (/\b(?:NaN|[+-]?Infinity)\b/.test(attribute.value) ||
+          [...attribute.value.matchAll(/[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi)].some(
+            ([number]) => !Number.isFinite(Number(number)),
+          )),
+    ),
+  );
+  return {
+    width: Number(document.documentElement.getAttribute("width")),
+    height: Number(document.documentElement.getAttribute("height")),
+    pointCount: document.querySelectorAll('[data-mark="point"]').length,
+    invalidGeometry,
+  };
+}
+
 export interface ChartsHarness {
   createIsland: typeof createIsland;
   cleanupApp: typeof cleanupApp;
@@ -558,6 +622,8 @@ export interface ChartsHarness {
   dispatchPointer: typeof dispatchPointer;
   countPaintedPixels: typeof countPaintedPixels;
   firstPoint: typeof firstPoint;
+  readPng: typeof readPng;
+  inspectSvg: typeof inspectSvg;
   components: {
     CartesianExample: typeof CartesianExample;
     VisualMatrix: typeof VisualMatrix;
@@ -591,6 +657,8 @@ function mount(component: () => JSXElement, options: { width?: string } = {}): H
   dispatchPointer,
   countPaintedPixels,
   firstPoint,
+  readPng,
+  inspectSvg,
   components: {
     CartesianExample,
     VisualMatrix,

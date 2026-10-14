@@ -17,7 +17,7 @@ const manifest = JSON.parse(readFileSync(packagePath, "utf8")) as PackageManifes
 describe("package exports", () => {
   it("should expose only root JavaScript styles and metadata given the clean-break manifest when resolving", () => {
     expect(manifest.name).toBe("@askrjs/charts");
-    expect(manifest.version).toBe("0.4.0");
+    expect(manifest.version).toBe("0.5.0");
     expect(manifest.exports).toEqual({
       ".": {
         types: "./dist/index.d.ts",
@@ -47,6 +47,10 @@ describe("package exports", () => {
       "default/progress-meter.css",
       "default/tokens.css",
       "templates/chart",
+      "model",
+      "compiler",
+      "scene",
+      "descriptors",
     ];
 
     for (const subpath of legacySubpaths) {
