@@ -261,6 +261,23 @@ describe("hierarchy partitioning", () => {
     expect(Object.isFrozen(partitioned)).toBe(true);
   });
 
+  it("should keep zero-value siblings within their normalized parent bounds when partitioning", () => {
+    const partitioned = partitionRows(
+      [
+        { id: "root", parentId: null, value: 0 },
+        { id: "positive", parentId: "root", value: 5 },
+        { id: "zero", parentId: "root", value: 0 },
+      ],
+      { id: "id", parentId: "parentId", value: "value" },
+    );
+    const root = partitioned.find(({ id }) => id === "root")!;
+    const zero = partitioned.find(({ id }) => id === "zero")!;
+
+    expect(zero.x0).toBeGreaterThanOrEqual(root.x0);
+    expect(zero.x1).toBeLessThanOrEqual(root.x1);
+    expect(zero.x0).toBe(zero.x1);
+  });
+
   it("should reject invalid hierarchies given duplicate or cyclic ids when partitioning", () => {
     expect(() =>
       partitionRows(
