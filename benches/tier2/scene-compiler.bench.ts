@@ -1,4 +1,4 @@
-import { bench, describe } from "vite-plus/test";
+import { describe, test } from "vite-plus/test";
 import { compilePlotScene } from "../../src/compiler";
 import {
   compileLineScene,
@@ -12,25 +12,20 @@ const largeOptions = { time: 0, iterations: 3, warmupTime: 0, warmupIterations: 
 const regularOptions = { time: 500, iterations: 10, warmupTime: 100, warmupIterations: 3 };
 
 describe("tier2 immutable scene compiler", () => {
-  bench(
-    "compile a 100k line scene (250ms first compile budget)",
-    () => {
+  test("compile a 100k line scene (250ms first compile budget)", async ({ bench }) => {
+    await bench("compile a 100k line scene (250ms first compile budget)", () => {
       consume(compileLineScene(sourceRows100k));
-    },
-    largeOptions,
-  );
+    }).run(largeOptions);
+  });
 
-  bench(
-    "compile a 100k line scene into a warm x viewport",
-    () => {
+  test("compile a 100k line scene into a warm x viewport", async ({ bench }) => {
+    await bench("compile a 100k line scene into a warm x viewport", () => {
       consume(compileLineScene(sourceRows100k, { x: [90_000, 100_000] }));
-    },
-    largeOptions,
-  );
+    }).run(largeOptions);
+  });
 
-  bench(
-    "compile a 10k mixed bar, line, and point scene",
-    () => {
+  test("compile a 10k mixed bar, line, and point scene", async ({ bench }) => {
+    await bench("compile a 10k mixed bar, line, and point scene", () => {
       consume(
         compilePlotScene({
           rows: sourceRows10k,
@@ -42,7 +37,6 @@ describe("tier2 immutable scene compiler", () => {
           pixelRatio: 1,
         }),
       );
-    },
-    regularOptions,
-  );
+    }).run(regularOptions);
+  });
 });

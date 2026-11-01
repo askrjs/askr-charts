@@ -9,7 +9,7 @@ The benchmark tiers separate algorithm cost from browser integration so a regres
 | 3    | jsdom    | Transient pan/zoom frames, settled scene compilation, spatial queries, and followed live batches |
 | 4    | Chromium | Mounted first compile/paint and warm real Canvas 2D painting                                     |
 
-Release-candidate evidence is three consecutive `npm run bench` executions on the same Chromium host. The scripts set `NODE_ENV=production` so development diagnostics are not charged to the shipped render path. The acceptance rows are:
+Release-candidate evidence is three consecutive `npm run bench` executions on the same Chromium host. The command runs tiers 1–4; the Chromium-only tier 4 config uses the Playwright browser provider. The scripts set `NODE_ENV=production` so development diagnostics are not charged to the shipped render path. The acceptance rows are:
 
 - Tier 4 100,000-row line mount, compile, and paint: at most 250 ms.
 - Tier 4 warm real-canvas 100,000-row scene repaint: p95 at most 16.7 ms.

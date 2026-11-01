@@ -1,5 +1,5 @@
-import type { BenchmarkResult } from "vite-plus/test";
-import type { Reporter } from "vite-plus/test/reporters";
+import type { BenchResult } from "vite-plus/test";
+import type { Reporter } from "vite-plus/test/node";
 
 type ReportedTestCase = Parameters<NonNullable<Reporter["onTestCaseResult"]>>[0];
 
@@ -9,9 +9,12 @@ export interface BenchmarkThreshold {
 }
 
 interface BenchmarkTaskResult {
-  readonly result?: {
-    readonly benchmark?: Pick<BenchmarkResult, "p99">;
-  };
+  readonly name: string;
+  readonly latency: Pick<BenchResult["latency"], "p99">;
+}
+
+interface ReportedBenchmark {
+  readonly tasks: readonly BenchmarkTaskResult[];
 }
 
 interface ThresholdReporterRuntime {
@@ -67,14 +70,20 @@ export class BenchmarkThresholdReporter implements Reporter {
   }
 
   onTestCaseResult(testCase: ReportedTestCase): void {
-    if (!this.#thresholds.has(testCase.name) || !testCase.meta().benchmark) return;
+    if (!testCase.meta().benchmark) return;
 
-    const task = testCase as ReportedTestCase & { readonly task: BenchmarkTaskResult };
-    const p99 = task.task.result?.benchmark?.p99;
-    if (p99 === undefined) return;
+    const benchmarks = testCase as ReportedTestCase & {
+      benchmarks: () => readonly ReportedBenchmark[];
+    };
 
-    if (this.#observations.has(testCase.name)) this.#duplicates.add(testCase.name);
-    this.#observations.set(testCase.name, p99);
+    for (const benchmark of benchmarks.benchmarks()) {
+      for (const task of benchmark.tasks) {
+        if (!this.#thresholds.has(task.name)) continue;
+
+        if (this.#observations.has(task.name)) this.#duplicates.add(task.name);
+        this.#observations.set(task.name, task.latency.p99);
+      }
+    }
   }
 
   onTestRunEnd(): void {

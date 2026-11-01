@@ -1,4 +1,4 @@
-import { bench, describe } from "vite-plus/test";
+import { describe, test } from "vite-plus/test";
 import { compilePlotScene } from "../../src/compiler";
 import { resolvePlotViewTransform } from "../../src/controller";
 import { createHitIndex } from "../../src/hit-index";
@@ -31,17 +31,14 @@ const sampledOptions = { time: 750, iterations: 50, warmupTime: 150, warmupItera
 const liveOptions = { time: 750, iterations: 10, warmupTime: 150, warmupIterations: 3 };
 
 describe("tier3 runtime acceptance hot paths", () => {
-  bench(
-    "warm 100k scene repaint diagnostic",
-    () => {
+  test("warm 100k scene repaint diagnostic", async ({ bench }) => {
+    await bench("warm 100k scene repaint diagnostic", () => {
       renderPlotScene(context, lineScene, defaultPlotTheme);
-    },
-    sampledOptions,
-  );
+    }).run(sampledOptions);
+  });
 
-  bench(
-    "warm pan/zoom transient frame (p99 proxy <=16.7ms)",
-    () => {
+  test("warm pan/zoom transient frame (p99 proxy <=16.7ms)", async ({ bench }) => {
+    await bench("warm pan/zoom transient frame (p99 proxy <=16.7ms)", () => {
       viewOffset = (viewOffset + 250) % 5_000;
       const transform = resolvePlotViewTransform(
         lineScene,
@@ -50,26 +47,22 @@ describe("tier3 runtime acceptance hot paths", () => {
       );
       transientCanvas.style.transform = transform;
       consume(transform);
-    },
-    sampledOptions,
-  );
+    }).run(sampledOptions);
+  });
 
-  bench(
-    "settled pan/zoom view compile and repaint diagnostic",
-    () => {
+  test("settled pan/zoom view compile and repaint diagnostic", async ({ bench }) => {
+    await bench("settled pan/zoom view compile and repaint diagnostic", () => {
       viewOffset = (viewOffset + 250) % 5_000;
       const scene = compileLineScene(sourceRows100k, {
         x: [85_000 + viewOffset, 95_000 + viewOffset],
       });
       renderPlotScene(context, scene, defaultPlotTheme);
       consume(scene);
-    },
-    liveOptions,
-  );
+    }).run(liveOptions);
+  });
 
-  bench(
-    "100k-source spatial hit query (p99 proxy <=2ms)",
-    () => {
+  test("100k-source spatial hit query (p99 proxy <=2ms)", async ({ bench }) => {
+    await bench("100k-source spatial hit query (p99 proxy <=2ms)", () => {
       queryOffset = (queryOffset + 37) % lineScene.hits.length;
       const shape = lineScene.hits[queryOffset]!.shape;
       if (shape.kind !== "polyline")
@@ -77,13 +70,11 @@ describe("tier3 runtime acceptance hot paths", () => {
       const point = shape.points[Math.floor(shape.points.length / 2)];
       if (!point) throw new Error("The line hit polyline is empty.");
       consume(hitIndex.query(point.x, point.y));
-    },
-    sampledOptions,
-  );
+    }).run(sampledOptions);
+  });
 
-  bench(
-    "append and repaint a 1k followed batch (p99 proxy <=50ms)",
-    () => {
+  test("append and repaint a 1k followed batch (p99 proxy <=50ms)", async ({ bench }) => {
+    await bench("append and repaint a 1k followed batch (p99 proxy <=50ms)", () => {
       const rows = trimPlotRows(appendPlotRows(liveWindowRows, liveBatchRows), { rows: 5_000 });
       const scene = compilePlotScene({
         rows,
@@ -96,7 +87,6 @@ describe("tier3 runtime acceptance hot paths", () => {
       });
       renderPlotScene(context, scene, defaultPlotTheme);
       consume(scene);
-    },
-    liveOptions,
-  );
+    }).run(liveOptions);
+  });
 });

@@ -1,4 +1,4 @@
-import { bench, describe } from "vite-plus/test";
+import { describe, test } from "vite-plus/test";
 import { downsamplePixelEnvelope } from "../../src/paths";
 import { appendPlotRows, trimPlotRows, upsertPlotRows } from "../../src/rows";
 import { createScale } from "../../src/scales";
@@ -27,9 +27,8 @@ const densePoints = Object.freeze(
 );
 
 describe("tier1 DOM-free algorithm hot paths", () => {
-  bench(
-    "map 10k values and generate linear ticks",
-    () => {
+  test("map 10k values and generate linear ticks", async ({ bench }) => {
+    await bench("map 10k values and generate linear ticks", () => {
       const scale = createScale({
         name: "latency",
         type: "linear",
@@ -41,45 +40,36 @@ describe("tier1 DOM-free algorithm hot paths", () => {
         mapped = scale.map(values10k[index]);
       }
       consume([mapped, scale.ticks(10)]);
-    },
-    shortOptions,
-  );
+    }).run(shortOptions);
+  });
 
-  bench(
-    "bin, moving-average, and regress 10k values",
-    () => {
+  test("bin, moving-average, and regress 10k values", async ({ bench }) => {
+    await bench("bin, moving-average, and regress 10k values", () => {
       consume([
         createBins(values10k, { thresholds: 40 }),
         movingWindowValues(values10k, { window: 64, operation: "mean", partial: true }),
         linearRegression(times10k, values10k),
       ]);
-    },
-    shortOptions,
-  );
+    }).run(shortOptions);
+  });
 
-  bench(
-    "build a diverging normalized stack",
-    () => {
+  test("build a diverging normalized stack", async ({ bench }) => {
+    await bench("build a diverging normalized stack", () => {
       consume(stackValues(stackInput, { offset: "expand", order: "inside-out" }));
-    },
-    shortOptions,
-  );
+    }).run(shortOptions);
+  });
 
-  bench(
-    "downsample a 100k line to an 800px envelope",
-    () => {
+  test("downsample a 100k line to an 800px envelope", async ({ bench }) => {
+    await bench("downsample a 100k line to an 800px envelope", () => {
       consume(downsamplePixelEnvelope(densePoints, 800));
-    },
-    shortOptions,
-  );
+    }).run(shortOptions);
+  });
 
-  bench(
-    "append, upsert, and trim a 1k live batch immutably",
-    () => {
+  test("append, upsert, and trim a 1k live batch immutably", async ({ bench }) => {
+    await bench("append, upsert, and trim a 1k live batch immutably", () => {
       const appended = appendPlotRows(liveWindowRows, liveBatchRows);
       const upserted = upsertPlotRows(appended, liveBatchRows.slice(0, 50), "id");
       consume(trimPlotRows(upserted, { rows: 5_000 }));
-    },
-    shortOptions,
-  );
+    }).run(shortOptions);
+  });
 });

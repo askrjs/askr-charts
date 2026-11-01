@@ -55,13 +55,14 @@
   },
   "scripts": {
     "dev:visual": "vp dev visual --host 127.0.0.1",
-    "bench": "npm run bench:tier1 && npm run bench:tier2 && npm run bench:tier3",
+    "bench": "npm run bench:tier1 && npm run bench:tier2 && npm run bench:tier3 && npm run bench:tier4",
     "bench:tier1": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier1.config.ts",
     "bench:tier2": "cross-env NODE_ENV=production vp test bench --run --reporter=default --config vitest.bench.tier2.config.ts",
     "bench:tier3": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench.tier3.config.ts",
+    "bench:tier4": "cross-env NODE_ENV=production vp test bench --run --config vitest.bench-tier4.config.ts",
     "test": "npm run test:unit && npm run test:checks && npm run test:jsdom && npm run test:browser && npm run test:visual",
-    "test:unit": "vp test run -c vitest.test.unit.config.ts",
-    "test:jsdom": "vp test run -c vitest.test.jsdom.config.ts",
+    "test:unit": "vp test run -c vitest.unit.config.ts",
+    "test:jsdom": "vp test run -c vitest.jsdom.config.ts",
     "test:browser": "playwright test",
     "test:visual": "playwright test tests/visual",
     "test:types": "npm run build && tsc -p tsconfig.types.json --noEmit",
@@ -81,19 +82,23 @@
     "@askrjs/askr": ">=0.5.0 <0.6.0",
     "@askrjs/ui": ">=0.5.0 <0.6.0",
     "@askrjs/vite": ">=0.5.0 <0.6.0",
-    "@playwright/test": "1.62.1",
+    "@playwright/test": "^1.64.1",
     "@types/jsdom": "^30.0.0",
-    "@types/node": "^26.3.0",
+    "@types/node": "^26.6.6",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "@vitest/browser-playwright": "^5.0.5",
     "cross-env": "^10.1.0",
-    "jsdom": "^30.0.1",
-    "playwright": "1.62.1",
-    "publint": "^0.3.24",
+    "jsdom": "^30.1.3",
+    "playwright": "^1.64.1",
+    "publint": "^0.3.25",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite-plus": "^0.3.1"
+    "vite-plus": "1.4.0"
   },
   "peerDependencies": {
     "@askrjs/askr": ">=0.5.0 <0.6.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"
   },
   "engines": {
     "node": ">=24.0.0"

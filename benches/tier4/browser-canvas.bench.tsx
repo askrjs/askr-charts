@@ -1,4 +1,4 @@
-import { bench, describe } from "vite-plus/test";
+import { describe, test } from "vite-plus/test";
 import "../../src/styles.css";
 import { createPlot } from "../../src";
 import { renderPlotScene, defaultPlotTheme } from "../../src/render";
@@ -59,9 +59,8 @@ function HundredThousandRowPlot() {
 }
 
 describe("tier4 Chromium Canvas 2D acceptance", () => {
-  bench(
-    "mount, compile, and paint a 100k line plot (<=250ms)",
-    () => {
+  test("mount, compile, and paint a 100k line plot (<=250ms)", async ({ bench }) => {
+    await bench("mount, compile, and paint a 100k line plot (<=250ms)", () => {
       const startedAt = performance.now();
       const root = mountPlot(<HundredThousandRowPlot />);
       try {
@@ -74,15 +73,12 @@ describe("tier4 Chromium Canvas 2D acceptance", () => {
       } finally {
         unmountPlot(root);
       }
-    },
-    mountOptions,
-  );
+    }).run(mountOptions);
+  });
 
-  bench(
-    "warm real-canvas 100k scene repaint (p99 proxy <=16.7ms)",
-    () => {
+  test("warm real-canvas 100k scene repaint (p99 proxy <=16.7ms)", async ({ bench }) => {
+    await bench("warm real-canvas 100k scene repaint (p99 proxy <=16.7ms)", () => {
       renderPlotScene(context, scene, defaultPlotTheme);
-    },
-    paintOptions,
-  );
+    }).run(paintOptions);
+  });
 });
