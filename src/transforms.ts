@@ -631,11 +631,13 @@ export function partitionRows<Row>(
   const padding = Math.max(0, Number(options.padding) || 0);
   const result: PartitionDatum<Row>[] = [];
   const layout = (nodesAtDepth: readonly Node[], x0: number, x1: number, depth: number) => {
-    const totalValue =
-      nodesAtDepth.reduce((sum, node) => sum + node.value, 0) || nodesAtDepth.length;
+    const siblingValue = nodesAtDepth.reduce((sum, node) => sum + node.value, 0);
+    const equalWeights = siblingValue === 0;
+    const totalValue = equalWeights ? nodesAtDepth.length : siblingValue;
     let cursor = x0;
     for (const node of nodesAtDepth) {
-      const span = (x1 - x0) * ((node.value || 1) / totalValue);
+      const weight = equalWeights ? 1 : node.value;
+      const span = (x1 - x0) * (weight / totalValue);
       const next = cursor + span;
       const inset = Math.min(padding / 2, span / 2);
       result.push(

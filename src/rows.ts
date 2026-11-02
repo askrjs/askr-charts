@@ -1,4 +1,4 @@
-import type { PlotKey, PlotRowKey, RowAccessor, RowField } from "./model";
+import type { PlotKey, PlotRowKey, RowAccessor, TemporalField } from "./model";
 
 export function readRowKey<Row>(
   row: Readonly<Row>,
@@ -115,7 +115,7 @@ export type TrimPlotRowsOptions<Row> =
   | { rows: number }
   | {
       durationMs: number;
-      field: RowField<Row> | RowAccessor<Row, Date>;
+      field: TemporalField<Row> | RowAccessor<Row, Date>;
       now?: Date | number;
     };
 
@@ -165,7 +165,7 @@ export function trimPlotRows<Row>(
 
 function findLatestTimestamp<Row>(
   rows: readonly Row[],
-  field: RowField<Row> | RowAccessor<Row, Date>,
+  field: TemporalField<Row> | RowAccessor<Row, Date>,
 ): number {
   let latest = Number.NEGATIVE_INFINITY;
   for (let index = 0; index < rows.length; index += 1) {
@@ -178,7 +178,7 @@ function findLatestTimestamp<Row>(
 function readTimestamp<Row>(
   row: Readonly<Row>,
   index: number,
-  field: RowField<Row> | RowAccessor<Row, Date>,
+  field: TemporalField<Row> | RowAccessor<Row, Date>,
 ): number {
   const value =
     typeof field === "function" ? field(row, index) : (row as Record<string, unknown>)[field];

@@ -19,6 +19,8 @@ export interface ResolvedScale {
   readonly omittedValueCount: number;
   readonly bandwidth?: number;
   readonly step?: number;
+  /** Unbounded coordinate used to measure zoom extents for continuous scales. */
+  coordinate?(value: ScaleInput): number | undefined;
   map(value: ScaleInput | null | undefined): ScaleOutput | undefined;
   invert?(value: number): ScaleInput | undefined;
   ticks(count?: number): readonly ScaleInput[];
@@ -889,6 +891,11 @@ function createTimeScale(options: CreateScaleOptions, type: "time" | "utc"): Res
     clamp: shouldClamp,
     reverse: options.reverse ?? false,
     omittedValueCount: resolvedDomain.omitted,
+    coordinate(value) {
+      const timestamp =
+        value instanceof Date ? value.getTime() : typeof value === "number" ? value : NaN;
+      return Number.isFinite(timestamp) ? timestamp : undefined;
+    },
     map(value) {
       const timestamp =
         value instanceof Date ? value.getTime() : typeof value === "number" ? value : NaN;
@@ -1060,6 +1067,11 @@ function createNumericScale(
     clamp: shouldClamp,
     reverse: options.reverse ?? false,
     omittedValueCount: resolvedDomain.omitted,
+    coordinate(value) {
+      if (!isFiniteNumber(value) || (type === "log" && value <= 0)) return undefined;
+      const transformed = transform(value);
+      return Number.isFinite(transformed) ? transformed : undefined;
+    },
     map(value) {
       if (!isFiniteNumber(value) || (type === "log" && value <= 0)) return unknownValue;
       const transformed = transform(value);

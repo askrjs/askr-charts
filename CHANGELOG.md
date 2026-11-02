@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Fixes
+
+- Keep zero-value partition rectangles within their normalized parent bounds, and divide equally only when all siblings have zero value.
+- Enforce Zoom minimum and maximum ratios in transformed coordinates for logarithmic, power, and symlog scales.
+- Restrict Date-window row trimming to Date-valued fields or Date accessors.
+
+### Tests
+
+- Add regression coverage for zero-value partition siblings, nonlinear zoom limits after recompilation, and invalid numeric fields in Date-window trim options.
+
 ## 0.5.0 - 2026-10-12
 
 ### Breaking changes

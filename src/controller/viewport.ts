@@ -68,7 +68,7 @@ export function zoomAt<Row>(
   if (scheduleCommit) scheduleTransientViewCommit(state);
 }
 
-function zoomScale(
+export function zoomScale(
   scale: import("../scales").ResolvedScale | undefined,
   domain: PlotView["x"],
   fullDomain: PlotView["x"],
@@ -85,22 +85,60 @@ function zoomScale(
   if (start == null || stop == null || rangeStart == null || rangeStop == null) return domain;
   const rangeSpan = rangeStop - rangeStart;
   if (rangeSpan === 0 || stop === start) return domain;
-  const fraction = Math.max(0, Math.min(1, (pixel - rangeStart) / rangeSpan));
   const fullStart = numericValue(fullDomain?.[0]);
   const fullStop = numericValue(fullDomain?.[1]);
-  const fullSpan =
-    fullStart == null || fullStop == null ? Math.abs(stop - start) : Math.abs(fullStop - fullStart);
-  const lowerSpan = fullSpan / Math.max(1, maximumZoom);
-  const upperSpan = fullSpan / Math.max(1, minimumZoom);
-  const span = Math.max(lowerSpan, Math.min(upperSpan, Math.abs(stop - start) * factor));
-  const direction = stop >= start ? 1 : -1;
-  const requestedFactor = span / Math.abs(stop - start);
-  const invertedStart = scale.invert?.(pixel + (rangeStart - pixel) * requestedFactor);
-  const invertedStop = scale.invert?.(pixel + (rangeStop - pixel) * requestedFactor);
-  const nextStart = numericValue(invertedStart) ?? start + direction * span * -fraction;
-  const nextStop = numericValue(invertedStop) ?? nextStart + direction * span;
+  const startCoordinate = scale.coordinate?.(domain[0]);
+  const stopCoordinate = scale.coordinate?.(domain[1]);
+  if (
+    startCoordinate == null ||
+    stopCoordinate == null ||
+    !Number.isFinite(factor) ||
+    factor <= 0
+  ) {
+    return domain;
+  }
+  const fullStartCoordinate = fullDomain ? scale.coordinate?.(fullDomain[0]) : undefined;
+  const fullStopCoordinate = fullDomain ? scale.coordinate?.(fullDomain[1]) : undefined;
+  const currentZoom =
+    fullStartCoordinate == null || fullStopCoordinate == null
+      ? 1
+      : intervalZoomRatio(fullStartCoordinate, fullStopCoordinate, startCoordinate, stopCoordinate);
+  const targetZoom = Math.max(minimumZoom, Math.min(maximumZoom, currentZoom / factor));
+  const requestedFactor = currentZoom / targetZoom;
+  const viewStartPixel = numericValue(scale.map(domain[0]));
+  const viewStopPixel = numericValue(scale.map(domain[1]));
+  if (viewStartPixel == null || viewStopPixel == null || viewStopPixel === viewStartPixel) {
+    return domain;
+  }
+  const viewScale = rangeSpan / (viewStopPixel - viewStartPixel);
+  if (!Number.isFinite(viewScale) || viewScale === 0) return domain;
+  const viewTranslate = rangeStart - viewStartPixel * viewScale;
+  const basePixel = (pixel - viewTranslate) / viewScale;
+  const invertedStart = scale.invert?.(basePixel + (viewStartPixel - basePixel) * requestedFactor);
+  const invertedStop = scale.invert?.(basePixel + (viewStopPixel - basePixel) * requestedFactor);
+  const nextStart = numericValue(invertedStart);
+  const nextStop = numericValue(invertedStop);
+  if (nextStart == null || nextStop == null) return domain;
   const bounded = clampViewDomain(nextStart, nextStop, fullStart, fullStop);
   return [restoreValue(domain[0], bounded[0]), restoreValue(domain[1], bounded[1])];
+}
+
+function intervalZoomRatio(
+  fullStart: number,
+  fullStop: number,
+  viewStart: number,
+  viewStop: number,
+): number {
+  const magnitude = Math.max(
+    Math.abs(fullStart),
+    Math.abs(fullStop),
+    Math.abs(viewStart),
+    Math.abs(viewStop),
+  );
+  if (magnitude === 0) return 1;
+  const fullSpan = Math.abs(fullStop / magnitude - fullStart / magnitude);
+  const viewSpan = Math.abs(viewStop / magnitude - viewStart / magnitude);
+  return viewSpan === 0 ? Number.POSITIVE_INFINITY : fullSpan / viewSpan;
 }
 
 export function panTo<Row>(

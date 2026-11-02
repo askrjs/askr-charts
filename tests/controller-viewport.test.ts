@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { clampViewDomain, isContinuousScale } from "../src/controller/viewport";
+import { clampViewDomain, isContinuousScale, zoomScale } from "../src/controller/viewport";
 import { createScale } from "../src/scales";
 
 describe("controller/viewport clampViewDomain", () => {
@@ -41,5 +41,41 @@ describe("controller/viewport isContinuousScale", () => {
     });
     expect(isContinuousScale(band)).toBe(false);
     expect(isContinuousScale(undefined)).toBe(false);
+  });
+});
+
+describe("controller/viewport zoomScale", () => {
+  it("should enforce the maximum zoom ratio after recompiling nonlinear views", () => {
+    const scenarios = [
+      { type: "log" as const, domain: [1, 10_000] as const, clamp: true },
+      { type: "power" as const, domain: [0, 100] as const, exponent: 2 },
+      { type: "symlog" as const, domain: [-100, 100] as const, constant: 1 },
+    ];
+
+    for (const scenario of scenarios) {
+      const initialScale = createScale({
+        name: "x",
+        channel: "x",
+        range: [0, 100],
+        ...scenario,
+      });
+      const fullDomain = scenario.domain;
+      const firstView = zoomScale(initialScale, fullDomain, fullDomain, 100, 0.5, 1, 2)!;
+      const secondTransientView = zoomScale(initialScale, firstView, fullDomain, 100, 0.5, 1, 2);
+      const compiledScale = createScale({
+        name: "x",
+        channel: "x",
+        range: [0, 100],
+        ...scenario,
+        domain: firstView,
+      });
+      const secondView = zoomScale(compiledScale, firstView, fullDomain, 100, 0.5, 1, 2);
+
+      if (scenario.type === "log") expect(firstView).toEqual([100, 10_000]);
+      expect(Number(secondTransientView?.[0])).toBeCloseTo(Number(firstView[0]), 10);
+      expect(Number(secondTransientView?.[1])).toBeCloseTo(Number(firstView[1]), 10);
+      expect(Number(secondView?.[0])).toBeCloseTo(Number(firstView[0]), 10);
+      expect(Number(secondView?.[1])).toBeCloseTo(Number(firstView[1]), 10);
+    }
   });
 });
