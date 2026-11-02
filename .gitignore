@@ -71,3 +71,4 @@ vite.config.ts.timestamp-*
 
 # Local agent state and worktrees
 .claude/
+.vitest/

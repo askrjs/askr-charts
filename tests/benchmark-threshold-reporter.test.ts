@@ -1,18 +1,18 @@
-import type { Reporter } from "vite-plus/test/reporters";
+import type { Reporter } from "vite-plus/test/node";
 import { describe, expect, it } from "vite-plus/test";
 import { BenchmarkThresholdReporter } from "../benches/_shared/threshold-reporter";
 
 type ReportedTestCase = Parameters<NonNullable<Reporter["onTestCaseResult"]>>[0];
 
-function benchmarkCase(name: string, p99: number): ReportedTestCase {
+function benchmarkCase(testName: string, benchmarkName: string, p99: number): ReportedTestCase {
   return {
-    name,
+    name: testName,
     meta: () => ({ benchmark: true }),
-    task: {
-      result: {
-        benchmark: { p99 },
+    benchmarks: () => [
+      {
+        tasks: [{ name: benchmarkName, latency: { p99 } }],
       },
-    },
+    ],
   } as unknown as ReportedTestCase;
 }
 
@@ -30,7 +30,7 @@ describe("benchmark threshold reporter", () => {
     });
 
     reporter.onTestRunStart();
-    reporter.onTestCaseResult(benchmarkCase("hot path", 16.7));
+    reporter.onTestCaseResult(benchmarkCase("runs the hot path", "hot path", 16.7));
     reporter.onTestRunEnd();
 
     expect(failed).toBe(false);
@@ -50,7 +50,7 @@ describe("benchmark threshold reporter", () => {
     });
 
     reporter.onTestRunStart();
-    reporter.onTestCaseResult(benchmarkCase("hot path", 0.001));
+    reporter.onTestCaseResult(benchmarkCase("runs the hot path", "hot path", 0.001));
     reporter.onTestRunEnd();
 
     expect(failed).toBe(true);
@@ -73,7 +73,7 @@ describe("benchmark threshold reporter", () => {
     );
 
     reporter.onTestRunStart();
-    reporter.onTestCaseResult(benchmarkCase("hot path", 0.001));
+    reporter.onTestCaseResult(benchmarkCase("runs the hot path", "hot path", 0.001));
     reporter.onTestRunEnd();
 
     expect(failed).toBe(true);
