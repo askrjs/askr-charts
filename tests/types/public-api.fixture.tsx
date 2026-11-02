@@ -6,6 +6,7 @@ import {
   filterRows,
   movingAverage,
   sum,
+  trimPlotRows,
   type PlotApi,
   type PlotView,
 } from "@askrjs/charts";
@@ -106,6 +107,12 @@ const ambiguousConstantColor = <Latency.Point x="timestamp" y="latency" fill="#0
 // @ts-expect-error a Date-valued field cannot be used as the stable PlotKey
 const wrongRowKey = <Latency.Root data={rows} rowKey="timestamp" label="Latency" />;
 
+const validTemporalTrim = trimPlotRows(rows, { durationMs: 1_000, field: "timestamp" });
+void validTemporalTrim;
+
+// @ts-expect-error time-window trimming requires a Date-valued field or accessor
+const invalidNumericTrim = trimPlotRows(rows, { durationMs: 1_000, field: "latency" });
+
 void wrongField;
 void wrongChannelType;
 void wrongAccessorType;
@@ -115,6 +122,7 @@ void unsupportedPointAggregate;
 void unsupportedArcAggregate;
 void ambiguousConstantColor;
 void wrongRowKey;
+void invalidNumericTrim;
 void invalidBooleanView;
 void legacyClassName;
 void legacyApiRef;
