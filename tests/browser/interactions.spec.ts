@@ -1,6 +1,57 @@
 import { expect, test } from "./fixtures";
 
 test.describe("plot interactions and live rows", () => {
+  for (const cancelEvent of ["pointercancel", "lostpointercapture"] as const) {
+    test(`should finish a pan and allow another gesture after ${cancelEvent}`, async ({ page }) => {
+      const result = await page.evaluate(async (cancelEvent) => {
+        const harness = window.charts;
+        const views: unknown[] = [];
+        const container = harness.mount(
+          () => harness.components.InteractivePlot({ onView: (view) => views.push(view) }),
+          { width: "640px" },
+        );
+        await harness.flushPaint();
+        const overlay = harness.required<HTMLCanvasElement>(
+          container,
+          '[data-slot="plot-canvas-overlay"]',
+        );
+        harness.dispatchPointer(overlay, "pointerdown", 160, 120, { pointerId: 31, buttons: 1 });
+        harness.dispatchPointer(overlay, "pointermove", 205, 120, { pointerId: 31, buttons: 1 });
+        await harness.flushPaint();
+        const wasPanning = container
+          .querySelector('[data-slot="plot-root"]')
+          ?.hasAttribute("data-panning");
+        overlay.dispatchEvent(new PointerEvent(cancelEvent, { pointerId: 31, bubbles: true }));
+        await harness.flushPaint();
+        const afterCancel = {
+          panning: container.querySelector('[data-slot="plot-root"]')?.hasAttribute("data-panning"),
+          committed: views.length > 0,
+        };
+        const committedViews = views.length;
+        harness.dispatchPointer(overlay, "pointerdown", 160, 120, { pointerId: 32, buttons: 1 });
+        harness.dispatchPointer(overlay, "pointermove", 205, 120, { pointerId: 32, buttons: 1 });
+        harness.dispatchPointer(overlay, "pointerup", 205, 120, { pointerId: 32 });
+        await harness.flushPaint();
+        const result = {
+          wasPanning,
+          ...afterCancel,
+          nextGestureCommitted: views.length > committedViews,
+          nextGestureCleared: !container
+            .querySelector('[data-slot="plot-root"]')
+            ?.hasAttribute("data-panning"),
+        };
+        harness.cleanupApp(container);
+        container.remove();
+        return result;
+      }, cancelEvent);
+      expect(result.wasPanning).toBe(true);
+      expect(result.panning).toBe(false);
+      expect(result.committed).toBe(true);
+      expect(result.nextGestureCommitted).toBe(true);
+      expect(result.nextGestureCleared).toBe(true);
+    });
+  }
+
   test("should inspect filter activate zoom brush and resume given pointer and keyboard input", async ({
     page,
   }) => {
@@ -314,13 +365,31 @@ test.describe("plot interactions and live rows", () => {
       );
       await harness.flushPaint();
       const initialRowCount = api.rows.length;
+      const frame = harness.required<HTMLElement>(container, '[data-slot="plot-frame"]');
+      const canvas = harness.required<HTMLCanvasElement>(
+        container,
+        '[data-slot="plot-canvas-marks"]',
+      );
+      const initialKeys = api.rows.map((row) => (row as { id: string }).id);
+      const initialPixels = harness.countPaintedPixels(canvas);
+      const initialPaint = canvas.toDataURL();
 
       append();
       await harness.flushPaint();
+      const afterCanvas = harness.required<HTMLCanvasElement>(
+        container,
+        '[data-slot="plot-canvas-marks"]',
+      );
 
       const outcome = {
         initialRowCount,
         appendedRowCount: api.rows.length,
+        initialKeys,
+        updatedKeys: api.rows.map((row) => (row as { id: string }).id),
+        initialPixels,
+        updatedPixels: harness.countPaintedPixels(afterCanvas),
+        paintChanged: initialPaint !== afterCanvas.toDataURL(),
+        markCount: Number(frame.dataset.markCount),
         exportedJson: api.exportData({ format: "json" }),
         exportedSvg: api.exportSvg(),
       };
@@ -331,6 +400,11 @@ test.describe("plot interactions and live rows", () => {
 
     expect(result.initialRowCount).toBe(4);
     expect(result.appendedRowCount).toBe(5);
+    expect(result.initialKeys).toEqual(["a", "b", "c", "d"]);
+    expect(result.updatedKeys).toEqual(["a", "b", "c", "d", "e"]);
+    expect(result.updatedPixels).toBeGreaterThan(result.initialPixels);
+    expect(result.paintChanged).toBe(true);
+    expect(result.markCount).toBeGreaterThan(0);
     expect(result.exportedJson).toContain('"id": "e"');
     expect(result.exportedSvg).toContain("14");
   });
