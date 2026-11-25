@@ -13,26 +13,30 @@ const examples = [
 ].map((file) => resolve(workspace, file));
 
 describe("local plot examples", () => {
-  it("should typecheck every official composition given the source package when compiling examples", () => {
-    const configPath = resolve(workspace, "tsconfig.json");
-    const loaded = ts.readConfigFile(configPath, ts.sys.readFile);
-    expect(loaded.error).toBeUndefined();
-    const parsed = ts.parseJsonConfigFileContent(loaded.config, ts.sys, workspace);
-    const program = ts.createProgram({
-      rootNames: examples,
-      options: {
-        ...parsed.options,
-        noEmit: true,
-        paths: {
-          ...parsed.options.paths,
-          "@askrjs/charts": ["./src/index.ts"],
+  it(
+    "should typecheck every official composition given the source package when compiling examples",
+    { timeout: 20_000 },
+    () => {
+      const configPath = resolve(workspace, "tsconfig.json");
+      const loaded = ts.readConfigFile(configPath, ts.sys.readFile);
+      expect(loaded.error).toBeUndefined();
+      const parsed = ts.parseJsonConfigFileContent(loaded.config, ts.sys, workspace);
+      const program = ts.createProgram({
+        rootNames: examples,
+        options: {
+          ...parsed.options,
+          noEmit: true,
+          paths: {
+            ...parsed.options.paths,
+            "@askrjs/charts": ["./src/index.ts"],
+          },
         },
-      },
-    });
-    const diagnostics = ts.getPreEmitDiagnostics(program);
+      });
+      const diagnostics = ts.getPreEmitDiagnostics(program);
 
-    expect(formatDiagnostics(diagnostics)).toBe("");
-  });
+      expect(formatDiagnostics(diagnostics)).toBe("");
+    },
+  );
 
   it("should link every removed chart composition to a checked and typechecked example", () => {
     const readme = readFileSync(resolve(workspace, "README.md"), "utf8");

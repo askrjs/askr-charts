@@ -79,37 +79,37 @@
     "test:checks": "vp test run -c vitest.test.checks.config.ts"
   },
   "devDependencies": {
-    "@askrjs/askr": ">=0.5.0 <0.6.0",
+    "@askrjs/askr": "^0.5.1",
     "@askrjs/ui": ">=0.5.0 <0.6.0",
     "@askrjs/vite": ">=0.5.0 <0.6.0",
     "@playwright/test": "^1.65.1",
     "@types/jsdom": "^30.0.0",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.10",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "@vitest/browser-playwright": "5.0.5",
+    "@vitest/browser-playwright": "5.1.1",
     "cross-env": "^10.1.0",
     "jsdom": "^31.0.1",
     "playwright": "^1.65.1",
     "publint": "^0.3.25",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
-    "vite-plus": "1.3.0",
-    "vitest": "5.0.5"
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8001",
+    "vite-plus": "1.8.0",
+    "vitest": "5.1.1"
   },
   "peerDependencies": {
     "@askrjs/askr": ">=0.5.0 <0.6.0"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8001",
     "vite-plus": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0"
+      "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8001"
     },
-    "vitest": "5.0.5"
+    "vitest": "5.1.1"
   },
   "engines": {
     "node": ">=24.0.0"
   },
-  "packageManager": "npm@12.0.1",
+  "packageManager": "npm@12.2.3",
   "askr": {
     "update": {
       "ignore": [
