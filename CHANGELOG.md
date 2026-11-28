@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.1 - 2026-11-28
+
 ### Fixes
 
 - Keep zero-value partition rectangles within their normalized parent bounds, and divide equally only when all siblings have zero value.

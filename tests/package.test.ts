@@ -15,9 +15,14 @@ const packagePath = fileURLToPath(new URL("../package.json", import.meta.url));
 const manifest = JSON.parse(readFileSync(packagePath, "utf8")) as PackageManifest;
 
 describe("package exports", () => {
+  it("should record the manifest version in the lockfile", () => {
+    const lock = JSON.parse(readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"));
+    expect(lock.version).toBe(manifest.version);
+    expect(lock.packages[""].version).toBe(manifest.version);
+  });
+
   it("should expose only root JavaScript styles and metadata given the clean-break manifest when resolving", () => {
     expect(manifest.name).toBe("@askrjs/charts");
-    expect(manifest.version).toBe("0.5.0");
     expect(manifest.exports).toEqual({
       ".": {
         types: "./dist/index.d.ts",
